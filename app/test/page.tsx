@@ -1,9 +1,40 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { passageBank } from "../../lib/passages";
+
+// Helper client-side sanitization function
+function sanitizePassageText(text: string): string {
+  if (!text) return "";
+
+  let sanitized = text;
+
+  // 1. Convert any line breaks/tabs to spaces
+  sanitized = sanitized.replace(/[\r\n\t]+/g, " ");
+
+  // 2. Trim leading/trailing whitespace
+  sanitized = sanitized.trim();
+
+  // 3. Remove leading and trailing quotation marks if wrapped completely
+  // Handle double quotes
+  if (sanitized.startsWith('"') && sanitized.endsWith('"')) {
+    sanitized = sanitized.substring(1, sanitized.length - 1);
+  }
+  // Handle single quotes
+  if (sanitized.startsWith("'") && sanitized.endsWith("'")) {
+    sanitized = sanitized.substring(1, sanitized.length - 1);
+  }
+
+  // 4. Strip markdown formatting (asterisks, backticks, header hashes, etc.)
+  sanitized = sanitized
+    .replace(/[*_`#~]/g, "") // Remove *, _, `, #, ~
+    .replace(/\s+/g, " ")     // Collapse multiple spaces to a single space
+    .trim();
+
+  return sanitized;
+}
 
 function TestScreenContent() {
   const searchParams = useSearchParams();
@@ -14,6 +45,7 @@ function TestScreenContent() {
 
   const [selectedPassage, setSelectedPassage] = useState<string>("");
   const [isActive, setIsActive] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Core typing state
   const [typedInput, setTypedInput] = useState("");
@@ -23,13 +55,45 @@ function TestScreenContent() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize passage on client side to prevent hydration mismatches
-  useEffect(() => {
-    const list = passageBank[difficulty];
-    const randomIndex = Math.floor(Math.random() * list.length);
-    const selected = list[randomIndex];
-    setSelectedPassage(selected.text);
+  // Fetch AI-generated passage from server-side API or fall back
+  const fetchPassage = useCallback(async () => {
+    setLoading(true);
+    setTypedInput("");
+    setTotalTypedCount(0);
+    setStartTime(null);
+    setElapsedSeconds(0);
+    setIsActive(false);
+
+    try {
+      const response = await fetch(`/api/generate-passage?difficulty=${difficulty}`);
+      if (response.ok) {
+        const data = await response.json();
+        const rawText = data?.passage;
+        if (rawText && typeof rawText === "string") {
+          const sanitized = sanitizePassageText(rawText);
+          if (sanitized) {
+            setSelectedPassage(sanitized);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      throw new Error("Failed to load valid passage from API");
+    } catch (err) {
+      console.warn("Client fetch error, using local fallback:", err);
+      // Client-side local redundant fallback
+      const list = passageBank[difficulty];
+      const randomIndex = Math.floor(Math.random() * list.length);
+      setSelectedPassage(sanitizePassageText(list[randomIndex].text));
+    } finally {
+      setLoading(false);
+    }
   }, [difficulty]);
+
+  // Initial load
+  useEffect(() => {
+    fetchPassage();
+  }, [fetchPassage]);
 
   // Handle live stopwatch update
   useEffect(() => {
@@ -44,19 +108,9 @@ function TestScreenContent() {
     return () => clearInterval(interval);
   }, [startTime]);
 
-  // Reset test state and pick a new random passage
-  const handleReset = () => {
-    setTypedInput("");
-    setTotalTypedCount(0);
-    setStartTime(null);
-    setElapsedSeconds(0);
-    setIsActive(false);
-
-    const list = passageBank[difficulty];
-    const randomIndex = Math.floor(Math.random() * list.length);
-    const selected = list[randomIndex];
-    setSelectedPassage(selected.text);
-
+  // Reset test state and pick a new AI-generated passage
+  const handleReset = async () => {
+    await fetchPassage();
     if (containerRef.current) {
       containerRef.current.focus();
     }
@@ -64,7 +118,7 @@ function TestScreenContent() {
 
   // Keyboard Event Capture
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!isActive) return;
+    if (!isActive || loading) return;
 
     // Filter out modifier combinations (e.g. Ctrl+C, Alt+Tab, Cmd+R)
     if (e.ctrlKey || e.altKey || e.metaKey) {
@@ -152,10 +206,29 @@ function TestScreenContent() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (!selectedPassage) {
+  // Styled, terminal-themed loading state
+  if (loading || !selectedPassage) {
     return (
       <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-electric-500"></div>
+        <div className="text-center space-y-6">
+          {/* Pulsing prompt cursor motif */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-electric-500 animate-pulse"></span>
+            <span className="font-mono text-xs text-slate-400 tracking-widest uppercase">
+              Initializing AI Session
+            </span>
+          </div>
+          {/* Dynamic dot loading sequence */}
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl px-8 py-6 font-mono text-sm max-w-md mx-auto">
+            <div className="text-left text-slate-400 mb-2">
+              <span className="text-electric-400 font-bold">&gt;_</span> fetch_passage_stream()
+            </div>
+            <div className="text-left text-emerald-400 flex items-center gap-1">
+              <span>Establishing secure connection</span>
+              <span className="animate-pulse">...</span>
+            </div>
+          </div>
+        </div>
       </main>
     );
   }
