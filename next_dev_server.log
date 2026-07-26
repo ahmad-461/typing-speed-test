@@ -7,32 +7,18 @@
    - Network:      http://192.168.0.2:3000
 
  ✓ Starting...
- ✓ Ready in 1419ms
+ ✓ Ready in 1431ms
  ○ Compiling / ...
- ✓ Compiled / in 7.2s
- GET / 200 in 8379ms
- ○ Compiling /test ...
- ✓ Compiled /test in 755ms
- GET /test?difficulty=medium&category=ai_lab 200 in 849ms
- ○ Compiling /api/generate-passage ...
- ✓ Compiled /api/generate-passage in 590ms
-GEMINI_API_KEY is not defined. Falling back to static passages.
- GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 951ms
-GEMINI_API_KEY is not defined. Falling back to static passages.
- GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 291ms
- GET /test?difficulty=medium&category=ai_lab 200 in 220ms
-GEMINI_API_KEY is not defined. Falling back to static passages.
- GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 268ms
- GET / 200 in 175ms
- GET /test?difficulty=medium&category=ai_lab 200 in 132ms
-GEMINI_API_KEY is not defined. Falling back to static passages.
- GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 352ms
-GEMINI_API_KEY is not defined. Falling back to static passages.
- GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 327ms
- ○ Compiling /results ...
- ✓ Compiled /results in 1686ms
- GET /results?difficulty=medium&category=ai_lab&wpm=253&accuracy=100&time=15&consistency=85 200 in 1804ms
+ ✓ Compiled / in 7.3s
+ GET / 200 in 8474ms
  ○ Compiling /history ...
- ✓ Compiled /history in 573ms
- GET /history 200 in 818ms
- GET / 200 in 179ms
+ ✓ Compiled /history in 674ms
+ GET /history 200 in 959ms
+ ○ Compiling /results ...
+ ✓ Compiled /results in 1690ms
+Supabase URL or Anon Key is missing from environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set. Falling back to placeholder client to prevent build errors.
+ GET /results?difficulty=medium&category=code_arena&wpm=95&accuracy=100&time=45&consistency=98 200 in 2006ms
+ GET / 200 in 220ms
+ GET /history 200 in 218ms
+ GET / 200 in 208ms
+ GET /history 200 in 163ms

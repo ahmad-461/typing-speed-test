@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   // Inject category descriptions (system prompts for themed categories)
   let themeInstruction = "";
   if (category === "code_arena") {
-    themeInstruction = "themed around a programming, technology, computer science concept, software history, or developer culture. It must be written entirely in normal, natural English prose (plain prose) and MUST NOT contain any actual code syntax, symbols, brackets, brackets, or code snippets. Keep it focused on the conceptual or cultural aspects of development.";
+    themeInstruction = "themed specifically around a software concept, history, or use-case of one of these programming technologies: Python, JavaScript, HTML/CSS, or SQL. It must be written entirely in normal, natural, typeable English prose (plain prose) and MUST NOT contain any actual code syntax, symbols like brackets or braces, or code snippets. Keep it focused on the conceptual, historic, or cultural aspects of Python, JavaScript, HTML/CSS, or SQL.";
   } else if (category === "knowledge_quest") {
     themeInstruction = "themed around factual general knowledge and trivia, including science, astronomy, history, discoveries, or general factual information. Keep it informative and highly educational.";
   } else if (category === "ai_lab") {

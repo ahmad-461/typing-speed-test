@@ -41,6 +41,7 @@ function ResultsScreenContent() {
 
   // Toast notifications for clipboard actions
   const [toastMessage, setToastMessage] = useState("");
+  const [xpEarned, setXpEarned] = useState<number | null>(null);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const hasSaved = useRef(false);
@@ -53,14 +54,68 @@ function ResultsScreenContent() {
       hasSaved.current = true;
       const passageText = sessionStorage.getItem("last_passage") || "";
 
-      saveResult({
-        wpm: parseInt(wpm, 10),
-        accuracy: parseFloat(accuracy),
-        difficulty: (["easy", "medium", "hard", "custom"].includes(difficulty) ? difficulty : "medium") as "easy" | "medium" | "hard" | "custom",
-        category: categoryParsed,
-        consistency: parseInt(consistency, 10),
-        timeTaken: parseInt(timeTaken, 10),
-        passageText,
+      // Import gamification helpers asynchronously or safely inside the effect
+      Promise.all([
+        import("../../lib/gamification")
+      ]).then(([{ getGamificationState, calculateXpForTest, ACHIEVEMENTS }]) => {
+        const beforeState = getGamificationState();
+
+        saveResult({
+          wpm: parseInt(wpm, 10),
+          accuracy: parseFloat(accuracy),
+          difficulty: (["easy", "medium", "hard", "custom"].includes(difficulty) ? difficulty : "medium") as "easy" | "medium" | "hard" | "custom",
+          category: categoryParsed,
+          consistency: parseInt(consistency, 10),
+          timeTaken: parseInt(timeTaken, 10),
+          passageText,
+        });
+
+        const afterState = getGamificationState();
+
+        // Determine difficulty multiplier safe type cast
+        const diffMultiplierKey = (["easy", "medium", "hard", "custom"].includes(difficulty) ? difficulty : "medium") as "easy" | "medium" | "hard" | "custom";
+
+        const xpInfo = calculateXpForTest(
+          parseInt(wpm, 10),
+          parseFloat(accuracy),
+          diffMultiplierKey,
+          beforeState.streakDays
+        );
+        setXpEarned(xpInfo.total);
+
+        // Fetch queueToast safely by utilizing a window or custom event, OR by having the custom effect trigger a state update.
+        // To strictly respect rules-of-hooks, we can trigger a custom message event, or dispatch a React state update that triggers the toast in the component layout.
+        // Actually, a safer pattern is to write a custom event or store the active toasts to a small temporary state list, which we can render right here or let ToastProvider read.
+        // Since we are inside Results, let's trigger standard browser CustomEvent, and have ToastContext listen to it! This is 100% clean, decoupled, and avoids any require() and rules-of-hooks violations!
+
+        if (afterState.currentLevel > beforeState.currentLevel) {
+          const evt = new CustomEvent("tst-toast", {
+            detail: {
+              type: "level_up",
+              title: `Level Up! Lvl ${afterState.currentLevel}`,
+              message: `You've earned enough XP to become a ${afterState.levelTitle}. Keep pushing!`
+            }
+          });
+          window.dispatchEvent(evt);
+        }
+
+        const newAchievements = afterState.unlockedAchievements.filter(
+          (id: string) => !beforeState.unlockedAchievements.includes(id)
+        );
+
+        newAchievements.forEach((badgeId: string) => {
+          const badge = ACHIEVEMENTS.find((a) => a.id === badgeId);
+          if (badge) {
+            const evt = new CustomEvent("tst-toast", {
+              detail: {
+                type: "achievement",
+                title: `Achievement Unlocked: ${badge.title}`,
+                message: badge.description
+              }
+            });
+            window.dispatchEvent(evt);
+          }
+        });
       });
     }
   }, [difficulty, categoryParsed, wpm, accuracy, timeTaken, consistency, searchParams]);
@@ -355,8 +410,15 @@ function ResultsScreenContent() {
 
         {/* Certificate Card Header */}
         <div className="p-6 sm:p-8 text-center border-b border-charcoal-700 bg-charcoal-900/20">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-charcoal-700 bg-charcoal-900 text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-4">
-            🏆 performance certificate
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-charcoal-700 bg-charcoal-900 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
+              🏆 performance certificate
+            </div>
+            {xpEarned !== null && (
+              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-electric-500/30 bg-electric-500/10 text-[10px] font-mono text-electric-400 uppercase tracking-widest font-bold animate-fade-in">
+                +{xpEarned} XP Earned
+              </div>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Test Results

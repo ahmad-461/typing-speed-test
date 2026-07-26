@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { ToastProvider } from "../components/ToastContext";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -31,13 +32,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${jakarta.variable} ${jetbrains.variable}`}>
       <body className="bg-charcoal-900 text-slate-100 antialiased font-sans min-h-screen selection:bg-electric-500/30 selection:text-electric-400">
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <div className="flex-grow flex flex-col">
-            {children}
+        <ToastProvider>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <div className="flex-grow flex flex-col">
+              {children}
+            </div>
+            <Footer />
           </div>
-          <Footer />
-        </div>
+        </ToastProvider>
       </body>
     </html>
   );

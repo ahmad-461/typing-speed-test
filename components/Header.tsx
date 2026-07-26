@@ -5,10 +5,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { getPersonalBest } from "../lib/stats";
+import { getGamificationState } from "../lib/gamification";
 
 export default function Header() {
   const pathname = usePathname();
   const [pbWPM, setPbWPM] = useState<number | null>(null);
+  const [gamification, setGamification] = useState<{
+    level: number;
+    title: string;
+    streak: number;
+    resetOccurred: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const best = getPersonalBest();
@@ -17,6 +24,15 @@ export default function Header() {
     } else {
       setPbWPM(null);
     }
+
+    // Read gamification state on route change to keep header accurate
+    const state = getGamificationState();
+    setGamification({
+      level: state.currentLevel,
+      title: state.levelTitle,
+      streak: state.streakDays,
+      resetOccurred: state.streakResetOccurred,
+    });
   }, [pathname]);
 
   const navItems = [
@@ -79,10 +95,25 @@ export default function Header() {
           })}
         </nav>
 
-        {/* PB Badge Right */}
-        <div className="flex items-center justify-end min-w-[70px] sm:min-w-[100px]">
+        {/* Gamification & PB Badges Right */}
+        <div className="flex items-center gap-3 justify-end select-none">
+          {gamification && (
+            <div className="flex flex-col items-end gap-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.08] text-[11px] font-mono text-white font-bold uppercase tracking-wider animate-fade-in">
+                <span className="text-[#3B82F6]">Lvl {gamification.level}</span>
+                <span className="text-slate-500 font-normal">•</span>
+                <span className="text-amber-500">🔥 {gamification.streak} Day Streak</span>
+              </div>
+              {gamification.resetOccurred && (
+                <div className="text-[9px] font-mono text-rose-400 font-semibold tracking-wider uppercase animate-pulse">
+                  Streak reset — start fresh today
+                </div>
+              )}
+            </div>
+          )}
+
           {pbWPM !== null && (
-            <div className="hidden min-[480px]:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.08] text-[11px] font-mono text-[#3B82F6] font-bold uppercase tracking-wider select-none animate-fade-in">
+            <div className="hidden min-[640px]:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-700 bg-charcoal-800 text-[11px] font-mono text-[#3B82F6] font-bold uppercase tracking-wider animate-fade-in">
               <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-pulse"></span>
               <span>PB: {pbWPM} WPM</span>
             </div>
