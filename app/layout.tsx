@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -30,7 +32,11 @@ export default function RootLayout({
     <html lang="en" className={`${jakarta.variable} ${jetbrains.variable}`}>
       <body className="bg-charcoal-900 text-slate-100 antialiased font-sans min-h-screen selection:bg-electric-500/30 selection:text-electric-400">
         <div className="flex flex-col min-h-screen">
-          {children}
+          <Header />
+          <div className="flex-grow pt-20 pb-16 flex flex-col">
+            {children}
+          </div>
+          <Footer />
         </div>
       </body>
     </html>

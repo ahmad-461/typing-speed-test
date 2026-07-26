@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 
@@ -18,6 +18,50 @@ function ResultsScreenContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const hasSavedToLocalStorage = useRef(false);
+
+  // Save score to local storage once upon component mount/params loaded
+  useEffect(() => {
+    if (hasSavedToLocalStorage.current) return;
+
+    try {
+      const parsedWPM = parseInt(wpm, 10);
+      const parsedAccuracy = parseFloat(accuracy);
+
+      if (!isNaN(parsedWPM) && !isNaN(parsedAccuracy)) {
+        hasSavedToLocalStorage.current = true;
+
+        const record = {
+          wpm: parsedWPM,
+          accuracy: parsedAccuracy,
+          difficulty: difficulty,
+          date: new Date().toISOString(),
+        };
+
+        const existing = localStorage.getItem("tst_history_v1");
+        let historyArray = [];
+        if (existing) {
+          try {
+            const parsed = JSON.parse(existing);
+            if (Array.isArray(parsed)) {
+              historyArray = parsed;
+            }
+          } catch {
+            // Safe fallback
+          }
+        }
+
+        historyArray.push(record);
+        localStorage.setItem("tst_history_v1", JSON.stringify(historyArray));
+
+        // Dispatch customized event so header state updates in real-time
+        window.dispatchEvent(new Event("tst_history_updated"));
+      }
+    } catch (e) {
+      console.warn("Could not save score to local storage:", e);
+    }
+  }, [wpm, accuracy, difficulty]);
 
   const handleSubmitScore = async () => {
     setIsSubmitting(true);

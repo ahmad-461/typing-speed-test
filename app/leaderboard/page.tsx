@@ -275,11 +275,6 @@ function LeaderboardContent() {
           </div>
         )}
       </div>
-
-      {/* Aesthetic Footer Info */}
-      <p className="text-center text-xs text-slate-500 font-mono mt-8 max-w-md leading-relaxed">
-        💡 High scores are calculated based on net speed (WPM) and accuracy. Practice daily to climb the leaderboard!
-      </p>
     </main>
   );
 }
