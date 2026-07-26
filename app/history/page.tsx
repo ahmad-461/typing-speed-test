@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import LinkNext from "next/link";
 import { getHistory, getHistorySummary, getPersonalBest, TestResult } from "../../lib/stats";
 
 function formatDateShort(timestamp: number) {
@@ -211,33 +210,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
-      {/* Top Header Bar */}
-      <header className="flex items-center justify-between w-full py-3 mb-8 border-b border-charcoal-800">
-        <div className="flex items-center gap-6">
-          <LinkNext
-            href="/"
-            className="flex items-center gap-2 font-mono text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-white transition-colors"
-          >
-            ⚡ TST v1.6
-          </LinkNext>
-        </div>
-        <div className="flex items-center gap-3">
-          <LinkNext
-            href="/leaderboard"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 text-xs font-mono text-slate-300 hover:text-white font-semibold hover-glow-electric"
-          >
-            Leaderboard 📊
-          </LinkNext>
-          <LinkNext
-            href="/history"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-electric-500/10 border border-electric-500/30 text-xs font-mono text-electric-400 font-semibold shadow-[0_0_8px_rgba(59,130,246,0.15)]"
-          >
-            History ⏳
-          </LinkNext>
-        </div>
-      </header>
-
+    <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
       <main className="flex-grow flex flex-col w-full">
         {/* Page Title */}
         <div className="text-center space-y-3 mb-10">
@@ -263,14 +236,6 @@ export default function HistoryPage() {
               <p className="text-sm text-slate-400 font-sans leading-relaxed">
                 You haven&apos;t completed any speed typing tests yet on this machine. Take your first test to initialize local tracking metrics and unlock the performance charts.
               </p>
-            </div>
-            <div className="pt-2">
-              <LinkNext
-                href="/"
-                className="inline-flex items-center gap-2 px-8 py-3.5 bg-electric-500 hover:bg-electric-400 text-white font-semibold rounded-xl shadow-lg shadow-electric-500/15 hover-glow-electric transition-all"
-              >
-                Take First Typing Test ⚡
-              </LinkNext>
             </div>
           </div>
         ) : (
@@ -485,11 +450,6 @@ export default function HistoryPage() {
           </div>
         )}
       </main>
-
-      {/* Aesthetic Footer Info */}
-      <footer className="mt-16 text-center text-xs text-slate-500 font-mono">
-        💡 Local metrics are tracked automatically in your browser using persistent web standard localStorage storage.
-      </footer>
     </div>
   );
 }
