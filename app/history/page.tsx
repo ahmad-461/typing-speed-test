@@ -1,39 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, useMemo } from "react";
+import LinkNext from "next/link";
+import { getHistory, getHistorySummary, getPersonalBest, TestResult } from "../../lib/stats";
 
-type HistoryEntry = {
-  wpm: number;
-  accuracy: number;
-  difficulty: "easy" | "medium" | "hard";
-  date: string;
-};
+function formatDateShort(timestamp: number) {
+  const d = new Date(timestamp);
+  if (isNaN(d.getTime())) return "—";
+  const day = d.getDate();
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthName = months[d.getMonth()];
+  return `${day} ${monthName}`;
+}
+
+function formatDateLong(timestamp: number) {
+  const d = new Date(timestamp);
+  if (isNaN(d.getTime())) return "—";
+  const day = d.getDate();
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const monthName = months[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day} ${monthName} ${year}`;
+}
 
 export default function HistoryPage() {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [history, setHistory] = useState<TestResult[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("tst_history_v1");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          // Sort by date descending
-          const sorted = [...parsed].sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
-          setHistory(sorted);
-        }
-      }
-    } catch (e) {
-      console.warn("Could not read tst_history_v1 from localStorage:", e);
-    } finally {
-      setLoading(false);
-    }
+    setHistory(getHistory());
+    setIsLoaded(true);
   }, []);
 
+  const summary = useMemo(() => getHistorySummary(), [history]);
+  const pbOverall = useMemo(() => getPersonalBest(), [history]);
+  const pbEasy = useMemo(() => getPersonalBest("easy"), [history]);
+  const pbMedium = useMemo(() => getPersonalBest("medium"), [history]);
+  const pbHard = useMemo(() => getPersonalBest("hard"), [history]);
+
+  // Last 20 tests for the chart, in chronological order (left to right)
+  const chartData = useMemo(() => {
+    return [...history].slice(0, 20).reverse();
+  }, [history]);
+
+  // Handle clear history action
   const handleClearHistory = () => {
     if (confirm("Are you sure you want to clear your entire local typing history?")) {
       localStorage.removeItem("tst_history_v1");
@@ -43,138 +56,102 @@ export default function HistoryPage() {
     }
   };
 
-  // Compute stats
-  const totalTests = history.length;
-  const highWPM = totalTests > 0 ? Math.max(...history.map((h) => h.wpm)) : 0;
-  const averageWPM =
-    totalTests > 0
-      ? Math.round(history.reduce((acc, curr) => acc + curr.wpm, 0) / totalTests)
-      : 0;
-  const averageAccuracy =
-    totalTests > 0
-      ? Math.round(
-          history.reduce((acc, curr) => acc + curr.accuracy, 0) / totalTests
-        )
-      : 100;
+  // Render beautiful hand-crafted Custom SVG line chart
+  const svgChart = useMemo(() => {
+    if (chartData.length < 2) return null;
 
-  // Render hand-crafted SVG progression line chart
-  const renderProgressionChart = () => {
-    // We only display up to 10 of the oldest tests chronologically to make the line flow left-to-right
-    const chartData = [...history]
-      .slice(0, 10)
-      .reverse();
+    // Dimensions
+    const width = 800;
+    const height = 260;
+    const paddingLeft = 50;
+    const paddingRight = 30;
+    const paddingTop = 20;
+    const paddingBottom = 40;
 
-    if (chartData.length < 2) {
-      return (
-        <div className="h-48 flex items-center justify-center border border-charcoal-700/60 rounded-xl bg-charcoal-900/40 p-4">
-          <span className="text-xs font-mono text-slate-500">
-            📊 Complete at least 2 tests to render a progress line chart
-          </span>
-        </div>
-      );
-    }
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
 
-    const width = 500;
-    const height = 180;
-    const padding = 25;
+    // Find min/max WPM for standardizing chart scale
+    const wpms = chartData.map((d) => d.wpm);
+    const maxWpm = Math.max(...wpms, 100); // floor of 100 max range
+    const minWpm = Math.min(...wpms, 0); // floor of 0 min range
+    const wpmRange = maxWpm - minWpm || 1;
 
-    const minVal = 0;
-    const maxVal = Math.max(...chartData.map((d) => d.wpm), 100) + 10;
+    // Map each data point to X, Y coordinates
+    const points = chartData.map((d, index) => {
+      const x = paddingLeft + (index / (chartData.length - 1)) * chartWidth;
+      const y = paddingTop + chartHeight - ((d.wpm - minWpm) / wpmRange) * chartHeight;
+      return { x, y, data: d, index };
+    });
 
-    const getX = (index: number) => {
-      return padding + (index * (width - padding * 2)) / (chartData.length - 1);
-    };
+    // Create SVG path string
+    const pathD = points.reduce((acc, p, idx) => {
+      if (idx === 0) return `M ${p.x} ${p.y}`;
+      return `${acc} L ${p.x} ${p.y}`;
+    }, "");
 
-    const getY = (wpmValue: number) => {
-      return (
-        height -
-        padding -
-        ((wpmValue - minVal) * (height - padding * 2)) / (maxVal - minVal)
-      );
-    };
+    // Path for gradient filling under the curve
+    const areaD = points.length > 0
+      ? `${pathD} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`
+      : "";
 
-    // Construct path string d
-    let pathD = "";
-    chartData.forEach((d, i) => {
-      const x = getX(i);
-      const y = getY(d.wpm);
-      if (i === 0) {
-        pathD += `M ${x} ${y}`;
-      } else {
-        pathD += ` L ${x} ${y}`;
-      }
+    // Generate horizontal grid lines and vertical labels
+    const gridCount = 4;
+    const yGridLines = Array.from({ length: gridCount + 1 }).map((_, idx) => {
+      const val = minWpm + (idx / gridCount) * wpmRange;
+      const y = paddingTop + chartHeight - (idx / gridCount) * chartHeight;
+      return { val: Math.round(val), y };
     });
 
     return (
-      <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-            ⚡ SPEED PROGRESSION CHART (LAST 10 RUNS)
-          </span>
-          <span className="text-[10px] font-mono text-electric-400">
-            Max WPM: {highWPM}
-          </span>
-        </div>
-        <div className="relative w-full overflow-hidden flex justify-center items-center">
-          <svg
-            viewBox={`0 0 ${width} ${height}`}
-            className="w-full max-w-lg overflow-visible"
-          >
-            {/* Grid Lines */}
-            <line
-              x1={padding}
-              y1={getY(50)}
-              x2={width - padding}
-              y2={getY(50)}
-              stroke="#23272F"
-              strokeDasharray="4 4"
-            />
-            <line
-              x1={padding}
-              y1={getY(100)}
-              x2={width - padding}
-              y2={getY(100)}
-              stroke="#23272F"
-              strokeDasharray="4 4"
-            />
-            <text
-              x={padding - 5}
-              y={getY(50) + 4}
-              fill="#4D5668"
-              fontSize="8"
-              fontFamily="var(--font-jetbrains)"
-              textAnchor="end"
-            >
-              50
-            </text>
-            <text
-              x={padding - 5}
-              y={getY(100) + 4}
-              fill="#4D5668"
-              fontSize="8"
-              fontFamily="var(--font-jetbrains)"
-              textAnchor="end"
-            >
-              100
-            </text>
+      <div className="w-full relative group">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="w-full h-auto overflow-visible select-none"
+        >
+          <defs>
+            {/* Custom linear gradient using strictly HEX colors */}
+            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.00" />
+            </linearGradient>
+          </defs>
 
-            {/* Glowing Gradient definition using HEX only */}
-            <defs>
-              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
-              </linearGradient>
-            </defs>
-
-            {/* Closed area under line for smooth gradient glow */}
-            {chartData.length > 0 && (
-              <path
-                d={`${pathD} L ${getX(chartData.length - 1)} ${height - padding} L ${getX(0)} ${height - padding} Z`}
-                fill="url(#chartGradient)"
+          {/* Grid lines */}
+          {yGridLines.map((line, idx) => (
+            <g key={idx} className="opacity-40">
+              <line
+                x1={paddingLeft}
+                y1={line.y}
+                x2={width - paddingRight}
+                y2={line.y}
+                stroke="#23272F"
+                strokeWidth="1"
+                strokeDasharray="4 4"
               />
-            )}
+              <text
+                x={paddingLeft - 10}
+                y={line.y + 4}
+                textAnchor="end"
+                className="fill-slate-500 font-mono text-[10px]"
+              >
+                {line.val}
+              </text>
+            </g>
+          ))}
 
-            {/* Line Path with smooth CSS draw-in transition */}
+          {/* Gradient area */}
+          {areaD && (
+            <path
+              d={areaD}
+              fill="url(#chartGradient)"
+              className="animate-fade-in"
+              style={{ animationDuration: "1s" }}
+            />
+          )}
+
+          {/* Line path */}
+          {pathD && (
             <path
               d={pathD}
               fill="none"
@@ -182,224 +159,337 @@ export default function HistoryPage() {
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="animate-draw"
+              className="path-draw-in"
               style={{
-                strokeDasharray: 1000,
-                strokeDashoffset: 1000,
-                animation: "draw 1.8s ease-out forwards",
+                strokeDasharray: 2000,
+                strokeDashoffset: 0,
               }}
             />
+          )}
 
-            {/* Data Points */}
-            {chartData.map((d, i) => (
-              <g key={i}>
-                <circle
-                  cx={getX(i)}
-                  cy={getY(d.wpm)}
-                  r="3.5"
-                  fill="#16181C"
-                  stroke="#3B82F6"
-                  strokeWidth="2"
-                  className="transition-all hover:scale-150 cursor-pointer"
-                />
-                {/* Score hover tags */}
-                <text
-                  x={getX(i)}
-                  y={getY(d.wpm) - 8}
-                  fill="#94A3B8"
-                  fontSize="7"
-                  fontFamily="var(--font-jetbrains)"
-                  textAnchor="middle"
-                  fontWeight="bold"
-                >
-                  {d.wpm}
-                </text>
-              </g>
-            ))}
-          </svg>
-        </div>
+          {/* Points & Hover Tooltips */}
+          {points.map((p, idx) => (
+            <g key={idx} className="group/node">
+              {/* Outer hover ring */}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r="8"
+                className="fill-electric-500/0 hover:fill-electric-500/20 transition-all duration-150 cursor-pointer"
+              />
+              {/* Core point dot */}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r="4.5"
+                className="fill-electric-500 stroke-charcoal-900 stroke-[2.5px] transition-all duration-150 group-hover/node:scale-125"
+              />
+              {/* Minimalist interactive node tooltip overlay on SVG */}
+              <title>{`${p.data.wpm} WPM (${p.data.difficulty}) - ${formatDateShort(p.data.timestamp)}`}</title>
+            </g>
+          ))}
+
+          {/* X Axis Labels for tests (Dates or Indices) */}
+          {points.map((p, idx) => {
+            // Only show labels on odd indices or bounds to prevent crowding
+            const step = Math.ceil(points.length / 7);
+            if (idx % step !== 0 && idx !== points.length - 1) return null;
+
+            return (
+              <text
+                key={idx}
+                x={p.x}
+                y={height - 15}
+                textAnchor="middle"
+                className="fill-slate-500 font-mono text-[9px] uppercase tracking-wider"
+              >
+                {formatDateShort(p.data.timestamp)}
+              </text>
+            );
+          })}
+        </svg>
       </div>
     );
-  };
+  }, [chartData]);
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-charcoal-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-electric-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-start px-4 py-8 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
-
+    <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
       {/* Secondary Inner-Page Header */}
       <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60">
-        <Link
+        <LinkNext
           href="/"
           className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
         >
           ← Home
-        </Link>
+        </LinkNext>
         <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
           📊 personal speed history & metrics
         </span>
       </div>
 
-      {/* Main Intro */}
-      <div className="text-center space-y-3 mb-10">
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-none">
-          Your Typing <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">History</span>
-        </h1>
-        <p className="text-sm text-slate-400 max-w-md mx-auto font-sans leading-relaxed">
-          Track your WPM progression over time, review past tests, and analyze your keyboard metrics.
-        </p>
-      </div>
-
-      {loading ? (
-        <div className="py-16 text-center flex flex-col items-center justify-center gap-3 w-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-electric-500"></div>
-          <p className="text-xs text-slate-400 font-mono tracking-widest uppercase">
-            Loading metrics...
+      <main className="flex-grow flex flex-col w-full">
+        {/* Page Title */}
+        <div className="text-center space-y-3 mb-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-charcoal-700 bg-charcoal-800 text-xs font-mono text-slate-400 tracking-wider uppercase">
+            📊 Personal Dashboard
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-none">
+            Your Performance <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">History</span>
+          </h1>
+          <p className="text-sm text-slate-400 max-w-md mx-auto">
+            Analyze your speed progression, view personal records, and race against your past ghost.
           </p>
         </div>
-      ) : history.length === 0 ? (
-        <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-2xl p-12 text-center space-y-6 max-w-xl mx-auto">
-          <div className="text-slate-400 text-sm font-mono">
-            &gt;_ no_history_found
-          </div>
-          <p className="text-slate-400 text-sm">
-            It looks like you haven&apos;t taken any speed tests on this device yet.
-          </p>
-          <Link
-            href="/"
-            className="inline-block px-6 py-3 bg-electric-500 hover:bg-electric-400 text-white font-bold text-xs font-mono uppercase tracking-wider rounded-xl transition-all shadow-md shadow-electric-500/10 hover-glow-electric"
-          >
-            Start First Speed Test ⚡
-          </Link>
-        </div>
-      ) : (
-        <div className="w-full space-y-8">
 
-          {/* Key Stat Cards Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-            {/* High WPM */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 text-center">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                Personal Best
-              </span>
-              <div className="text-3xl font-extrabold text-white font-mono">
-                {highWPM}
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-0.5 block">MAX WPM</span>
+        {history.length === 0 ? (
+          /* Empty State for first-time users */
+          <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-2xl p-12 text-center space-y-6 max-w-xl mx-auto shadow-2xl">
+            <div className="w-16 h-16 rounded-full bg-electric-500/5 border border-electric-500/20 flex items-center justify-center mx-auto text-3xl">
+              ⌨️
             </div>
-
-            {/* Average WPM */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 text-center">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                Average WPM
-              </span>
-              <div className="text-3xl font-extrabold text-electric-400 font-mono">
-                {averageWPM}
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-0.5 block">NET SPEED</span>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-white tracking-tight">No Typing History Found</h2>
+              <p className="text-sm text-slate-400 font-sans leading-relaxed">
+                You haven&apos;t completed any speed typing tests yet on this machine. Take your first test to initialize local tracking metrics and unlock the performance charts.
+              </p>
             </div>
-
-            {/* Average Accuracy */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 text-center">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                Avg Accuracy
-              </span>
-              <div className="text-3xl font-extrabold text-emerald-400 font-mono">
-                {averageAccuracy}%
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-0.5 block">PRECISION</span>
-            </div>
-
-            {/* Total Run Count */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 text-center">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                Tests Taken
-              </span>
-              <div className="text-3xl font-extrabold text-slate-300 font-mono">
-                {totalTests}
-              </div>
-              <span className="text-[10px] font-mono text-slate-500 mt-0.5 block">TOTAL RUNS</span>
-            </div>
-
-          </div>
-
-          {/* Line Chart */}
-          {renderProgressionChart()}
-
-          {/* History List */}
-          <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col">
-            <div className="h-1 w-full bg-gradient-to-r from-electric-500 to-sky-500" />
-            <div className="p-4 sm:p-5 border-b border-charcoal-700 flex items-center justify-between">
-              <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-                📋 DETAILED RUN LOGS
-              </span>
-              <button
-                onClick={handleClearHistory}
-                className="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/40 text-rose-400 border border-rose-900/50 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider transition-colors focus:outline-none"
+            <div className="pt-2">
+              <LinkNext
+                href="/"
+                className="inline-flex items-center gap-2 px-8 py-3.5 bg-electric-500 hover:bg-electric-400 text-white font-semibold rounded-xl shadow-lg shadow-electric-500/15 hover-glow-electric transition-all"
               >
-                Clear Logs 🗑️
-              </button>
-            </div>
-
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-charcoal-700 bg-charcoal-900/40 text-[9px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-widest">
-                    <th className="py-3 px-4 sm:px-6 w-16 text-center">No.</th>
-                    <th className="py-3 px-4">Speed (WPM)</th>
-                    <th className="py-3 px-4">Accuracy</th>
-                    <th className="py-3 px-4">Difficulty</th>
-                    <th className="py-3 px-4 pr-6 sm:pr-8 text-right">Completion Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-charcoal-700/50">
-                  {history.map((item, index) => {
-                    const originalIdx = history.length - index;
-                    return (
-                      <tr
-                        key={index}
-                        className="transition-colors hover:bg-charcoal-900/10"
-                      >
-                        <td className="py-3 px-4 sm:px-6 text-center font-mono text-slate-500 font-bold text-xs">
-                          #{originalIdx}
-                        </td>
-                        <td className="py-3 px-4 font-mono font-black text-white text-sm sm:text-base">
-                          {item.wpm} <span className="text-[10px] font-normal text-slate-500">WPM</span>
-                        </td>
-                        <td className="py-3 px-4 font-mono font-bold text-emerald-400 text-xs sm:text-sm">
-                          {item.accuracy}%
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-block text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${
-                              item.difficulty === "easy"
-                                ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
-                                : item.difficulty === "medium"
-                                ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
-                                : "text-rose-400 bg-rose-500/5 border-rose-500/20"
-                            }`}
-                          >
-                            {item.difficulty}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 pr-6 sm:pr-8 text-right font-mono text-[10px] sm:text-xs text-slate-400">
-                          {new Date(item.date).toLocaleString()}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                Take First Typing Test ⚡
+              </LinkNext>
             </div>
           </div>
+        ) : (
+          /* Main Dashboard View */
+          <div className="space-y-8">
+            {/* Summary Metrics Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Metric 1: Total Tests */}
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                  Tests Completed
+                </span>
+                <div className="text-3xl font-extrabold text-white font-mono leading-none">
+                  {summary.totalTests}
+                </div>
+                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
+                  Count
+                </div>
+              </div>
 
-        </div>
-      )}
+              {/* Metric 2: Avg WPM */}
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                  Average Speed
+                </span>
+                <div className="text-3xl font-extrabold text-electric-400 font-mono leading-none">
+                  {summary.avgWpm} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
+                </div>
+                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
+                  Avg
+                </div>
+              </div>
 
-      {/* Helpful Hint */}
-      <p className="text-center text-xs text-slate-500 font-mono mt-8 max-w-md leading-relaxed">
-        💡 Your local speed history is securely persisted inside your browser sandbox under standard storage protocols.
-      </p>
+              {/* Metric 3: Avg Accuracy */}
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                  Average Accuracy
+                </span>
+                <div className="text-3xl font-extrabold text-emerald-400 font-mono leading-none">
+                  {summary.avgAccuracy}%
+                </div>
+                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
+                  Acc
+                </div>
+              </div>
 
-    </main>
+              {/* Metric 4: All-time Personal Best */}
+              <div className="bg-charcoal-800 border border-electric-500/40 rounded-xl p-5 relative overflow-hidden group shadow-[0_0_12px_rgba(59,130,246,0.05)]">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider block font-semibold">
+                    Personal Best
+                  </span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-electric-500 text-white leading-none">
+                    PB
+                  </span>
+                </div>
+                <div className="text-3xl font-extrabold text-white font-mono leading-none">
+                  {pbOverall ? pbOverall.wpm : 0} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
+                </div>
+                {pbOverall && (
+                  <div className="text-[9px] font-mono text-slate-500 mt-1 uppercase">
+                    On {pbOverall.difficulty}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Difficulty Personal Records (PBs) Segment */}
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+              <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 border-b border-charcoal-700 pb-3">
+                <span>🏆</span> difficulty personal bests
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                {/* Easy PB */}
+                <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider font-bold">
+                      Easy
+                    </span>
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      {pbEasy ? `${formatDateShort(pbEasy.timestamp)} • ${pbEasy.accuracy}% acc` : "No completed runs"}
+                    </div>
+                  </div>
+                  <div className="text-2xl font-extrabold text-white font-mono">
+                    {pbEasy ? pbEasy.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                  </div>
+                </div>
+
+                {/* Medium PB */}
+                <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider font-bold">
+                      Medium
+                    </span>
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      {pbMedium ? `${formatDateShort(pbMedium.timestamp)} • ${pbMedium.accuracy}% acc` : "No completed runs"}
+                    </div>
+                  </div>
+                  <div className="text-2xl font-extrabold text-white font-mono">
+                    {pbMedium ? pbMedium.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                  </div>
+                </div>
+
+                {/* Hard PB */}
+                <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono text-rose-400 uppercase tracking-wider font-bold">
+                      Hard
+                    </span>
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      {pbHard ? `${formatDateShort(pbHard.timestamp)} • ${pbHard.accuracy}% acc` : "No completed runs"}
+                    </div>
+                  </div>
+                  <div className="text-2xl font-extrabold text-white font-mono">
+                    {pbHard ? pbHard.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Over Time Chart Section */}
+            {chartData.length >= 2 && (
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>📈</span> typing speed progression (WPM)
+                  </h2>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    showing last {chartData.length} tests
+                  </span>
+                </div>
+                <div className="py-2">
+                  {svgChart}
+                </div>
+              </div>
+            )}
+
+            {/* History Table Log */}
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl overflow-hidden shadow-xl">
+              <div className="p-5 border-b border-charcoal-700 flex justify-between items-center bg-charcoal-900/10">
+                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <span>⏱️</span> chronological test log
+                </h2>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleClearHistory}
+                    className="px-3 py-1 bg-rose-950/40 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 rounded text-[10px] font-mono font-semibold uppercase tracking-wider transition-all"
+                  >
+                    Clear History 🗑️
+                  </button>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    Total logged: {history.length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-charcoal-700 bg-charcoal-900/30 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
+                      <th className="py-3 px-6 w-20">Index</th>
+                      <th className="py-3 px-6">Date &amp; Time</th>
+                      <th className="py-3 px-6 text-center w-24">WPM</th>
+                      <th className="py-3 px-6 text-center w-28">Accuracy</th>
+                      <th className="py-3 px-6 text-center w-28">Difficulty</th>
+                      <th className="py-3 px-6 text-center w-28">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-charcoal-700/40 text-sm">
+                    {history.map((item, idx) => {
+                      const numberIndex = history.length - idx;
+                      return (
+                        <tr key={item.id} className="hover:bg-charcoal-900/10 transition-colors">
+                          {/* Index */}
+                          <td className="py-3 px-6 font-mono text-xs text-slate-500 font-bold">
+                            #{numberIndex.toString().padStart(2, "0")}
+                          </td>
+
+                          {/* Date and Time */}
+                          <td className="py-3 px-6 font-mono text-slate-300 whitespace-nowrap">
+                            {formatDateLong(item.timestamp)}
+                          </td>
+
+                          {/* WPM */}
+                          <td className="py-3 px-6 text-center font-mono font-extrabold text-white text-base">
+                            {item.wpm}
+                          </td>
+
+                          {/* Accuracy */}
+                          <td className="py-3 px-6 text-center font-mono font-bold text-emerald-400">
+                            {item.accuracy}%
+                          </td>
+
+                          {/* Difficulty */}
+                          <td className="py-3 px-6 text-center">
+                            <span
+                              className={`inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                                item.difficulty === "easy"
+                                  ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
+                                  : item.difficulty === "medium"
+                                  ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
+                                  : "text-rose-400 bg-rose-500/5 border-rose-500/20"
+                              }`}
+                            >
+                              {item.difficulty}
+                            </span>
+                          </td>
+
+                          {/* Duration */}
+                          <td className="py-3 px-6 text-center font-mono text-xs text-slate-400">
+                            {item.timeTaken}s
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }

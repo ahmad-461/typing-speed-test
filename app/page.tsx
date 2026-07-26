@@ -1,12 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { getPersonalBest } from "../lib/stats";
 
 type Difficulty = "easy" | "medium" | "hard";
 
 export default function Home() {
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+  const [hasPB, setHasPB] = useState(false);
+  const [ghostEnabled, setGhostEnabled] = useState(false);
+  const [pbWPM, setPbWPM] = useState<number | null>(null);
+
+  useEffect(() => {
+    const pb = getPersonalBest(difficulty);
+    setHasPB(!!pb);
+    setPbWPM(pb ? pb.wpm : null);
+    if (!pb) {
+      setGhostEnabled(false);
+    }
+  }, [difficulty]);
 
   const difficulties: { value: Difficulty; label: string; desc: string; colors: string }[] = [
     {
@@ -99,13 +112,49 @@ export default function Home() {
             })}
           </div>
 
+          {/* Ghost Race Mode Toggle */}
+          {hasPB && (
+            <div className="bg-charcoal-900/40 border border-charcoal-700 rounded-xl p-4 flex items-center justify-between animate-fade-in">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-white font-mono uppercase tracking-wider">
+                    👻 Ghost Race Mode
+                  </span>
+                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
+                    ghostEnabled
+                      ? "bg-electric-500/20 text-electric-400 border border-electric-500/30"
+                      : "bg-charcoal-700 text-slate-400 border border-charcoal-600"
+                  }`}>
+                    {ghostEnabled ? "Active" : "Disabled"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-normal font-sans">
+                  Race against your personal best run of <span className="text-electric-400 font-mono font-semibold">{pbWPM} WPM</span> on this difficulty.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGhostEnabled(!ghostEnabled)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-electric-500 ${
+                  ghostEnabled ? "bg-electric-500" : "bg-charcoal-700"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    ghostEnabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
+
           {/* Start Test Button */}
           <div className="pt-4 border-t border-charcoal-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
               <span className="text-electric-500">⚡</span> Supports instant keyboard focus activation
             </div>
             <Link
-              href={`/test?difficulty=${difficulty}`}
+              href={`/test?difficulty=${difficulty}${ghostEnabled ? "&ghost=true" : ""}`}
               className="w-full sm:w-auto text-center px-8 py-3.5 bg-electric-500 text-white font-semibold rounded-xl shadow-lg shadow-electric-500/15 hover:bg-electric-400 active:bg-electric-600 focus:outline-none focus:ring-2 focus:ring-electric-500 focus:ring-offset-2 focus:ring-offset-charcoal-800 transition-all duration-200 hover-glow-electric"
             >
               Start Test

@@ -92,13 +92,21 @@ function LeaderboardContent() {
     <main className="flex-grow flex flex-col items-center justify-start px-4 py-8 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
       {/* Navigation Header */}
       <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60">
-        <Link
-          href="/"
-          className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
-        >
-          ← Home
-        </Link>
-        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
+          >
+            ← Home
+          </Link>
+          <Link
+            href="/history"
+            className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
+          >
+            History ⏳
+          </Link>
+        </div>
+        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest hidden sm:inline-block">
           🏆 global speed typing standings
         </span>
       </div>
