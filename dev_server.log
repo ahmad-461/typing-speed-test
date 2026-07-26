@@ -7,21 +7,12 @@
    - Network:      http://192.168.0.2:3000
 
  ✓ Starting...
- ✓ Ready in 1615ms
+ ✓ Ready in 1433ms
  ○ Compiling / ...
- ✓ Compiled / in 7.9s
- GET / 200 in 9027ms
- ○ Compiling /test ...
- ✓ Compiled /test in 697ms
- GET /test?difficulty=easy 200 in 985ms
- ○ Compiling /api/generate-passage ...
- ✓ Compiled /api/generate-passage in 728ms
-GEMINI_API_KEY is not defined. Falling back to static passage.
- GET /api/generate-passage?difficulty=easy 200 in 1105ms
- ○ Compiling /results ...
- ✓ Compiled /results in 1893ms
- GET /results?difficulty=easy&wpm=240&accuracy=100&time=7 200 in 1987ms
- GET / 200 in 187ms
- ○ Compiling /history ...
- ✓ Compiled /history in 616ms
- GET /history 200 in 832ms
+ ✓ Compiled / in 8.7s
+ GET / 200 in 9698ms
+ ○ Compiling /leaderboard ...
+ ✓ Compiled /leaderboard in 1242ms
+ GET /leaderboard 200 in 1376ms
+Supabase URL or Anon Key is missing from environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set. Falling back to placeholder client to prevent build errors.
+ GET /leaderboard 200 in 318ms
