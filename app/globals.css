@@ -22,3 +22,33 @@ body {
 .animate-blink {
   animation: blink 1s step-end infinite;
 }
+
+/* Page mount transition and focus-ring classes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 180ms ease-out forwards;
+}
+
+/* Soft drop-shadow and glow effect for electric accents */
+.hover-glow-electric {
+  transition: all 0.2s ease-in-out;
+}
+
+.hover-glow-electric:hover {
+  border-color: #3B82F6;
+  box-shadow: 0 0 10px 1px rgba(59, 130, 246, 0.25);
+}
+
+.focus-glow-electric:focus-within, .focus-glow-electric:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 10px 1px rgba(59, 130, 246, 0.25);
+  outline: none;
+}

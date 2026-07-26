@@ -16,7 +16,9 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Typing Speed Test",
-  description: "Test your typing speed and accuracy with a beautiful, minimalist, and sleek interface.",
+  description: "Evaluate your typing speed and accuracy under pressure with a beautiful, minimalist, and sleek developer terminal theme. Fully integrated with AI passage generation and global live leaderboard.",
+  keywords: ["typing speed test", "typing test", "wpm", "keyboard test", "words per minute"],
+  authors: [{ name: "Ahmad" }],
 };
 
 export default function RootLayout({

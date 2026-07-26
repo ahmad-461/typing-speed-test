@@ -53,7 +53,7 @@ function TestScreenContent() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Fetch AI-generated passage from server-side API or fall back
   const fetchPassage = useCallback(async () => {
@@ -111,51 +111,28 @@ function TestScreenContent() {
   // Reset test state and pick a new AI-generated passage
   const handleReset = async () => {
     await fetchPassage();
-    if (containerRef.current) {
-      containerRef.current.focus();
-    }
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 50);
   };
 
-  // Keyboard Event Capture
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  // Keyboard and Mobile Typing Capture via Hidden Input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isActive || loading) return;
 
-    // Filter out modifier combinations (e.g. Ctrl+C, Alt+Tab, Cmd+R)
-    if (e.ctrlKey || e.altKey || e.metaKey) {
-      return;
-    }
-
-    const key = e.key;
-
-    // Ignore major control and navigation keys
-    if (key === "Tab" || key === "Escape" || key === "Shift") {
-      return;
-    }
-
-    if (key === "Backspace") {
-      e.preventDefault();
-      setTypedInput((prev) => prev.slice(0, -1));
-      return;
-    }
-
-    if (key === "Space" || key === " " || key === "Spacebar") {
-      e.preventDefault();
-    }
+    const newValue = e.target.value;
 
     // Do not allow typing past the end of the passage
-    if (typedInput.length >= selectedPassage.length) {
+    if (newValue.length > selectedPassage.length) {
       return;
     }
 
-    // Capture standard single-character keys
-    if (key.length === 1) {
-      if (key === " ") {
-        e.preventDefault();
-      }
-
-      const nextInput = typedInput + key;
-      setTypedInput(nextInput);
-      setTotalTypedCount((prev) => prev + 1);
+    const diff = newValue.length - typedInput.length;
+    if (diff > 0) {
+      // Characters were added
+      setTotalTypedCount((prev) => prev + diff);
 
       let actualStartTime = startTime;
       if (!startTime) {
@@ -163,21 +140,42 @@ function TestScreenContent() {
         setStartTime(actualStartTime);
       }
 
-      // If typed correctly up to the very last character
-      if (nextInput === selectedPassage) {
+      setTypedInput(newValue);
+
+      // Check completion
+      if (newValue === selectedPassage) {
         const endTime = Date.now();
         const durationMs = actualStartTime ? endTime - actualStartTime : 0;
         const durationSecs = Math.max(1, Math.round(durationMs / 1000));
 
         const correctCount = selectedPassage.length;
         const finalWPM = Math.round((correctCount / 5) / (durationSecs / 60));
-        const finalAccuracy = Math.round((correctCount / (totalTypedCount + 1)) * 100);
+        const updatedTotalCount = totalTypedCount + diff;
+        const finalAccuracy = Math.round((correctCount / updatedTotalCount) * 100);
 
         // Immediate redirection on correct completion
         router.push(
           `/results?difficulty=${difficulty}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}`
         );
       }
+    } else if (diff < 0) {
+      // Characters were deleted (Backspace)
+      setTypedInput(newValue);
+    }
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Prevent cursor movement inside the hidden input
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleInputFocus = () => {
+    setIsActive(true);
+    if (inputRef.current) {
+      const len = inputRef.current.value.length;
+      inputRef.current.setSelectionRange(len, len);
     }
   };
 
@@ -240,13 +238,13 @@ function TestScreenContent() {
   ];
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+    <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
       {/* Top Meta info */}
       <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60">
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="text-xs font-mono text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700"
+            className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
           >
             ← Back
           </Link>
@@ -302,14 +300,10 @@ function TestScreenContent() {
         </div>
 
         <div
-          ref={containerRef}
-          tabIndex={0}
-          onFocus={() => setIsActive(true)}
-          onBlur={() => setIsActive(false)}
-          onKeyDown={handleKeyDown}
           onClick={() => {
-            setIsActive(true);
-            containerRef.current?.focus();
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
           }}
           className={`w-full text-left bg-charcoal-800 border-2 rounded-2xl p-6 sm:p-8 font-mono text-lg sm:text-xl leading-relaxed transition-all duration-300 outline-none select-none relative overflow-hidden cursor-pointer ${
             isActive
@@ -317,12 +311,28 @@ function TestScreenContent() {
               : "border-charcoal-700 hover:border-charcoal-600 hover:bg-charcoal-800/80"
           }`}
         >
+          {/* Hidden text input to seamlessly handle mobile keyboards and physical events */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={typedInput}
+            onChange={handleInputChange}
+            onKeyDown={handleInputKeyDown}
+            onFocus={handleInputFocus}
+            onBlur={() => setIsActive(false)}
+            autoCapitalize="off"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+            className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer pointer-events-none z-10"
+          />
+
           {/* Subtle glowing active accent inside terminal */}
           {isActive && (
             <div className="absolute inset-0 bg-gradient-to-br from-electric-500/5 to-transparent pointer-events-none" />
           )}
 
-          <div className="relative text-slate-300 font-mono tracking-wide selection:bg-transparent">
+          <div className="relative text-slate-300 font-mono tracking-wide selection:bg-transparent z-0">
             {selectedPassage.split("").map((char, index) => {
               let colorClass = "";
 
@@ -375,11 +385,11 @@ function TestScreenContent() {
       {/* Control Actions */}
       <div className="w-full flex flex-col sm:flex-row justify-between items-center gap-4 bg-charcoal-800/40 border border-charcoal-700/60 rounded-xl p-4 font-mono text-xs">
         <div className="text-slate-400 text-center sm:text-left leading-normal">
-          💡 <span className="text-slate-300 font-semibold">Tip:</span> Simply start typing on your physical keyboard. Revert errors with Backspace.
+          💡 <span className="text-slate-300 font-semibold">Tip:</span> Tap the terminal box to focus, then type on your physical or virtual keyboard. Revert errors with Backspace.
         </div>
         <button
           onClick={handleReset}
-          className="w-full sm:w-auto text-center px-6 py-3 bg-charcoal-700 hover:bg-charcoal-600 hover:text-white text-slate-300 font-bold rounded-lg border border-charcoal-600 transition-colors duration-200 uppercase tracking-wider text-[11px]"
+          className="w-full sm:w-auto text-center px-6 py-3 bg-charcoal-700 hover:bg-charcoal-600 hover:text-white text-slate-300 font-bold rounded-lg border border-charcoal-600 transition-all duration-200 uppercase tracking-wider text-[11px] hover-glow-electric cursor-pointer focus:outline-none focus:ring-1 focus:ring-electric-500"
         >
           Reset Test 🔄
         </button>

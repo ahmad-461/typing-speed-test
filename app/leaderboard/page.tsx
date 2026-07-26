@@ -89,12 +89,12 @@ function LeaderboardContent() {
   const hasMore = scores.length === pageSize && scores.length < 50;
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-start px-4 py-8 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+    <main className="flex-grow flex flex-col items-center justify-start px-4 py-8 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
       {/* Navigation Header */}
       <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60">
         <Link
           href="/"
-          className="text-xs font-mono text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700"
+          className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
         >
           ← Home
         </Link>
@@ -115,17 +115,17 @@ function LeaderboardContent() {
 
       {/* Difficulty Filter Tabs */}
       <div className="w-full flex justify-center mb-6">
-        <div className="flex bg-charcoal-850 p-1 rounded-xl border border-charcoal-700 max-w-md w-full">
+        <div className="flex bg-charcoal-800 p-1 rounded-xl border border-charcoal-700 max-w-md w-full">
           {(["all", "easy", "medium", "hard"] as DifficultyFilter[]).map((tab) => {
             const isActive = filter === tab;
             return (
               <button
                 key={tab}
                 onClick={() => handleFilterChange(tab)}
-                className={`flex-1 text-center py-2 text-xs font-mono font-bold rounded-lg uppercase tracking-wider transition-all cursor-pointer ${
+                className={`flex-1 text-center py-2 text-xs font-mono font-bold rounded-lg uppercase tracking-wider transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-electric-500 ${
                   isActive
                     ? "bg-electric-500 text-white shadow-md shadow-electric-500/15"
-                    : "text-slate-400 hover:text-white hover:bg-charcoal-800/50"
+                    : "text-slate-400 hover:text-white hover:bg-charcoal-900/40"
                 }`}
               >
                 {tab}
@@ -141,12 +141,14 @@ function LeaderboardContent() {
         <div className="h-1 w-full bg-gradient-to-r from-electric-500 via-sky-500 to-emerald-500" />
 
         {error ? (
-          <div className="p-12 text-center space-y-4">
-            <span className="text-4xl">⚠️</span>
-            <p className="text-rose-400 font-mono text-sm">{error}</p>
+          <div className="p-12 text-center space-y-4 font-mono">
+            <div className="text-rose-500 text-sm font-bold uppercase tracking-wider">
+              &gt;_ error: fetch_failed
+            </div>
+            <p className="text-slate-400 text-xs">Couldn&apos;t load leaderboard — try again</p>
             <button
               onClick={fetchScores}
-              className="px-5 py-2 rounded-lg bg-charcoal-700 hover:bg-charcoal-600 text-slate-200 border border-charcoal-600 text-xs font-mono"
+              className="px-5 py-2 rounded-lg bg-charcoal-700 hover:bg-charcoal-600 text-slate-200 border border-charcoal-600 text-xs font-bold transition-all hover-glow-electric focus:outline-none focus:ring-1 focus:ring-electric-500 cursor-pointer"
             >
               Retry Connection 🔄
             </button>
@@ -159,12 +161,12 @@ function LeaderboardContent() {
             </p>
           </div>
         ) : scores.length === 0 ? (
-          <div className="p-16 text-center space-y-3">
-            <p className="text-slate-400 font-mono text-sm">No scores submitted yet for this tier.</p>
-            <p className="text-xs text-slate-500">Be the first to secure a spot!</p>
+          <div className="p-16 text-center space-y-4 font-mono">
+            <div className="text-slate-400 text-sm">No scores submitted yet for this difficulty tier.</div>
+            <p className="text-xs text-slate-500">Be the very first typist to secure a legendary spot!</p>
             <Link
               href="/"
-              className="inline-block px-5 py-2.5 bg-electric-500 hover:bg-electric-400 text-white text-xs font-mono font-bold rounded-lg transition-colors"
+              className="inline-block px-5 py-2.5 bg-electric-500 text-white text-xs font-bold rounded-lg hover-glow-electric transition-colors cursor-pointer"
             >
               Start Typing Test Now ⚡
             </Link>
@@ -257,7 +259,7 @@ function LeaderboardContent() {
           <div className="p-4 bg-charcoal-900/20 border-t border-charcoal-700/50 flex justify-center">
             <button
               onClick={handleLoadMore}
-              className="px-6 py-2.5 bg-charcoal-750 hover:bg-charcoal-700 text-slate-300 hover:text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg border border-charcoal-750 transition-all cursor-pointer"
+              className="px-6 py-2.5 bg-charcoal-700 text-slate-300 hover:text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg border border-charcoal-600 transition-all cursor-pointer hover-glow-electric focus:outline-none focus:ring-1 focus:ring-electric-500"
             >
               Load More Standings 📊
             </button>
