@@ -1,0 +1,27 @@
+
+> nextjs-setup@0.1.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.5.22 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 1615ms
+ ○ Compiling / ...
+ ✓ Compiled / in 7.9s
+ GET / 200 in 9027ms
+ ○ Compiling /test ...
+ ✓ Compiled /test in 697ms
+ GET /test?difficulty=easy 200 in 985ms
+ ○ Compiling /api/generate-passage ...
+ ✓ Compiled /api/generate-passage in 728ms
+GEMINI_API_KEY is not defined. Falling back to static passage.
+ GET /api/generate-passage?difficulty=easy 200 in 1105ms
+ ○ Compiling /results ...
+ ✓ Compiled /results in 1893ms
+ GET /results?difficulty=easy&wpm=240&accuracy=100&time=7 200 in 1987ms
+ GET / 200 in 187ms
+ ○ Compiling /history ...
+ ✓ Compiled /history in 616ms
+ GET /history 200 in 832ms

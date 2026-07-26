@@ -1,9 +1,10 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useRef, Suspense, useCallback } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { passageBank } from "../../lib/passages";
+import { getPersonalBest } from "../../lib/stats";
 
 // Helper client-side sanitization function
 function sanitizePassageText(text: string): string {
@@ -18,11 +19,9 @@ function sanitizePassageText(text: string): string {
   sanitized = sanitized.trim();
 
   // 3. Remove leading and trailing quotation marks if wrapped completely
-  // Handle double quotes
   if (sanitized.startsWith('"') && sanitized.endsWith('"')) {
     sanitized = sanitized.substring(1, sanitized.length - 1);
   }
-  // Handle single quotes
   if (sanitized.startsWith("'") && sanitized.endsWith("'")) {
     sanitized = sanitized.substring(1, sanitized.length - 1);
   }
@@ -43,6 +42,8 @@ function TestScreenContent() {
   const rawDifficulty = searchParams.get("difficulty") || "medium";
   const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
 
+  const isGhostEnabled = searchParams.get("ghost") === "true";
+
   const [selectedPassage, setSelectedPassage] = useState<string>("");
   const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -53,7 +54,16 @@ function TestScreenContent() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
+  // Ghost Mode position state
+  const [ghostPosition, setGhostPosition] = useState(0);
+
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch PB for ghost race
+  const ghostPB = useMemo(() => {
+    if (typeof window === "undefined" || !isGhostEnabled) return null;
+    return getPersonalBest(difficulty);
+  }, [isGhostEnabled, difficulty]);
 
   // Fetch AI-generated passage from server-side API or fall back
   const fetchPassage = useCallback(async () => {
@@ -62,6 +72,7 @@ function TestScreenContent() {
     setTotalTypedCount(0);
     setStartTime(null);
     setElapsedSeconds(0);
+    setGhostPosition(0);
     setIsActive(false);
 
     try {
@@ -81,7 +92,6 @@ function TestScreenContent() {
       throw new Error("Failed to load valid passage from API");
     } catch (err) {
       console.warn("Client fetch error, using local fallback:", err);
-      // Client-side local redundant fallback
       const list = passageBank[difficulty];
       const randomIndex = Math.floor(Math.random() * list.length);
       setSelectedPassage(sanitizePassageText(list[randomIndex].text));
@@ -108,6 +118,33 @@ function TestScreenContent() {
     return () => clearInterval(interval);
   }, [startTime]);
 
+  // Handle continuous ghost cursor movement independent of user input
+  useEffect(() => {
+    if (!isGhostEnabled || loading || !selectedPassage || !ghostPB) {
+      setGhostPosition(0);
+      return;
+    }
+
+    const ghostStartTime = Date.now();
+    // Ghost target duration in milliseconds: (characters * 12 * 1000) / PB WPM
+    const ghostTargetMs = (selectedPassage.length * 12 * 1000) / ghostPB.wpm;
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - ghostStartTime;
+      const pos = Math.min(
+        selectedPassage.length,
+        Math.floor((elapsed / ghostTargetMs) * selectedPassage.length)
+      );
+      setGhostPosition(pos);
+
+      if (pos >= selectedPassage.length) {
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isGhostEnabled, loading, selectedPassage, ghostPB]);
+
   // Reset test state and pick a new AI-generated passage
   const handleReset = async () => {
     await fetchPassage();
@@ -131,7 +168,6 @@ function TestScreenContent() {
 
     const diff = newValue.length - typedInput.length;
     if (diff > 0) {
-      // Characters were added
       setTotalTypedCount((prev) => prev + diff);
 
       let actualStartTime = startTime;
@@ -153,9 +189,26 @@ function TestScreenContent() {
         const updatedTotalCount = totalTypedCount + diff;
         const finalAccuracy = Math.round((correctCount / updatedTotalCount) * 100);
 
+        // Save passage text in session storage for performance share cards
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("last_passage", selectedPassage);
+        }
+
+        // Compare against the ghost if active
+        let ghostMsg = "";
+        if (isGhostEnabled && ghostPB) {
+          const ghostTargetSecs = (selectedPassage.length * 12) / ghostPB.wpm;
+          const diffVal = Math.abs(durationSecs - ghostTargetSecs).toFixed(1);
+          if (durationSecs < ghostTargetSecs) {
+            ghostMsg = `You beat your ghost by ${diffVal} seconds! ⚡`;
+          } else {
+            ghostMsg = `Your ghost finished ${diffVal} seconds ahead — try again! 👻`;
+          }
+        }
+
         // Immediate redirection on correct completion
         router.push(
-          `/results?difficulty=${difficulty}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}`
+          `/results?difficulty=${difficulty}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}`
         );
       }
     } else if (diff < 0) {
@@ -209,14 +262,12 @@ function TestScreenContent() {
     return (
       <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
         <div className="text-center space-y-6">
-          {/* Pulsing prompt cursor motif */}
           <div className="flex items-center justify-center gap-2">
             <span className="w-3 h-3 rounded-full bg-electric-500 animate-pulse"></span>
             <span className="font-mono text-xs text-slate-400 tracking-widest uppercase">
               Initializing AI Session
             </span>
           </div>
-          {/* Dynamic dot loading sequence */}
           <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl px-8 py-6 font-mono text-sm max-w-md mx-auto">
             <div className="text-left text-slate-400 mb-2">
               <span className="text-electric-400 font-bold">&gt;_</span> fetch_passage_stream()
@@ -262,10 +313,15 @@ function TestScreenContent() {
               {difficulty}
             </span>
           </div>
+          {isGhostEnabled && ghostPB && (
+            <div className="text-[10px] bg-electric-500/10 border border-electric-500/30 text-electric-400 font-mono font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1">
+              <span>👻</span> Racin&apos; Ghost: {ghostPB.wpm} WPM
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span className="text-xs font-mono text-slate-400">Live Connection Secured</span>
+          <span className="text-xs font-mono text-slate-400">Live Session Ready</span>
         </div>
       </div>
 
@@ -296,7 +352,14 @@ function TestScreenContent() {
       <div className="w-full mb-8">
         <div className="text-xs text-slate-400 font-mono mb-2 flex justify-between items-center px-1">
           <span>⌨️ PROMPT TERMINAL</span>
-          <span>{isActive ? "🔴 READY TO TYPE" : "⏸️ CLICK BOX TO ACTIVATE"}</span>
+          <div className="flex items-center gap-3">
+            {isGhostEnabled && (
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+                👻 slate badge: ghost cursor position
+              </span>
+            )}
+            <span>{isActive ? "🔴 READY TO TYPE" : "⏸️ CLICK BOX TO ACTIVATE"}</span>
+          </div>
         </div>
 
         <div
@@ -346,10 +409,15 @@ function TestScreenContent() {
               }
 
               const isCurrent = index === typedInput.length;
+              const isGhostCurrent = isGhostEnabled && index === ghostPosition;
 
               return (
                 <span key={index} className={`relative ${colorClass}`}>
                   {char}
+                  {/* Subtle translucent ghost cursor marker behind or around the character */}
+                  {isGhostCurrent && (
+                    <span className="absolute -inset-x-0.5 inset-y-0 border border-slate-500/30 bg-slate-500/10 rounded pointer-events-none" />
+                  )}
                   {isCurrent && isActive && (
                     <span className="absolute left-0 bottom-0 top-0 w-[2px] bg-electric-400 animate-blink" />
                   )}
@@ -363,6 +431,9 @@ function TestScreenContent() {
             {/* Render a virtual cursor past the last character when typedInput matches selectedPassage length */}
             {typedInput.length === selectedPassage.length && (
               <span className="relative">
+                {isGhostEnabled && ghostPosition === selectedPassage.length && (
+                  <span className="absolute -inset-x-0.5 inset-y-0 border border-slate-500/30 bg-slate-500/10 rounded pointer-events-none" />
+                )}
                 {isActive ? (
                   <span className="absolute left-0 bottom-0 top-0 w-[2px] bg-electric-400 animate-blink" />
                 ) : (
