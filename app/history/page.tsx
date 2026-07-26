@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { getHistory, getHistorySummary, getPersonalBest, TestResult, getKeyErrors } from "../../lib/stats";
+import { getGamificationState, ACHIEVEMENTS, GamificationState } from "../../lib/gamification";
 
 function formatDateShort(timestamp: number) {
   const d = new Date(timestamp);
@@ -28,11 +29,13 @@ function formatDateLong(timestamp: number) {
 export default function HistoryPage() {
   const [history, setHistory] = useState<TestResult[]>([]);
   const [keyErrors, setKeyErrors] = useState<Record<string, number>>({});
+  const [gamification, setGamification] = useState<GamificationState | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setHistory(getHistory());
     setKeyErrors(getKeyErrors());
+    setGamification(getGamificationState());
     setIsLoaded(true);
   }, []);
 
@@ -256,6 +259,73 @@ export default function HistoryPage() {
         ) : (
           /* Main Dashboard View */
           <div className="space-y-8">
+            {/* Gamification Progress Bar Card */}
+            {gamification && (
+              <div className="bg-charcoal-800 border-2 border-[#3B82F6]/30 rounded-2xl p-6 shadow-xl space-y-4 relative overflow-hidden animate-fade-in">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-400 to-electric-600" />
+
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-electric-400 uppercase tracking-widest font-extrabold block">
+                      {"// RECRUIT PROGRESSION TRACKING"}
+                    </span>
+                    <h2 className="text-xl font-extrabold text-white">
+                      {gamification.levelTitle} <span className="text-sm font-mono text-slate-500">(Level {gamification.currentLevel})</span>
+                    </h2>
+                  </div>
+
+                  <div className="text-left sm:text-right font-mono">
+                    <div className="text-sm font-bold text-white">
+                      {gamification.totalXp.toLocaleString()} XP
+                    </div>
+                    {gamification.nextLevelXp ? (
+                      <div className="text-[10px] text-slate-400">
+                        {gamification.nextLevelXp - gamification.totalXp} XP to next level
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+                        Maximum Level Reached
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress Bar Container */}
+                {gamification.nextLevelXp && (
+                  <div className="space-y-1.5">
+                    <div className="w-full h-3 bg-charcoal-900 rounded-full border border-charcoal-700 overflow-hidden relative">
+                      <div
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            Math.max(
+                              0,
+                              ((gamification.totalXp - gamification.prevLevelXp) /
+                                (gamification.nextLevelXp - gamification.prevLevelXp)) *
+                                100
+                            )
+                          )}%`,
+                        }}
+                        className="h-full bg-electric-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                      <span>{gamification.prevLevelXp} XP</span>
+                      <span>
+                        {Math.round(
+                          ((gamification.totalXp - gamification.prevLevelXp) /
+                            (gamification.nextLevelXp - gamification.prevLevelXp)) *
+                            100
+                        )}
+                        % Complete
+                      </span>
+                      <span>{gamification.nextLevelXp} XP</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Summary Metrics Row */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {/* Metric 1: Total Tests */}
@@ -471,6 +541,98 @@ export default function HistoryPage() {
                 </div>
                 <div className="py-2">
                   {svgChart}
+                </div>
+              </div>
+            )}
+
+            {/* Unlocked Achievements Section */}
+            {gamification && (
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>🏆</span> Unlockable Achievements
+                  </h2>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    {gamification.unlockedAchievements.length} / {ACHIEVEMENTS.length} Unlocked
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+                  {ACHIEVEMENTS.map((badge) => {
+                    const isUnlocked = gamification.unlockedAchievements.includes(badge.id);
+
+                    // Render custom simple inline vector shapes for minimal premium look
+                    return (
+                      <div
+                        key={badge.id}
+                        className={`p-4 rounded-xl border flex gap-3.5 transition-all duration-300 relative group select-none ${
+                          isUnlocked
+                            ? "border-[#3B82F6]/30 bg-electric-500/[0.03] text-white shadow-[0_0_12px_rgba(59,130,246,0.03)]"
+                            : "border-charcoal-700/50 bg-charcoal-900/10 text-slate-500"
+                        }`}
+                      >
+                        {/* Custom visual vector indicator based on achievement ID */}
+                        <div className={`w-11 h-11 rounded-lg border flex items-center justify-center flex-shrink-0 transition-colors ${
+                          isUnlocked
+                            ? "border-[#3B82F6]/40 bg-[#3B82F6]/10 text-[#3B82F6]"
+                            : "border-charcoal-700 bg-charcoal-800/40 text-slate-600"
+                        }`}>
+                          {badge.id === "speed_demon" ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          ) : badge.id === "perfect_accuracy" ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          ) : badge.id === "seven_day_streak" ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                            </svg>
+                          ) : badge.id === "code_warrior" ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                          ) : badge.id === "knowledge_master" ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                            </svg>
+                          )}
+                        </div>
+
+                        {/* Description block */}
+                        <div className="flex-grow space-y-0.5">
+                          <h4 className={`text-xs font-bold font-sans tracking-wide uppercase transition-colors ${
+                            isUnlocked ? "text-white" : "text-slate-500"
+                          }`}>
+                            {badge.title}
+                          </h4>
+                          <p className="text-[10px] text-slate-500 leading-normal font-sans">
+                            {badge.description}
+                          </p>
+                        </div>
+
+                        {/* Top-right lock/unlock overlay badge */}
+                        <div className="absolute top-3 right-3">
+                          {isUnlocked ? (
+                            <span className="text-[9px] font-mono text-[#3B82F6]/80 font-bold tracking-widest uppercase">
+                              UNLOCKED
+                            </span>
+                          ) : (
+                            <div className="text-slate-600 flex items-center" title={badge.condition}>
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

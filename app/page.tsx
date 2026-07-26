@@ -128,25 +128,25 @@ export default function Home() {
     {
       value: "code_arena",
       label: "Code Arena",
-      desc: "Tech-themed passages about software concepts, dev culture, or tech history written in standard plain English.",
+      desc: "Code Arena — Master programming concepts and language history through typing",
       icon: "💻",
     },
     {
       value: "knowledge_quest",
       label: "Knowledge Quest",
-      desc: "Factual general knowledge and trivia covering science, history, geography, discoveries, and interesting truths.",
+      desc: "Knowledge Quest — Discover science, history, and fascinating trivia",
       icon: "🧠",
     },
     {
       value: "ai_lab",
       label: "AI Lab",
-      desc: "Futuristic passages exploring artificial intelligence, machine learning systems, and emerging technologies.",
+      desc: "AI Lab — Explore neural networks and future technology landscapes",
       icon: "🤖",
     },
     {
       value: "world_explorer",
       label: "World Explorer",
-      desc: "Vivid, scenic, and narrative stories highlighting geography, unique global cultures, travels, and natural wonders.",
+      desc: "World Explorer — Travel the globe through scenic stories and facts",
       icon: "🌍",
     },
   ];

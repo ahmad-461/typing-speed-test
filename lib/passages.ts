@@ -15,12 +15,22 @@ export const passageBank: PassageBank = {
     {
       id: "easy-code-1",
       category: "code_arena",
-      text: "A variable is like a small labeled box that stores some important data or values inside a computer program. We can retrieve or change this stored data anytime we want.",
+      text: "Python is a popular programming language known for its clear syntax and great readability. It is widely used in data science, web development, and automation tasks around the world.",
     },
     {
       id: "easy-code-2",
       category: "code_arena",
-      text: "Coding is simply writing a list of step by step instructions that a computer can understand. We use programming languages to build amazing apps, websites, and fun games.",
+      text: "JavaScript powers the interactive features of modern websites. It allows developers to build dynamic elements, handle clicks, and fetch web data seamlessly inside any browser.",
+    },
+    {
+      id: "easy-code-3",
+      category: "code_arena",
+      text: "HTML provides the structure of a webpage, while CSS handles the visual style and layout. Together, they form the foundation of everything we see and interact with online.",
+    },
+    {
+      id: "easy-code-4",
+      category: "code_arena",
+      text: "SQL is the standard language used to communicate with databases. It allows developers to quickly query, insert, update, and manage large amounts of structured data.",
     },
     {
       id: "easy-quest-1",
@@ -57,12 +67,22 @@ export const passageBank: PassageBank = {
     {
       id: "medium-code-1",
       category: "code_arena",
-      text: "Learning to write software represents a profound journey of discovery and constant problem solving. Writing high quality code requires patience, focus, and a willingness to learn from your mistakes. Every error message is not a setback, but rather a helpful guidepost pointing towards a better solution. Practice daily and watch your professional development flourish rapidly.",
+      text: "Python has grown to become one of the most influential programming languages in existence today. Its elegant design and emphasis on readability allow both beginners and experts to write clean and concise code. Python excels in scientific computing, machine learning, and automation, supported by a massive global community that continuously builds open source libraries to solve complex modern challenges.",
     },
     {
       id: "medium-code-2",
       category: "code_arena",
-      text: "Software developers often write functions to organize their instructions into small reusable blocks. Functions accept inputs, perform some calculations or operations, and return a useful output. Breaking down complex problems into smaller, well-designed functions is one of the most fundamental skills in computer engineering. It makes code readable, maintainable, and much easier to test.",
+      text: "JavaScript has evolved from a simple scripting tool into a powerhouse of modern software development. It runs natively in every web browser, enabling rich client-side interactions and fluid user interfaces. With the advent of server-side runtimes like Node, JavaScript developers can build entire full-stack applications using a single language, making it highly versatile and popular.",
+    },
+    {
+      id: "medium-code-3",
+      category: "code_arena",
+      text: "HTML and CSS are the twin pillars of frontend web development, working in perfect harmony to deliver digital experiences. HTML establishes the semantic hierarchy and content structure, while CSS defines the aesthetics, animations, responsive layouts, and typography. Modern CSS features, such as Flexbox and Grid, allow developers to create highly adaptive interfaces for any screen size.",
+    },
+    {
+      id: "medium-code-4",
+      category: "code_arena",
+      text: "SQL, or Structured Query Language, is the indispensable standard for managing relational databases. It provides a declarative way to query and manipulate structured tables of information. By writing optimized queries, developers can retrieve precise datasets, join complex tables, and aggregate millions of rows of data in milliseconds, ensuring that modern applications remain fast and reliable.",
     },
     {
       id: "medium-quest-1",
@@ -99,12 +119,22 @@ export const passageBank: PassageBank = {
     {
       id: "hard-code-1",
       category: "code_arena",
-      text: "Implementing critical concurrent algorithms requires synchronization primitives to carefully avoid complex race conditions. Developers must thoroughly analyze memory structures, operational complexities, and potential deadlocks when writing highly distributed microservices. Optimization, although vital, must not precede clarity in software architecture; asynchronous interfaces demand rigorous telemetry and debugging protocols. Furthermore, multi-threaded execution environments frequently expose subtle synchronization anomalies that are exceptionally challenging to diagnose without comprehensive diagnostic logging and sophisticated profiling utilities.",
+      text: "Python relies on a design philosophy that prioritizes developer productivity and code readability, famously summarized in the Zen of Python. Under the hood, Python utilizes automatic memory management and dynamic typing, executing code through an interpreter. While its global interpreter lock can present concurrency challenges in CPU-bound applications, Python overcomes performance bottlenecks by offloading heavy computations to highly optimized C extensions. This unique balance of ease of use and high-performance integration has made it the undisputed language of choice for cutting-edge artificial intelligence, data engineering, and scientific research.",
     },
     {
       id: "hard-code-2",
       category: "code_arena",
-      text: "Modern functional programming paradigms encourage immutability and pure functions to minimize side effects in complex software systems. By ensuring that functions depend exclusively on their input arguments, developers can easily reason about application state transitions. This declarative approach significantly simplifies unit testing, parallel execution, and horizontal scaling across cloud infrastructures. However, adopting functional architectures requires a shift in cognitive patterns, transitioning away from imperative loops and mutable variables towards recursive evaluations and higher-order function compositions.",
+      text: "JavaScript operates on a single-threaded event loop architecture that utilizes non-blocking input and output operations, making it exceptionally efficient for modern asynchronous applications. When executed in browser engines, JavaScript undergoes just-in-time compilation to execute complex logic at near-native speeds. Developers leverage advanced features like closures, prototypes, and asynchronous promises to build highly interactive web applications. Navigating the vast ecosystem of packaging tools, transpilers, and framework architectures requires a deep understanding of memory management, execution contexts, and the ever-evolving standards of ECMAScript.",
+    },
+    {
+      id: "hard-code-3",
+      category: "code_arena",
+      text: "HTML and CSS form the bedrock of the modern semantic web, requiring a sophisticated understanding of layout engines, document object model painting, and browser rendering pipelines. Modern HTML demands strict accessibility compliance and search engine optimization, while advanced CSS incorporates complex layout architectures, custom property design systems, and hardware-accelerated animations. Frontend engineers must master rendering behaviors, such as cumulative layout shifts, z-index stacking contexts, CSS containment, and performance optimization across diverse mobile and desktop devices to deliver seamless web user experiences.",
+    },
+    {
+      id: "hard-code-4",
+      category: "code_arena",
+      text: "SQL database engines employ sophisticated cost-based query optimizers to determine the most efficient execution paths for retrieving relational datasets. Developers must analyze index selection, execution plans, and transaction isolation levels to prevent concurrency anomalies like dirty reads or serialization failures. Advanced SQL techniques include window functions, recursive common table expressions, and partitioned tables, which allow for the processing of massive analytical workloads. Designing resilient schema migrations and tuning queries for high-throughput database systems are critical skills for backend architects managing global enterprise applications.",
     },
     {
       id: "hard-quest-1",
