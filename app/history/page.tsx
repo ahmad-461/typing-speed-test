@@ -429,7 +429,9 @@ export default function HistoryPage() {
                                   ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
                                   : item.difficulty === "medium"
                                   ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
-                                  : "text-rose-400 bg-rose-500/5 border-rose-500/20"
+                                  : item.difficulty === "hard"
+                                  ? "text-rose-400 bg-rose-500/5 border-rose-500/20"
+                                  : "text-sky-400 bg-sky-500/5 border-sky-500/20"
                               }`}
                             >
                               {item.difficulty}

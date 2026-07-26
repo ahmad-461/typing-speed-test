@@ -7,7 +7,7 @@ create table if
     name text not null check (length(name) <= 25), -- Allow a bit of margin, client restricts to 20
     wpm integer not null,
     accuracy numeric not null,
-    difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
+    difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'custom')),
     created_at timestamp with time zone default now() not null
   );
 

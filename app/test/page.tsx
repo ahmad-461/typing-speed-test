@@ -35,16 +35,32 @@ function sanitizePassageText(text: string): string {
   return sanitized;
 }
 
+const getPreviewText = (text: string): string => {
+  if (!text) return "";
+  const words = text.split(/\s+/);
+  if (words.length <= 10) return text;
+  return words.slice(0, 10).join(" ") + " ...";
+};
+
+const getWordCount = (text: string): number => {
+  if (!text) return 0;
+  return text.trim().split(/\s+/).filter(Boolean).length;
+};
+
 function TestScreenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const rawDifficulty = searchParams.get("difficulty") || "medium";
-  const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
+  const difficulty = (["easy", "medium", "hard", "custom"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard" | "custom";
 
-  const isGhostEnabled = searchParams.get("ghost") === "true";
+  // Hide/disable Ghost Mode for Custom difficulty
+  const isGhostEnabled = difficulty !== "custom" && searchParams.get("ghost") === "true";
 
+  const [fetchedPassages, setFetchedPassages] = useState<string[]>([]);
   const [selectedPassage, setSelectedPassage] = useState<string>("");
+  const [isPassageSelected, setIsPassageSelected] = useState(false);
+
   const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +81,7 @@ function TestScreenContent() {
     return getPersonalBest(difficulty);
   }, [isGhostEnabled, difficulty]);
 
-  // Fetch AI-generated passage from server-side API or fall back
+  // Fetch AI-generated passages from server-side API or fall back
   const fetchPassage = useCallback(async () => {
     setLoading(true);
     setTypedInput("");
@@ -75,30 +91,50 @@ function TestScreenContent() {
     setGhostPosition(0);
     setIsActive(false);
 
+    if (difficulty === "custom") {
+      const stored = typeof window !== "undefined" ? sessionStorage.getItem("custom_passage") : "";
+      if (stored) {
+        const sanitized = sanitizePassageText(stored);
+        setSelectedPassage(sanitized);
+        setFetchedPassages([sanitized]);
+        setIsPassageSelected(true);
+        setLoading(false);
+      } else {
+        router.push("/");
+      }
+      return;
+    }
+
     try {
       const response = await fetch(`/api/generate-passage?difficulty=${difficulty}`);
       if (response.ok) {
         const data = await response.json();
-        const rawText = data?.passage;
-        if (rawText && typeof rawText === "string") {
-          const sanitized = sanitizePassageText(rawText);
-          if (sanitized) {
-            setSelectedPassage(sanitized);
+        const rawPassages = data?.passages;
+        if (Array.isArray(rawPassages) && rawPassages.length >= 3) {
+          const sanitizedList = rawPassages.map((p) => sanitizePassageText(p)).filter(Boolean);
+          if (sanitizedList.length >= 3) {
+            setFetchedPassages(sanitizedList);
+            setIsPassageSelected(false);
             setLoading(false);
             return;
           }
         }
       }
-      throw new Error("Failed to load valid passage from API");
+      throw new Error("Failed to load valid passages from API");
     } catch (err) {
       console.warn("Client fetch error, using local fallback:", err);
       const list = passageBank[difficulty];
-      const randomIndex = Math.floor(Math.random() * list.length);
-      setSelectedPassage(sanitizePassageText(list[randomIndex].text));
+      const shuffled = [...list].sort(() => 0.5 - Math.random());
+      const selectedList = shuffled.slice(0, 3).map((item) => sanitizePassageText(item.text));
+      while (selectedList.length < 3) {
+        selectedList.push(sanitizePassageText(list[0]?.text || "A beautiful day to practice typing and improve speed."));
+      }
+      setFetchedPassages(selectedList);
+      setIsPassageSelected(false);
     } finally {
       setLoading(false);
     }
-  }, [difficulty]);
+  }, [difficulty, router]);
 
   // Initial load
   useEffect(() => {
@@ -120,7 +156,7 @@ function TestScreenContent() {
 
   // Handle continuous ghost cursor movement independent of user input
   useEffect(() => {
-    if (!isGhostEnabled || loading || !selectedPassage || !ghostPB) {
+    if (!isGhostEnabled || loading || !selectedPassage || !ghostPB || !isPassageSelected) {
       setGhostPosition(0);
       return;
     }
@@ -143,11 +179,17 @@ function TestScreenContent() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isGhostEnabled, loading, selectedPassage, ghostPB]);
+  }, [isGhostEnabled, loading, selectedPassage, ghostPB, isPassageSelected]);
 
   // Reset test state and pick a new AI-generated passage
   const handleReset = async () => {
     await fetchPassage();
+  };
+
+  // Select passage from picker options
+  const handleSelectPassage = (text: string) => {
+    setSelectedPassage(text);
+    setIsPassageSelected(true);
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -157,7 +199,7 @@ function TestScreenContent() {
 
   // Keyboard and Mobile Typing Capture via Hidden Input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isActive || loading) return;
+    if (!isActive || loading || !isPassageSelected) return;
 
     const newValue = e.target.value;
 
@@ -258,25 +300,123 @@ function TestScreenContent() {
   };
 
   // Styled, terminal-themed loading state
-  if (loading || !selectedPassage) {
+  if (loading) {
     return (
       <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center gap-2">
             <span className="w-3 h-3 rounded-full bg-electric-500 animate-pulse"></span>
             <span className="font-mono text-xs text-slate-400 tracking-widest uppercase">
-              Initializing AI Session
+              Establishing Prompts
             </span>
           </div>
           <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl px-8 py-6 font-mono text-sm max-w-md mx-auto">
             <div className="text-left text-slate-400 mb-2">
-              <span className="text-electric-400 font-bold">&gt;_</span> fetch_passage_stream()
+              <span className="text-electric-400 font-bold">&gt;_</span> fetch_passages_manifest()
             </div>
             <div className="text-left text-emerald-400 flex items-center gap-1">
               <span>Establishing secure connection</span>
               <span className="animate-pulse">...</span>
             </div>
           </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Passages Picker Selection Screen
+  if (!isPassageSelected) {
+    return (
+      <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
+        {/* Top Meta info */}
+        <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
+            >
+              ← Back
+            </Link>
+            <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">
+              Difficulty:{" "}
+              <span
+                className={`font-bold ${
+                  difficulty === "easy"
+                    ? "text-emerald-400"
+                    : difficulty === "medium"
+                    ? "text-electric-400"
+                    : "text-rose-400"
+                }`}
+              >
+                {difficulty}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-electric-500 animate-pulse"></span>
+            <span className="text-xs font-mono text-slate-400">Prompts Ready</span>
+          </div>
+        </div>
+
+        {/* Picker Header */}
+        <div className="text-center space-y-3 mb-10 w-full">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-none">
+            Choose Your <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">Passage</span>
+          </h2>
+          <p className="text-sm text-slate-400 max-w-md mx-auto">
+            Select one of the 3 randomized paragraphs below to begin your timed typing test.
+          </p>
+        </div>
+
+        {/* 3 Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-8">
+          {fetchedPassages.map((text, idx) => {
+            const wordCount = getWordCount(text);
+            const preview = getPreviewText(text);
+
+            return (
+              <div
+                key={idx}
+                onClick={() => handleSelectPassage(text)}
+                className="bg-charcoal-800 border-2 border-charcoal-700 hover:border-electric-500 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 cursor-pointer group relative"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-charcoal-700/50 pb-2">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">
+                      Prompt #0{idx + 1}
+                    </span>
+                    <span className="text-[10px] font-mono text-electric-400 bg-electric-500/10 border border-electric-500/20 px-2 py-0.5 rounded uppercase tracking-wider font-bold">
+                      {wordCount} words
+                    </span>
+                  </div>
+                  <p className="text-slate-300 font-mono text-sm leading-relaxed min-h-[90px]">
+                    {preview}
+                  </p>
+                </div>
+                <div className="pt-6">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectPassage(text);
+                    }}
+                    className="w-full text-center py-2.5 bg-charcoal-900 border border-charcoal-700 hover:border-electric-500 hover:bg-electric-500 hover:text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all duration-200 cursor-pointer"
+                  >
+                    Select Passage
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Refresh options */}
+        <div className="w-full flex justify-center">
+          <button
+            onClick={fetchPassage}
+            className="px-6 py-2.5 bg-charcoal-800 hover:bg-charcoal-700 text-slate-400 hover:text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg border border-charcoal-700 transition-all cursor-pointer hover-glow-electric"
+          >
+            Re-roll Choices 🔄
+          </button>
         </div>
       </main>
     );
@@ -307,14 +447,16 @@ function TestScreenContent() {
                   ? "text-emerald-400"
                   : difficulty === "medium"
                   ? "text-electric-400"
-                  : "text-rose-400"
+                  : difficulty === "hard"
+                  ? "text-rose-400"
+                  : "text-sky-400"
               }`}
             >
               {difficulty}
             </span>
           </div>
           {isGhostEnabled && ghostPB && (
-            <div className="text-[10px] bg-electric-500/10 border border-electric-500/30 text-electric-400 font-mono font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1">
+            <div className="text-[10px] bg-electric-500/10 border border-electric-500/30 text-electric-400 font-mono font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1 animate-fade-in">
               <span>👻</span> Racin&apos; Ghost: {ghostPB.wpm} WPM
             </div>
           )}

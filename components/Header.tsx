@@ -20,7 +20,6 @@ export default function Header() {
   }, [pathname]);
 
   const navItems = [
-    { label: "Play", href: "/" },
     { label: "Leaderboard", href: "/leaderboard" },
     { label: "History", href: "/history" },
   ];
