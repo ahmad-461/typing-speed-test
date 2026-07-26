@@ -3,6 +3,8 @@ import { passageBank } from "../../../lib/passages";
 
 export const dynamic = "force-dynamic";
 
+type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawDifficulty = searchParams.get("difficulty") || "medium";
@@ -10,10 +12,10 @@ export async function GET(request: NextRequest) {
     ? rawDifficulty
     : "medium") as "easy" | "medium" | "hard";
 
-  const rawCategory = searchParams.get("category") || "programming";
-  const category = (["programming", "general_knowledge"].includes(rawCategory)
+  const rawCategory = searchParams.get("category") || "code_arena";
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer"].includes(rawCategory)
     ? rawCategory
-    : "programming") as "programming" | "general_knowledge";
+    : "code_arena") as NewCategory;
 
   // Select a single random static fallback passage from the matching category and difficulty
   const getStaticFallback = () => {
@@ -46,10 +48,16 @@ export async function GET(request: NextRequest) {
     description = "complex sentence structure, advanced vocabulary/technical jargon, and high density of punctuation";
   }
 
-  // Inject category descriptions
-  let themeInstruction = "themed around a general knowledge topic (science, geography, space, history, or factual trivia)";
-  if (category === "programming") {
-    themeInstruction = "themed around a programming, tech, or software engineering concept, written entirely in normal English prose without actual code syntax, symbols, brackets, or programming tags";
+  // Inject category descriptions (system prompts for themed categories)
+  let themeInstruction = "";
+  if (category === "code_arena") {
+    themeInstruction = "themed around a programming, technology, computer science concept, software history, or developer culture. It must be written entirely in normal, natural English prose (plain prose) and MUST NOT contain any actual code syntax, symbols, brackets, brackets, or code snippets. Keep it focused on the conceptual or cultural aspects of development.";
+  } else if (category === "knowledge_quest") {
+    themeInstruction = "themed around factual general knowledge and trivia, including science, astronomy, history, discoveries, or general factual information. Keep it informative and highly educational.";
+  } else if (category === "ai_lab") {
+    themeInstruction = "themed specifically around artificial intelligence, machine learning, neural networks, futures, emerging technologies, or human-machine interaction. Focus on modern ML advancements and future tech concepts.";
+  } else if (category === "world_explorer") {
+    themeInstruction = "themed around world geography, cultural traditions, travel, natural wonders, scenic landscapes, or narrative world history. It should have a vivid, narrative, storytelling tone like a travel magazine rather than dry facts.";
   }
 
   const prompt = `Generate exactly ONE (1) distinct, high-quality typing test passage of ${wordCountGuide}. The passage must be a single coherent and natural paragraph of ${description} ${themeInstruction}, suitable for a general audience.

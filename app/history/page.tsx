@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { getHistory, getHistorySummary, getPersonalBest, TestResult } from "../../lib/stats";
+import { getHistory, getHistorySummary, getPersonalBest, TestResult, getKeyErrors } from "../../lib/stats";
 
 function formatDateShort(timestamp: number) {
   const d = new Date(timestamp);
@@ -27,23 +27,38 @@ function formatDateLong(timestamp: number) {
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<TestResult[]>([]);
+  const [keyErrors, setKeyErrors] = useState<Record<string, number>>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setHistory(getHistory());
+    setKeyErrors(getKeyErrors());
     setIsLoaded(true);
   }, []);
 
-  const summary = useMemo(() => getHistorySummary(), []);
-  const pbOverall = useMemo(() => getPersonalBest(), []);
-  const pbEasy = useMemo(() => getPersonalBest("easy"), []);
-  const pbMedium = useMemo(() => getPersonalBest("medium"), []);
-  const pbHard = useMemo(() => getPersonalBest("hard"), []);
+  const summary = useMemo(() => getHistorySummary(history), [history]);
+  const pbOverall = useMemo(() => getPersonalBest(undefined, history), [history]);
+  const pbEasy = useMemo(() => getPersonalBest("easy", history), [history]);
+  const pbMedium = useMemo(() => getPersonalBest("medium", history), [history]);
+  const pbHard = useMemo(() => getPersonalBest("hard", history), [history]);
 
   // Last 20 tests for the chart, in chronological order (left to right)
   const chartData = useMemo(() => {
     return [...history].slice(0, 20).reverse();
   }, [history]);
+
+  // Max error count for heatmap relative scaling
+  const maxErrorCount = useMemo(() => {
+    const vals = Object.values(keyErrors);
+    return vals.length > 0 ? Math.max(...vals, 1) : 1;
+  }, [keyErrors]);
+
+  const qwertyRows = [
+    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+    ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+    ["Z", "X", "C", "V", "B", "N", "M"],
+    ["SPACE"]
+  ];
 
   // Render beautiful hand-crafted Custom SVG line chart
   const svgChart = useMemo(() => {
@@ -242,7 +257,7 @@ export default function HistoryPage() {
           /* Main Dashboard View */
           <div className="space-y-8">
             {/* Summary Metrics Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {/* Metric 1: Total Tests */}
               <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
                 <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
@@ -282,8 +297,21 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              {/* Metric 4: All-time Personal Best */}
-              <div className="bg-charcoal-800 border border-electric-500/40 rounded-xl p-5 relative overflow-hidden group shadow-[0_0_12px_rgba(59,130,246,0.05)]">
+              {/* Metric 4: Avg Consistency */}
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                  Avg Consistency
+                </span>
+                <div className="text-3xl font-extrabold text-sky-400 font-mono leading-none">
+                  {summary.avgConsistency}%
+                </div>
+                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
+                  Pace
+                </div>
+              </div>
+
+              {/* Metric 5: All-time Personal Best */}
+              <div className="bg-charcoal-800 border border-electric-500/40 rounded-xl p-5 relative overflow-hidden group shadow-[0_0_12px_rgba(59,130,246,0.05)] col-span-2 sm:col-span-1">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider block font-semibold">
                     Personal Best
@@ -301,6 +329,80 @@ export default function HistoryPage() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Weak-Key Heatmap Keyboard Visualization */}
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <span>⌨️</span> Weak-Key Error Map
+                </h2>
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  Target expected keys causing mistakes
+                </span>
+              </div>
+
+              {history.length < 3 ? (
+                <div className="p-8 text-center text-xs font-mono text-slate-500">
+                  Complete a few more tests to see your weak-key map
+                </div>
+              ) : (
+                <div className="py-4 space-y-4">
+                  <div className="flex flex-col items-center gap-2 font-mono">
+                    {qwertyRows.map((row, rowIdx) => (
+                      <div key={rowIdx} className="flex gap-1.5 justify-center w-full">
+                        {row.map((key) => {
+                          const isSpace = key === "SPACE";
+                          const count = keyErrors[key] || 0;
+                          const intensity = count / maxErrorCount;
+
+                          const bgStyle = count > 0
+                            ? {
+                                backgroundColor: `rgba(59, 130, 246, ${0.1 + intensity * 0.9})`,
+                                borderColor: `rgba(59, 130, 246, ${0.3 + intensity * 0.7})`,
+                                color: `#FFFFFF`,
+                                boxShadow: intensity > 0.5 ? `0 0 10px rgba(59, 130, 246, ${intensity * 0.25})` : "none",
+                              }
+                            : {
+                                backgroundColor: "rgba(15, 23, 42, 0.4)",
+                                borderColor: "rgba(51, 65, 85, 0.3)",
+                                color: "rgba(148, 163, 184, 0.5)",
+                              };
+
+                          return (
+                            <div
+                              key={key}
+                              style={bgStyle}
+                              className={`flex flex-col items-center justify-center rounded-lg border font-bold text-[10px] sm:text-xs transition-all duration-200 uppercase relative ${
+                                isSpace ? "w-36 sm:w-56 h-9" : "w-8 h-8 sm:w-10 sm:h-10"
+                              }`}
+                              title={`${key}: ${count} mistakes`}
+                            >
+                              <span>{isSpace ? "Spacebar" : key}</span>
+                              {count > 0 && (
+                                <span className="absolute bottom-0.5 right-1 text-[8px] font-normal opacity-70">
+                                  {count}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4 text-[10px] font-mono text-slate-500 w-full max-w-sm mx-auto">
+                    <span>Low mistake frequency</span>
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/30" />
+                      <div className="w-3 h-3 rounded bg-blue-500/40 border border-blue-500/50" />
+                      <div className="w-3 h-3 rounded bg-blue-500/70 border border-blue-500/70" />
+                      <div className="w-3 h-3 rounded bg-blue-500/90 border border-blue-500/95 shadow-[0_0_8px_rgba(59,130,246,0.2)]" />
+                    </div>
+                    <span>High mistake frequency</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Difficulty Personal Records (PBs) Segment */}
@@ -392,6 +494,7 @@ export default function HistoryPage() {
                       <th className="py-3 px-6">Date &amp; Time</th>
                       <th className="py-3 px-6 text-center w-24">WPM</th>
                       <th className="py-3 px-6 text-center w-28">Accuracy</th>
+                      <th className="py-3 px-6 text-center w-28">Consistency</th>
                       <th className="py-3 px-6 text-center w-28">Difficulty</th>
                       <th className="py-3 px-6 text-center w-28">Duration</th>
                     </tr>
@@ -419,6 +522,11 @@ export default function HistoryPage() {
                           {/* Accuracy */}
                           <td className="py-3 px-6 text-center font-mono font-bold text-emerald-400">
                             {item.accuracy}%
+                          </td>
+
+                          {/* Consistency */}
+                          <td className="py-3 px-6 text-center font-mono font-bold text-sky-400">
+                            {typeof item.consistency === "number" ? `${item.consistency}%` : "—"}
                           </td>
 
                           {/* Difficulty */}

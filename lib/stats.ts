@@ -3,7 +3,8 @@ export type TestResult = {
   wpm: number;
   accuracy: number;
   difficulty: "easy" | "medium" | "hard" | "custom";
-  category?: "programming" | "general_knowledge" | "custom";
+  category?: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "programming" | "general_knowledge" | "custom";
+  consistency?: number;
   timeTaken: number; // in seconds
   timestamp: number; // millisecond timestamp
   passageText: string;
@@ -11,6 +12,7 @@ export type TestResult = {
 
 // Key used in local storage
 const STORAGE_KEY = "tst_history_v1";
+const KEY_ERRORS_STORAGE_KEY = "tst_keyerrors_v1";
 
 /**
  * Retrieve all local test history.
@@ -58,8 +60,8 @@ export function saveResult(result: Omit<TestResult, "id" | "timestamp">): TestRe
 /**
  * Get personal best (PB) WPM for a specific difficulty or overall.
  */
-export function getPersonalBest(difficulty?: "easy" | "medium" | "hard" | "custom"): TestResult | null {
-  const history = getHistory();
+export function getPersonalBest(difficulty?: "easy" | "medium" | "hard" | "custom", preloadedHistory?: TestResult[]): TestResult | null {
+  const history = preloadedHistory || getHistory();
   if (history.length === 0) return null;
 
   const filtered = difficulty
@@ -78,13 +80,14 @@ export function getPersonalBest(difficulty?: "easy" | "medium" | "hard" | "custo
 /**
  * Compute average metrics across all history.
  */
-export function getHistorySummary() {
-  const history = getHistory();
+export function getHistorySummary(preloadedHistory?: TestResult[]) {
+  const history = preloadedHistory || getHistory();
   if (history.length === 0) {
     return {
       totalTests: 0,
       avgWpm: 0,
       avgAccuracy: 0,
+      avgConsistency: 0,
     };
   }
 
@@ -92,9 +95,47 @@ export function getHistorySummary() {
   const sumWpm = history.reduce((sum, r) => sum + r.wpm, 0);
   const sumAccuracy = history.reduce((sum, r) => sum + r.accuracy, 0);
 
+  const testsWithConsistency = history.filter((r) => typeof r.consistency === "number");
+  const avgConsistency = testsWithConsistency.length > 0
+    ? Math.round(testsWithConsistency.reduce((sum, r) => sum + (r.consistency || 0), 0) / testsWithConsistency.length)
+    : 0;
+
   return {
     totalTests,
     avgWpm: Math.round(sumWpm / totalTests),
     avgAccuracy: Math.round((sumAccuracy / totalTests) * 10) / 10,
+    avgConsistency,
   };
+}
+
+/**
+ * Get aggregated key errors from local storage.
+ */
+export function getKeyErrors(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(KEY_ERRORS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.error("Failed to load key errors:", e);
+    return {};
+  }
+}
+
+/**
+ * Save / increment aggregated key errors.
+ */
+export function saveKeyErrors(errors: Record<string, number>) {
+  if (typeof window === "undefined") return;
+  try {
+    const current = getKeyErrors();
+    const updated = { ...current };
+    for (const [key, count] of Object.entries(errors)) {
+      const normalizedKey = key.toUpperCase();
+      updated[normalizedKey] = (updated[normalizedKey] || 0) + count;
+    }
+    localStorage.setItem(KEY_ERRORS_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error("Failed to save key errors:", e);
+  }
 }
