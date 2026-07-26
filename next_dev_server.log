@@ -1,0 +1,38 @@
+
+> nextjs-setup@0.1.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.5.22 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 1419ms
+ ○ Compiling / ...
+ ✓ Compiled / in 7.2s
+ GET / 200 in 8379ms
+ ○ Compiling /test ...
+ ✓ Compiled /test in 755ms
+ GET /test?difficulty=medium&category=ai_lab 200 in 849ms
+ ○ Compiling /api/generate-passage ...
+ ✓ Compiled /api/generate-passage in 590ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 951ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 291ms
+ GET /test?difficulty=medium&category=ai_lab 200 in 220ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 268ms
+ GET / 200 in 175ms
+ GET /test?difficulty=medium&category=ai_lab 200 in 132ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 352ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=medium&category=ai_lab 200 in 327ms
+ ○ Compiling /results ...
+ ✓ Compiled /results in 1686ms
+ GET /results?difficulty=medium&category=ai_lab&wpm=253&accuracy=100&time=15&consistency=85 200 in 1804ms
+ ○ Compiling /history ...
+ ✓ Compiled /history in 573ms
+ GET /history 200 in 818ms
+ GET / 200 in 179ms

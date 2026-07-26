@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from "react";
 import LinkIcon from "next/link";
 import { passageBank } from "../../lib/passages";
-import { getPersonalBest } from "../../lib/stats";
+import { getPersonalBest, saveKeyErrors } from "../../lib/stats";
 
 // Helper client-side sanitization function
 function sanitizePassageText(text: string): string {
@@ -35,6 +35,32 @@ function sanitizePassageText(text: string): string {
   return sanitized;
 }
 
+function getTrackedKey(char: string): string | null {
+  if (char === " ") return "SPACE";
+  if (/^[a-zA-Z]$/.test(char)) return char.toUpperCase();
+  return null;
+}
+
+function calculateConsistencyScore(samples: number[]): number {
+  if (samples.length < 3) {
+    return 100; // default for extremely fast runs or insufficient samples
+  }
+
+  const n = samples.length;
+  const mean = samples.reduce((a, b) => a + b, 0) / n;
+
+  if (mean === 0) {
+    return 0;
+  }
+
+  const variance = samples.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n;
+  const stdDev = Math.sqrt(variance);
+  const cv = stdDev / mean;
+
+  const score = Math.max(0, Math.round(100 - (cv * 100)));
+  return score;
+}
+
 function TestScreenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -42,11 +68,10 @@ function TestScreenContent() {
   const rawDifficulty = searchParams.get("difficulty") || "medium";
   const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
 
-  const rawCategory = searchParams.get("category") || "programming";
-  const category = (["programming", "general_knowledge", "custom"].includes(rawCategory) ? rawCategory : "programming") as "programming" | "general_knowledge" | "custom";
+  const rawCategory = searchParams.get("category") || "code_arena";
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
 
-  // Hide/disable Ghost Mode for Custom category
-  const isGhostEnabled = category !== "custom" && searchParams.get("ghost") === "true";
+  const isGhostEnabled = searchParams.get("ghost") === "true";
 
   const [selectedPassage, setSelectedPassage] = useState<string>("");
   const [isActive, setIsActive] = useState(false);
@@ -58,10 +83,29 @@ function TestScreenContent() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
+  // Key error tracking
+  const [keyErrors, setKeyErrors] = useState<Record<string, number>>({});
+
+  // WPM samples for consistency score
+  const wpmSamplesRef = useRef<number[]>([]);
+  const lastSampledSecondRef = useRef<number>(0);
+
   // Ghost Mode position state
   const [ghostPosition, setGhostPosition] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Refs to avoid interval closures
+  const typedInputRef = useRef(typedInput);
+  const selectedPassageRef = useRef(selectedPassage);
+
+  useEffect(() => {
+    typedInputRef.current = typedInput;
+  }, [typedInput]);
+
+  useEffect(() => {
+    selectedPassageRef.current = selectedPassage;
+  }, [selectedPassage]);
 
   // Fetch PB for ghost race
   const ghostPB = useMemo(() => {
@@ -78,18 +122,9 @@ function TestScreenContent() {
     setElapsedSeconds(0);
     setGhostPosition(0);
     setIsActive(false);
-
-    if (category === "custom") {
-      const stored = typeof window !== "undefined" ? sessionStorage.getItem("custom_passage") : "";
-      if (stored) {
-        const sanitized = sanitizePassageText(stored);
-        setSelectedPassage(sanitized);
-        setLoading(false);
-      } else {
-        router.push("/");
-      }
-      return;
-    }
+    setKeyErrors({});
+    wpmSamplesRef.current = [];
+    lastSampledSecondRef.current = 0;
 
     try {
       const response = await fetch(`/api/generate-passage?difficulty=${difficulty}&category=${category}`);
@@ -116,21 +151,38 @@ function TestScreenContent() {
     } finally {
       setLoading(false);
     }
-  }, [difficulty, category, router]);
+  }, [difficulty, category]);
 
   // Initial load
   useEffect(() => {
     fetchPassage();
   }, [fetchPassage]);
 
-  // Handle live stopwatch update
+  // Handle live stopwatch update & WPM sampling
   useEffect(() => {
     if (!startTime) return;
 
     const interval = setInterval(() => {
       const now = Date.now();
       const elapsedMs = now - startTime;
-      setElapsedSeconds(Math.floor(elapsedMs / 1000));
+      const secs = Math.floor(elapsedMs / 1000);
+      setElapsedSeconds(secs);
+
+      // Sample WPM every second mark
+      if (secs > 0 && secs > lastSampledSecondRef.current) {
+        lastSampledSecondRef.current = secs;
+
+        let correctCount = 0;
+        const currentTyped = typedInputRef.current;
+        const currentPassage = selectedPassageRef.current;
+        for (let i = 0; i < currentTyped.length; i++) {
+          if (currentTyped[i] === currentPassage[i]) {
+            correctCount++;
+          }
+        }
+        const instantWPM = Math.round((correctCount / 5) / (secs / 60));
+        wpmSamplesRef.current.push(instantWPM);
+      }
     }, 200);
 
     return () => clearInterval(interval);
@@ -184,6 +236,23 @@ function TestScreenContent() {
         setStartTime(actualStartTime);
       }
 
+      // Track weak-key errors for newly typed characters
+      const updatedErrors = { ...keyErrors };
+      let hadNewError = false;
+      for (let i = typedInput.length; i < newValue.length; i++) {
+        if (newValue[i] !== selectedPassage[i]) {
+          const expectedChar = selectedPassage[i];
+          const tracked = getTrackedKey(expectedChar);
+          if (tracked) {
+            updatedErrors[tracked] = (updatedErrors[tracked] || 0) + 1;
+            hadNewError = true;
+          }
+        }
+      }
+      if (hadNewError) {
+        setKeyErrors(updatedErrors);
+      }
+
       setTypedInput(newValue);
 
       // Check completion
@@ -196,6 +265,13 @@ function TestScreenContent() {
         const finalWPM = Math.round((correctCount / 5) / (durationSecs / 60));
         const updatedTotalCount = totalTypedCount + diff;
         const finalAccuracy = Math.round((correctCount / updatedTotalCount) * 100);
+
+        // Save aggregated key errors to localStorage
+        saveKeyErrors(updatedErrors);
+
+        // Compute consistency score
+        const allSamples = [...wpmSamplesRef.current, finalWPM];
+        const consistencyScore = calculateConsistencyScore(allSamples);
 
         // Save passage text in session storage for performance share cards
         if (typeof window !== "undefined") {
@@ -216,7 +292,7 @@ function TestScreenContent() {
 
         // Immediate redirection on correct completion
         router.push(
-          `/results?difficulty=${difficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}`
+          `/results?difficulty=${difficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}&consistency=${consistencyScore}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}`
         );
       }
     } else if (diff < 0) {
@@ -356,7 +432,7 @@ function TestScreenContent() {
             <span className="text-slate-600">•</span>
             <span>CATEGORY:</span>
             <span className="font-bold text-sky-400 uppercase">
-              {category === "general_knowledge" ? "General Knowledge" : category}
+              {category.replace("_", " ")}
             </span>
           </div>
           {isGhostEnabled && ghostPB && (

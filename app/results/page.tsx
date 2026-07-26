@@ -23,12 +23,13 @@ function ResultsScreenContent() {
 
   // Extract results stats from query parameters or provide polished mock fallback values
   const difficulty = searchParams.get("difficulty") || "medium";
-  const category = searchParams.get("category") || "programming";
-  const categoryParsed = (["programming", "general_knowledge", "custom"].includes(category) ? category : "programming") as "programming" | "general_knowledge" | "custom";
+  const category = searchParams.get("category") || "code_arena";
+  const categoryParsed = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer"].includes(category) ? category : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
 
   const wpm = searchParams.get("wpm") || "72";
   const accuracy = searchParams.get("accuracy") || "98";
   const timeTaken = searchParams.get("time") || "60";
+  const consistency = searchParams.get("consistency") || "100";
 
   // Optional ghost mode comparison message passed from /test
   const ghostComparison = searchParams.get("ghostMsg") || null;
@@ -57,11 +58,12 @@ function ResultsScreenContent() {
         accuracy: parseFloat(accuracy),
         difficulty: (["easy", "medium", "hard", "custom"].includes(difficulty) ? difficulty : "medium") as "easy" | "medium" | "hard" | "custom",
         category: categoryParsed,
+        consistency: parseInt(consistency, 10),
         timeTaken: parseInt(timeTaken, 10),
         passageText,
       });
     }
-  }, [difficulty, categoryParsed, wpm, accuracy, timeTaken, searchParams]);
+  }, [difficulty, categoryParsed, wpm, accuracy, timeTaken, consistency, searchParams]);
 
   const handleSubmitScore = async () => {
     setIsSubmitting(true);
@@ -270,7 +272,7 @@ function ResultsScreenContent() {
             </div>
           </div>
 
-          {/* Right Detailed Stats Grid */}
+          {/* Right Detailed Stats Grid (with WPM, Accuracy, Consistency, Difficulty as the 4 hero stats) */}
           <div className="col-span-7 pl-4 space-y-6">
             <div className="grid grid-cols-2 gap-4">
               {/* Acc */}
@@ -282,6 +284,15 @@ function ResultsScreenContent() {
                   {accuracy}%
                 </span>
               </div>
+              {/* Consistency */}
+              <div>
+                <span className="text-[9px] text-slate-400 uppercase tracking-widest block mb-1">
+                  CONSISTENCY SCORE
+                </span>
+                <span className="text-2xl font-extrabold font-mono" style={{ color: "#3B82F6" }}>
+                  {consistency}%
+                </span>
+              </div>
               {/* Diff */}
               <div>
                 <span className="text-[9px] text-slate-400 uppercase tracking-widest block mb-1">
@@ -291,22 +302,13 @@ function ResultsScreenContent() {
                   {difficulty}
                 </span>
               </div>
-              {/* Duration */}
+              {/* Duration / Time Elapsed */}
               <div>
                 <span className="text-[9px] text-slate-400 uppercase tracking-widest block mb-1">
                   TIME ELAPSED
                 </span>
                 <span className="text-2xl font-extrabold font-mono text-slate-200">
                   {timeTaken}s
-                </span>
-              </div>
-              {/* Performance Score */}
-              <div>
-                <span className="text-[9px] text-slate-400 uppercase tracking-widest block mb-1">
-                  PERFORMANCE RANK
-                </span>
-                <span className="text-2xl font-extrabold font-mono" style={{ color: "#3B82F6" }}>
-                  {Number(wpm) >= 80 ? "TIER S" : Number(wpm) >= 50 ? "TIER A" : "TIER B"}
                 </span>
               </div>
             </div>
@@ -363,16 +365,16 @@ function ResultsScreenContent() {
             Difficulty level:{" "}
             <span className="text-electric-400 uppercase font-bold mr-2">{difficulty}</span>
             Category:{" "}
-            <span className="text-sky-400 uppercase font-bold">{category === "general_knowledge" ? "General Knowledge" : category}</span>
+            <span className="text-sky-400 uppercase font-bold">{category.replace("_", " ")}</span>
           </p>
         </div>
 
         {/* Core Stats Section inside Card */}
         <div className="p-6 sm:p-8 space-y-6 flex-grow">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
             {/* WPM Container */}
-            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center">
+            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center col-span-2 sm:col-span-1">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
                 words per minute
               </span>
@@ -393,6 +395,17 @@ function ResultsScreenContent() {
               <span className="text-xs font-mono text-slate-500 mt-1">Precision score</span>
             </div>
 
+            {/* Consistency Container */}
+            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+                consistency
+              </span>
+              <div className="text-4xl sm:text-5xl font-extrabold text-electric-400 font-mono tracking-tight">
+                {consistency}%
+              </div>
+              <span className="text-xs font-mono text-slate-500 mt-1">Pace stability</span>
+            </div>
+
             {/* Time Taken Container */}
             <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
@@ -404,8 +417,8 @@ function ResultsScreenContent() {
               <span className="text-xs font-mono text-slate-500 mt-1">Duration</span>
             </div>
 
-            {/* Rank / Performance tier */}
-            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center">
+            {/* Rank / Evaluation Tier */}
+            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center col-span-2 sm:col-span-2">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
                 skill level
               </span>
