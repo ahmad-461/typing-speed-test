@@ -30,17 +30,31 @@ export default function Home() {
   ];
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
-      {/* Header Section */}
-      <div className="text-center space-y-4 mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-charcoal-700 bg-charcoal-800 text-xs font-mono text-slate-400 tracking-wider uppercase">
-          <span className="w-2 h-2 rounded-full bg-electric-500 animate-pulse"></span>
-          Phase 1 Setup
+    <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      {/* Top Header Bar */}
+      <header className="flex items-center justify-between w-full py-3 mb-6 border-b border-charcoal-800">
+        <div className="flex items-center gap-2 font-mono text-xs font-bold text-slate-400 uppercase tracking-widest">
+          ⚡ TST v1.4
         </div>
+        <Link
+          href="/leaderboard"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-charcoal-800 border border-charcoal-700 hover:border-charcoal-600 text-xs font-mono text-slate-300 hover:text-white transition-all font-semibold"
+        >
+          Leaderboard 📊
+        </Link>
+      </header>
 
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-none">
-          Typing <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">Speed</span> Test
-        </h1>
+      <main className="flex-grow flex flex-col items-center justify-center w-full">
+        {/* Header Section */}
+        <div className="text-center space-y-4 mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-charcoal-700 bg-charcoal-800 text-xs font-mono text-slate-400 tracking-wider uppercase">
+            <span className="w-2 h-2 rounded-full bg-electric-500 animate-pulse"></span>
+            Phase 4 Integrated
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-none">
+            Typing <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">Speed</span> Test
+          </h1>
 
         <p className="text-lg text-slate-400 max-w-xl mx-auto font-sans leading-relaxed">
           Benchmark your keyboard accuracy and words-per-minute with a beautiful, editorial terminal designed to evaluate typing precision under pressure.
@@ -112,8 +126,9 @@ export default function Home() {
 
       {/* Footer / Info section */}
       <footer className="mt-16 text-center text-xs text-slate-500 font-mono">
-        Designed for writers, developers, and speed-typing enthusiasts. Phase 1 static flow.
+        Designed for writers, developers, and speed-typing enthusiasts. Phase 4 Supabase Integrated.
       </footer>
     </main>
+    </div>
   );
 }
