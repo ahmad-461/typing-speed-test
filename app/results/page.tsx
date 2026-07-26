@@ -52,7 +52,7 @@ function ResultsScreenContent() {
       saveResult({
         wpm: parseInt(wpm, 10),
         accuracy: parseFloat(accuracy),
-        difficulty: (["easy", "medium", "hard"].includes(difficulty) ? difficulty : "medium") as "easy" | "medium" | "hard",
+        difficulty: (["easy", "medium", "hard", "custom"].includes(difficulty) ? difficulty : "medium") as "easy" | "medium" | "hard" | "custom",
         timeTaken: parseInt(timeTaken, 10),
         passageText,
       });

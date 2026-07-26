@@ -2,7 +2,7 @@ export type TestResult = {
   id: string;
   wpm: number;
   accuracy: number;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: "easy" | "medium" | "hard" | "custom";
   timeTaken: number; // in seconds
   timestamp: number; // millisecond timestamp
   passageText: string;
@@ -57,7 +57,7 @@ export function saveResult(result: Omit<TestResult, "id" | "timestamp">): TestRe
 /**
  * Get personal best (PB) WPM for a specific difficulty or overall.
  */
-export function getPersonalBest(difficulty?: "easy" | "medium" | "hard"): TestResult | null {
+export function getPersonalBest(difficulty?: "easy" | "medium" | "hard" | "custom"): TestResult | null {
   const history = getHistory();
   if (history.length === 0) return null;
 

@@ -9,11 +9,11 @@ type ScoreEntry = {
   name: string;
   wpm: number;
   accuracy: number;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: "easy" | "medium" | "hard" | "custom";
   created_at: string;
 };
 
-type DifficultyFilter = "all" | "easy" | "medium" | "hard";
+type DifficultyFilter = "all" | "easy" | "medium" | "hard" | "custom";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -123,8 +123,8 @@ function LeaderboardContent() {
 
       {/* Difficulty Filter Tabs */}
       <div className="w-full flex justify-center mb-6">
-        <div className="flex bg-charcoal-800 p-1 rounded-xl border border-charcoal-700 max-w-md w-full">
-          {(["all", "easy", "medium", "hard"] as DifficultyFilter[]).map((tab) => {
+        <div className="flex bg-charcoal-800 p-1 rounded-xl border border-charcoal-700 max-w-lg w-full">
+          {(["all", "easy", "medium", "hard", "custom"] as DifficultyFilter[]).map((tab) => {
             const isActive = filter === tab;
             return (
               <button
@@ -243,7 +243,9 @@ function LeaderboardContent() {
                               ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
                               : score.difficulty === "medium"
                               ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
-                              : "text-rose-400 bg-rose-500/5 border-rose-500/20"
+                              : score.difficulty === "hard"
+                              ? "text-rose-400 bg-rose-500/5 border-rose-500/20"
+                              : "text-sky-400 bg-sky-500/5 border-sky-500/20"
                           }`}
                         >
                           {score.difficulty}
