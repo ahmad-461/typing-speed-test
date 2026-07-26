@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from "react";
-import Link from "next/link";
+import LinkIcon from "next/link";
 import { passageBank } from "../../lib/passages";
 import { getPersonalBest } from "../../lib/stats";
 
@@ -35,32 +35,20 @@ function sanitizePassageText(text: string): string {
   return sanitized;
 }
 
-const getPreviewText = (text: string): string => {
-  if (!text) return "";
-  const words = text.split(/\s+/);
-  if (words.length <= 10) return text;
-  return words.slice(0, 10).join(" ") + " ...";
-};
-
-const getWordCount = (text: string): number => {
-  if (!text) return 0;
-  return text.trim().split(/\s+/).filter(Boolean).length;
-};
-
 function TestScreenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const rawDifficulty = searchParams.get("difficulty") || "medium";
-  const difficulty = (["easy", "medium", "hard", "custom"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard" | "custom";
+  const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
 
-  // Hide/disable Ghost Mode for Custom difficulty
-  const isGhostEnabled = difficulty !== "custom" && searchParams.get("ghost") === "true";
+  const rawCategory = searchParams.get("category") || "programming";
+  const category = (["programming", "general_knowledge", "custom"].includes(rawCategory) ? rawCategory : "programming") as "programming" | "general_knowledge" | "custom";
 
-  const [fetchedPassages, setFetchedPassages] = useState<string[]>([]);
+  // Hide/disable Ghost Mode for Custom category
+  const isGhostEnabled = category !== "custom" && searchParams.get("ghost") === "true";
+
   const [selectedPassage, setSelectedPassage] = useState<string>("");
-  const [isPassageSelected, setIsPassageSelected] = useState(false);
-
   const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +69,7 @@ function TestScreenContent() {
     return getPersonalBest(difficulty);
   }, [isGhostEnabled, difficulty]);
 
-  // Fetch AI-generated passages from server-side API or fall back
+  // Fetch AI-generated passage from server-side API or fall back
   const fetchPassage = useCallback(async () => {
     setLoading(true);
     setTypedInput("");
@@ -91,13 +79,11 @@ function TestScreenContent() {
     setGhostPosition(0);
     setIsActive(false);
 
-    if (difficulty === "custom") {
+    if (category === "custom") {
       const stored = typeof window !== "undefined" ? sessionStorage.getItem("custom_passage") : "";
       if (stored) {
         const sanitized = sanitizePassageText(stored);
         setSelectedPassage(sanitized);
-        setFetchedPassages([sanitized]);
-        setIsPassageSelected(true);
         setLoading(false);
       } else {
         router.push("/");
@@ -106,35 +92,31 @@ function TestScreenContent() {
     }
 
     try {
-      const response = await fetch(`/api/generate-passage?difficulty=${difficulty}`);
+      const response = await fetch(`/api/generate-passage?difficulty=${difficulty}&category=${category}`);
       if (response.ok) {
         const data = await response.json();
         const rawPassages = data?.passages;
-        if (Array.isArray(rawPassages) && rawPassages.length >= 3) {
-          const sanitizedList = rawPassages.map((p) => sanitizePassageText(p)).filter(Boolean);
-          if (sanitizedList.length >= 3) {
-            setFetchedPassages(sanitizedList);
-            setIsPassageSelected(false);
+        if (Array.isArray(rawPassages) && rawPassages.length >= 1) {
+          const sanitized = sanitizePassageText(rawPassages[0]);
+          if (sanitized) {
+            setSelectedPassage(sanitized);
             setLoading(false);
             return;
           }
         }
       }
-      throw new Error("Failed to load valid passages from API");
+      throw new Error("Failed to load valid passage from API");
     } catch (err) {
       console.warn("Client fetch error, using local fallback:", err);
-      const list = passageBank[difficulty];
-      const shuffled = [...list].sort(() => 0.5 - Math.random());
-      const selectedList = shuffled.slice(0, 3).map((item) => sanitizePassageText(item.text));
-      while (selectedList.length < 3) {
-        selectedList.push(sanitizePassageText(list[0]?.text || "A beautiful day to practice typing and improve speed."));
-      }
-      setFetchedPassages(selectedList);
-      setIsPassageSelected(false);
+      const list = passageBank[difficulty].filter((p) => p.category === category);
+      const fallbackList = list.length > 0 ? list : passageBank[difficulty];
+      const randomItem = fallbackList[Math.floor(Math.random() * fallbackList.length)];
+      const sanitized = sanitizePassageText(randomItem?.text || "Practice typing to improve your speed.");
+      setSelectedPassage(sanitized);
     } finally {
       setLoading(false);
     }
-  }, [difficulty, router]);
+  }, [difficulty, category, router]);
 
   // Initial load
   useEffect(() => {
@@ -156,7 +138,7 @@ function TestScreenContent() {
 
   // Handle continuous ghost cursor movement independent of user input
   useEffect(() => {
-    if (!isGhostEnabled || loading || !selectedPassage || !ghostPB || !isPassageSelected) {
+    if (!isGhostEnabled || loading || !selectedPassage || !ghostPB) {
       setGhostPosition(0);
       return;
     }
@@ -179,27 +161,11 @@ function TestScreenContent() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isGhostEnabled, loading, selectedPassage, ghostPB, isPassageSelected]);
-
-  // Reset test state and pick a new AI-generated passage
-  const handleReset = async () => {
-    await fetchPassage();
-  };
-
-  // Select passage from picker options
-  const handleSelectPassage = (text: string) => {
-    setSelectedPassage(text);
-    setIsPassageSelected(true);
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 50);
-  };
+  }, [isGhostEnabled, loading, selectedPassage, ghostPB]);
 
   // Keyboard and Mobile Typing Capture via Hidden Input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isActive || loading || !isPassageSelected) return;
+    if (loading || !selectedPassage) return;
 
     const newValue = e.target.value;
 
@@ -250,7 +216,7 @@ function TestScreenContent() {
 
         // Immediate redirection on correct completion
         router.push(
-          `/results?difficulty=${difficulty}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}`
+          `/results?difficulty=${difficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}`
         );
       }
     } else if (diff < 0) {
@@ -299,6 +265,39 @@ function TestScreenContent() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Setup click-to-focus on first load once page renders
+  useEffect(() => {
+    if (!loading && selectedPassage) {
+      // Register typing-active session key for footer CTA hide detection
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("typing_active", "true");
+      }
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 300);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("typing_active");
+      }
+    };
+  }, [loading, selectedPassage]);
+
+  // Clean typing-active indicator if blurred
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (isActive) {
+        sessionStorage.setItem("typing_active", "true");
+      } else {
+        sessionStorage.removeItem("typing_active");
+      }
+      // Trigger simple custom event to let the footer dynamically detect focus status
+      window.dispatchEvent(new Event("typing_focus_change"));
+    }
+  }, [isActive]);
+
   // Styled, terminal-themed loading state
   if (loading) {
     return (
@@ -324,104 +323,6 @@ function TestScreenContent() {
     );
   }
 
-  // Passages Picker Selection Screen
-  if (!isPassageSelected) {
-    return (
-      <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
-        {/* Top Meta info */}
-        <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
-            >
-              ← Back
-            </Link>
-            <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-              Difficulty:{" "}
-              <span
-                className={`font-bold ${
-                  difficulty === "easy"
-                    ? "text-emerald-400"
-                    : difficulty === "medium"
-                    ? "text-electric-400"
-                    : "text-rose-400"
-                }`}
-              >
-                {difficulty}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-electric-500 animate-pulse"></span>
-            <span className="text-xs font-mono text-slate-400">Prompts Ready</span>
-          </div>
-        </div>
-
-        {/* Picker Header */}
-        <div className="text-center space-y-3 mb-10 w-full">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-none">
-            Choose Your <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">Passage</span>
-          </h2>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
-            Select one of the 3 randomized paragraphs below to begin your timed typing test.
-          </p>
-        </div>
-
-        {/* 3 Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-8">
-          {fetchedPassages.map((text, idx) => {
-            const wordCount = getWordCount(text);
-            const preview = getPreviewText(text);
-
-            return (
-              <div
-                key={idx}
-                onClick={() => handleSelectPassage(text)}
-                className="bg-charcoal-800 border-2 border-charcoal-700 hover:border-electric-500 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 cursor-pointer group relative"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-charcoal-700/50 pb-2">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">
-                      Prompt #0{idx + 1}
-                    </span>
-                    <span className="text-[10px] font-mono text-electric-400 bg-electric-500/10 border border-electric-500/20 px-2 py-0.5 rounded uppercase tracking-wider font-bold">
-                      {wordCount} words
-                    </span>
-                  </div>
-                  <p className="text-slate-300 font-mono text-sm leading-relaxed min-h-[90px]">
-                    {preview}
-                  </p>
-                </div>
-                <div className="pt-6">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectPassage(text);
-                    }}
-                    className="w-full text-center py-2.5 bg-charcoal-900 border border-charcoal-700 hover:border-electric-500 hover:bg-electric-500 hover:text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all duration-200 cursor-pointer"
-                  >
-                    Select Passage
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Refresh options */}
-        <div className="w-full flex justify-center">
-          <button
-            onClick={fetchPassage}
-            className="px-6 py-2.5 bg-charcoal-800 hover:bg-charcoal-700 text-slate-400 hover:text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg border border-charcoal-700 transition-all cursor-pointer hover-glow-electric"
-          >
-            Re-roll Choices 🔄
-          </button>
-        </div>
-      </main>
-    );
-  }
-
   const stats = [
     { label: "TIMER", value: formatTime(elapsedSeconds), unit: "", icon: "⏱️" },
     { label: "WPM", value: liveWPM.toString(), unit: "wpm", icon: "⚡" },
@@ -433,26 +334,29 @@ function TestScreenContent() {
       {/* Top Meta info */}
       <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60">
         <div className="flex items-center gap-3">
-          <Link
+          <LinkIcon
             href="/"
             className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
           >
             ← Back
-          </Link>
-          <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-            Difficulty:{" "}
+          </LinkIcon>
+          <div className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <span>DIFFICULTY:</span>
             <span
               className={`font-bold ${
                 difficulty === "easy"
                   ? "text-emerald-400"
                   : difficulty === "medium"
                   ? "text-electric-400"
-                  : difficulty === "hard"
-                  ? "text-rose-400"
-                  : "text-sky-400"
+                  : "text-rose-400"
               }`}
             >
               {difficulty}
+            </span>
+            <span className="text-slate-600">•</span>
+            <span>CATEGORY:</span>
+            <span className="font-bold text-sky-400 uppercase">
+              {category === "general_knowledge" ? "General Knowledge" : category}
             </span>
           </div>
           {isGhostEnabled && ghostPB && (
@@ -493,7 +397,7 @@ function TestScreenContent() {
       {/* Terminal Typing Block */}
       <div className="w-full mb-8">
         <div className="text-xs text-slate-400 font-mono mb-2 flex justify-between items-center px-1">
-          <span>⌨️ PROMPT TERMINAL</span>
+          <span>{"⌨️ PROMPT TERMINAL"}</span>
           <div className="flex items-center gap-3">
             {isGhostEnabled && (
               <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
@@ -601,7 +505,7 @@ function TestScreenContent() {
           💡 <span className="text-slate-300 font-semibold">Tip:</span> Tap the terminal box to focus, then type on your physical or virtual keyboard. Revert errors with Backspace.
         </div>
         <button
-          onClick={handleReset}
+          onClick={fetchPassage}
           className="w-full sm:w-auto text-center px-6 py-3 bg-charcoal-700 hover:bg-charcoal-600 hover:text-white text-slate-300 font-bold rounded-lg border border-charcoal-600 transition-all duration-200 uppercase tracking-wider text-[11px] hover-glow-electric cursor-pointer focus:outline-none focus:ring-1 focus:ring-electric-500"
         >
           Reset Test 🔄

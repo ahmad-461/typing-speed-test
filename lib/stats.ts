@@ -3,6 +3,7 @@ export type TestResult = {
   wpm: number;
   accuracy: number;
   difficulty: "easy" | "medium" | "hard" | "custom";
+  category?: "programming" | "general_knowledge" | "custom";
   timeTaken: number; // in seconds
   timestamp: number; // millisecond timestamp
   passageText: string;

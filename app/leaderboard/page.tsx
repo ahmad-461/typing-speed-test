@@ -13,7 +13,7 @@ type ScoreEntry = {
   created_at: string;
 };
 
-type DifficultyFilter = "all" | "easy" | "medium" | "hard" | "custom";
+type DifficultyFilter = "all" | "easy" | "medium" | "hard";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -123,8 +123,8 @@ function LeaderboardContent() {
 
       {/* Difficulty Filter Tabs */}
       <div className="w-full flex justify-center mb-6">
-        <div className="flex bg-charcoal-800 p-1 rounded-xl border border-charcoal-700 max-w-lg w-full">
-          {(["all", "easy", "medium", "hard", "custom"] as DifficultyFilter[]).map((tab) => {
+        <div className="flex bg-charcoal-800 p-1 rounded-xl border border-charcoal-700 max-w-md w-full">
+          {(["all", "easy", "medium", "hard"] as DifficultyFilter[]).map((tab) => {
             const isActive = filter === tab;
             return (
               <button

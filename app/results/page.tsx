@@ -23,6 +23,9 @@ function ResultsScreenContent() {
 
   // Extract results stats from query parameters or provide polished mock fallback values
   const difficulty = searchParams.get("difficulty") || "medium";
+  const category = searchParams.get("category") || "programming";
+  const categoryParsed = (["programming", "general_knowledge", "custom"].includes(category) ? category : "programming") as "programming" | "general_knowledge" | "custom";
+
   const wpm = searchParams.get("wpm") || "72";
   const accuracy = searchParams.get("accuracy") || "98";
   const timeTaken = searchParams.get("time") || "60";
@@ -53,11 +56,12 @@ function ResultsScreenContent() {
         wpm: parseInt(wpm, 10),
         accuracy: parseFloat(accuracy),
         difficulty: (["easy", "medium", "hard", "custom"].includes(difficulty) ? difficulty : "medium") as "easy" | "medium" | "hard" | "custom",
+        category: categoryParsed,
         timeTaken: parseInt(timeTaken, 10),
         passageText,
       });
     }
-  }, [difficulty, wpm, accuracy, timeTaken, searchParams]);
+  }, [difficulty, categoryParsed, wpm, accuracy, timeTaken, searchParams]);
 
   const handleSubmitScore = async () => {
     setIsSubmitting(true);
@@ -77,17 +81,29 @@ function ResultsScreenContent() {
         sanitizedName = "Anonymous";
       }
 
-      const { error } = await supabase.from("scores").insert([
-        {
+      const insertPayload = {
+        name: sanitizedName,
+        wpm: parseInt(wpm, 10),
+        accuracy: parseFloat(accuracy),
+        difficulty: difficulty,
+        category: categoryParsed,
+      };
+
+      const { error } = await supabase.from("scores").insert([insertPayload]);
+
+      if (error) {
+        console.warn("Primary category insert failed, trying backup insertion:", error);
+        // Fallback without category column in case of legacy db tables
+        const fallbackPayload = {
           name: sanitizedName,
           wpm: parseInt(wpm, 10),
           accuracy: parseFloat(accuracy),
           difficulty: difficulty,
-        },
-      ]);
-
-      if (error) {
-        throw error;
+        };
+        const { error: fallbackError } = await supabase.from("scores").insert([fallbackPayload]);
+        if (fallbackError) {
+          throw fallbackError;
+        }
       }
 
       setIsSubmitted(true);
@@ -345,7 +361,9 @@ function ResultsScreenContent() {
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
             Difficulty level:{" "}
-            <span className="text-electric-400 uppercase font-bold">{difficulty}</span>
+            <span className="text-electric-400 uppercase font-bold mr-2">{difficulty}</span>
+            Category:{" "}
+            <span className="text-sky-400 uppercase font-bold">{category === "general_knowledge" ? "General Knowledge" : category}</span>
           </p>
         </div>
 
