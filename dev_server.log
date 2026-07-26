@@ -7,15 +7,11 @@
    - Network:      http://192.168.0.2:3000
 
  ✓ Starting...
- ✓ Ready in 1541ms
+ ✓ Ready in 1493ms
  ○ Compiling / ...
- ✓ Compiled / in 7.8s
- GET / 200 in 9088ms
+ ✓ Compiled / in 7.9s
+ GET / 200 in 9077ms
+ GET / 200 in 216ms
  ○ Compiling /test ...
- ✓ Compiled /test in 776ms
- GET /test?difficulty=custom 200 in 899ms
- ○ Compiling /leaderboard ...
- ✓ Compiled /leaderboard in 1443ms
-Supabase URL or Anon Key is missing from environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set. Falling back to placeholder client to prevent build errors.
- GET /leaderboard 200 in 1828ms
- GET / 200 in 253ms
+ ✓ Compiled /test in 678ms
+ GET /test?difficulty=easy&category=custom&ghost=false 200 in 787ms
