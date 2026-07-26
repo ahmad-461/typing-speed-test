@@ -7,12 +7,20 @@
    - Network:      http://192.168.0.2:3000
 
  ✓ Starting...
- ✓ Ready in 1433ms
+ ✓ Ready in 1573ms
  ○ Compiling / ...
- ✓ Compiled / in 8.7s
- GET / 200 in 9698ms
+ ✓ Compiled / in 7.7s
+ GET / 200 in 9007ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 4.5s
+ ⨯ A conflicting public file and page file was found for path /icon.svg https://nextjs.org/docs/messages/conflicting-public-file-page
+ GET /icon.svg 500 in 4918ms
  ○ Compiling /leaderboard ...
- ✓ Compiled /leaderboard in 1242ms
- GET /leaderboard 200 in 1376ms
-Supabase URL or Anon Key is missing from environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set. Falling back to placeholder client to prevent build errors.
- GET /leaderboard 200 in 318ms
+ ✓ Compiled /leaderboard in 1283ms
+ GET /leaderboard 200 in 1457ms
+ ⨯ A conflicting public file and page file was found for path /icon.svg https://nextjs.org/docs/messages/conflicting-public-file-page
+ HEAD /icon.svg 500 in 61ms
+ GET / 200 in 360ms
+ GET /leaderboard 200 in 136ms
+ GET / 200 in 221ms
+ GET /leaderboard 200 in 150ms
