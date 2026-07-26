@@ -30,15 +30,15 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8 animate-fade-in">
       {/* Top Header Bar */}
       <header className="flex items-center justify-between w-full py-3 mb-6 border-b border-charcoal-800">
         <div className="flex items-center gap-2 font-mono text-xs font-bold text-slate-400 uppercase tracking-widest">
-          ⚡ TST v1.4
+          ⚡ TST v1.5
         </div>
         <Link
           href="/leaderboard"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-charcoal-800 border border-charcoal-700 hover:border-charcoal-600 text-xs font-mono text-slate-300 hover:text-white transition-all font-semibold"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-charcoal-800 border border-charcoal-700 text-xs font-mono text-slate-300 hover:text-white font-semibold hover-glow-electric"
         >
           Leaderboard 📊
         </Link>
@@ -73,17 +73,19 @@ export default function Home() {
             const isSelected = difficulty === item.value;
             let activeStyles = "";
             if (isSelected) {
-              if (item.value === "easy") activeStyles = "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20";
-              else if (item.value === "medium") activeStyles = "border-electric-500 bg-electric-500/10 ring-2 ring-electric-500/20";
-              else activeStyles = "border-rose-500 bg-rose-500/10 ring-2 ring-rose-500/20";
+              if (item.value === "easy") activeStyles = "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20 shadow-[0_0_10px_1px_rgba(16,185,129,0.2)]";
+              else if (item.value === "medium") activeStyles = "border-electric-500 bg-electric-500/10 ring-2 ring-electric-500/20 shadow-[0_0_10px_1px_rgba(59,130,246,0.2)]";
+              else activeStyles = "border-rose-500 bg-rose-500/10 ring-2 ring-rose-500/20 shadow-[0_0_10px_1px_rgba(244,63,94,0.2)]";
             }
 
             return (
               <button
                 key={item.value}
                 onClick={() => setDifficulty(item.value)}
-                className={`flex flex-col text-left p-5 rounded-xl border transition-all duration-200 cursor-pointer ${
-                  isSelected ? activeStyles : "border-charcoal-700 bg-charcoal-900/40 text-slate-300 hover:border-charcoal-600 hover:bg-charcoal-900/60"
+                className={`flex flex-col text-left p-5 rounded-xl border transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 ${
+                  isSelected
+                    ? activeStyles
+                    : "border-charcoal-700 bg-charcoal-900/40 text-slate-300 hover:border-charcoal-600 hover:bg-charcoal-900/60 focus:ring-charcoal-600 focus:border-charcoal-600"
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-2">
@@ -117,7 +119,7 @@ export default function Home() {
           </div>
           <Link
             href={`/test?difficulty=${difficulty}`}
-            className="w-full sm:w-auto text-center px-8 py-3.5 bg-electric-500 hover:bg-electric-400 active:bg-electric-600 text-white font-semibold rounded-xl shadow-lg shadow-electric-500/15 hover:shadow-electric-500/25 transition-all duration-200"
+            className="w-full sm:w-auto text-center px-8 py-3.5 bg-electric-500 text-white font-semibold rounded-xl shadow-lg shadow-electric-500/15 hover:bg-electric-400 active:bg-electric-600 focus:outline-none focus:ring-2 focus:ring-electric-500 focus:ring-offset-2 focus:ring-offset-charcoal-800 transition-all duration-200 hover-glow-electric"
           >
             Start Test
           </Link>

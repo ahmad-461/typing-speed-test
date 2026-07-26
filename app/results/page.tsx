@@ -60,7 +60,7 @@ function ResultsScreenContent() {
   };
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+    <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
       {/* Container holding the shareable certificate card */}
       <div className="w-full max-w-xl bg-charcoal-800 border-2 border-charcoal-700 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col">
 
@@ -166,7 +166,7 @@ function ResultsScreenContent() {
                 onClick={handleSubmitScore}
                 disabled={isSubmitted || isSubmitting}
                 className="w-full py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 shadow-md flex items-center justify-center gap-2 border cursor-pointer
-                  disabled:cursor-not-allowed
+                  disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-charcoal-800
                   bg-emerald-600 border-emerald-500 hover:bg-emerald-500 text-white shadow-emerald-500/10
                   disabled:bg-charcoal-700 disabled:border-charcoal-600 disabled:text-slate-400 disabled:shadow-none"
               >
@@ -213,13 +213,13 @@ function ResultsScreenContent() {
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Link
               href="/leaderboard"
-              className="w-full sm:w-auto text-center px-6 py-2.5 bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 font-bold rounded-lg text-xs font-mono uppercase tracking-wider border border-charcoal-700 transition-colors duration-200"
+              className="w-full sm:w-auto text-center px-6 py-2.5 bg-charcoal-800 text-slate-300 font-bold rounded-lg text-xs font-mono uppercase tracking-wider border border-charcoal-700 transition-colors duration-200 hover-glow-electric focus:outline-none focus:ring-1 focus:ring-electric-500"
             >
               Leaderboard 📊
             </Link>
             <Link
               href="/"
-              className="w-full sm:w-auto text-center px-6 py-2.5 bg-electric-500 hover:bg-electric-400 active:bg-electric-600 text-white font-bold rounded-lg text-xs font-mono uppercase tracking-wider transition-colors duration-200 shadow-md shadow-electric-500/10"
+              className="w-full sm:w-auto text-center px-6 py-2.5 bg-electric-500 text-white font-bold rounded-lg text-xs font-mono uppercase tracking-wider transition-colors duration-200 shadow-md shadow-electric-500/10 hover-glow-electric focus:outline-none focus:ring-2 focus:ring-electric-500 focus:ring-offset-2 focus:ring-offset-charcoal-800"
             >
               Try Again 🔄
             </Link>
