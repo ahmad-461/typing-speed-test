@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { getHistory, getHistorySummary, getPersonalBest, TestResult, getKeyErrors, getTrendComparison, TrendComparison } from "../../lib/stats";
+import { getHistory, getHistorySummary, getPersonalBest, TestResult, getKeyErrors, getTrendComparison, TrendComparison, getNamespacedKey } from "../../lib/stats";
 import { getGamificationState, ACHIEVEMENTS, GamificationState, computeMilestones, MilestoneEvent } from "../../lib/gamification";
 
 function formatDateShort(timestamp: number) {
@@ -44,7 +44,7 @@ export default function HistoryPage() {
     setMilestones(computeMilestones(hist));
 
     // Load WPM goal
-    const stored = localStorage.getItem("tst_personal_wpm_goal_v1");
+    const stored = localStorage.getItem(getNamespacedKey("tst_personal_wpm_goal_v1"));
     if (stored) {
       const parsed = parseInt(stored, 10);
       if (!isNaN(parsed) && parsed > 0) {
@@ -56,13 +56,13 @@ export default function HistoryPage() {
   const handleSaveGoal = (val: string) => {
     const parsed = parseInt(val, 10);
     if (!isNaN(parsed) && parsed > 0) {
-      localStorage.setItem("tst_personal_wpm_goal_v1", parsed.toString());
+      localStorage.setItem(getNamespacedKey("tst_personal_wpm_goal_v1"), parsed.toString());
       setPersonalGoal(parsed);
       setIsEditingGoal(false);
       // Recalculate gamification state (to immediately recognize Goal Crusher unlock if applicable)
       setGamification(getGamificationState());
     } else {
-      localStorage.removeItem("tst_personal_wpm_goal_v1");
+      localStorage.removeItem(getNamespacedKey("tst_personal_wpm_goal_v1"));
       setPersonalGoal(null);
       setIsEditingGoal(false);
       setGamification(getGamificationState());

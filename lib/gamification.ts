@@ -1,4 +1,4 @@
-import { TestResult, getHistory } from "./stats";
+import { TestResult, getHistory, getNamespacedKey } from "./stats";
 
 export interface GamificationState {
   totalXp: number;
@@ -98,6 +98,7 @@ const ACHIEVEMENTS_STORAGE_KEY = "tst_achievements_v1";
 const STREAK_DAYS_STORAGE_KEY = "tst_streak_days_v1";
 const LAST_STREAK_TIMESTAMP_KEY = "tst_last_streak_timestamp_v1";
 const STREAK_RESET_NOTIFIED_KEY = "tst_streak_reset_notified_v1";
+const PERSONAL_WPM_GOAL_KEY = "tst_personal_wpm_goal_v1";
 
 /**
  * Checks if two millisecond timestamps represent the same calendar day in the local timezone.
@@ -270,7 +271,7 @@ export function computeRetroactiveState(history: TestResult[]): GamificationStat
   // 5. Evaluate custom goal and trend setter achievements (can check post chronological loop)
   if (typeof window !== "undefined") {
     // Check Goal Crusher
-    const rawGoal = localStorage.getItem("tst_personal_wpm_goal_v1");
+    const rawGoal = localStorage.getItem(getNamespacedKey(PERSONAL_WPM_GOAL_KEY));
     if (rawGoal) {
       const goal = parseInt(rawGoal, 10);
       if (!isNaN(goal) && goal > 0) {
@@ -395,21 +396,21 @@ export function getGamificationState(): GamificationState {
   const state = computeRetroactiveState(history);
 
   // Sync state to local storage to be sure other pages read correct/consistent parameters
-  localStorage.setItem(XP_STORAGE_KEY, state.totalXp.toString());
-  localStorage.setItem(STREAK_DAYS_STORAGE_KEY, state.streakDays.toString());
-  localStorage.setItem(ACHIEVEMENTS_STORAGE_KEY, JSON.stringify(state.unlockedAchievements));
+  localStorage.setItem(getNamespacedKey(XP_STORAGE_KEY), state.totalXp.toString());
+  localStorage.setItem(getNamespacedKey(STREAK_DAYS_STORAGE_KEY), state.streakDays.toString());
+  localStorage.setItem(getNamespacedKey(ACHIEVEMENTS_STORAGE_KEY), JSON.stringify(state.unlockedAchievements));
   if (history.length > 0) {
     const latestRun = [...history].sort((a, b) => b.timestamp - a.timestamp)[0];
-    localStorage.setItem(LAST_STREAK_TIMESTAMP_KEY, latestRun.timestamp.toString());
+    localStorage.setItem(getNamespacedKey(LAST_STREAK_TIMESTAMP_KEY), latestRun.timestamp.toString());
   }
 
   // Handle streak reset notification status
-  const wasResetNotified = localStorage.getItem(STREAK_RESET_NOTIFIED_KEY) === "true";
+  const wasResetNotified = localStorage.getItem(getNamespacedKey(STREAK_RESET_NOTIFIED_KEY)) === "true";
   if (state.streakResetOccurred && !wasResetNotified) {
     // A reset happened but wasn't notified yet. We'll leave it to Header to read streakResetOccurred as true.
   } else if (!state.streakResetOccurred) {
     // If no reset, clear notification flag
-    localStorage.removeItem(STREAK_RESET_NOTIFIED_KEY);
+    localStorage.removeItem(getNamespacedKey(STREAK_RESET_NOTIFIED_KEY));
   }
 
   return state;
@@ -420,7 +421,7 @@ export function getGamificationState(): GamificationState {
  */
 export function acknowledgeStreakReset() {
   if (typeof window !== "undefined") {
-    localStorage.setItem(STREAK_RESET_NOTIFIED_KEY, "true");
+    localStorage.setItem(getNamespacedKey(STREAK_RESET_NOTIFIED_KEY), "true");
   }
 }
 
@@ -429,7 +430,7 @@ export function acknowledgeStreakReset() {
  */
 export function isStreakResetNotified(): boolean {
   if (typeof window === "undefined") return true;
-  return localStorage.getItem(STREAK_RESET_NOTIFIED_KEY) === "true";
+  return localStorage.getItem(getNamespacedKey(STREAK_RESET_NOTIFIED_KEY)) === "true";
 }
 
 export interface MilestoneEvent {

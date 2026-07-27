@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
-import { saveResult } from "../../lib/stats";
+import { saveResult, getPlayerName, setPlayerName as statsSetPlayerName, getNamespacedKey } from "../../lib/stats";
 
 function formatExportDate() {
   const d = new Date();
@@ -42,7 +42,7 @@ function ResultsScreenContent() {
   // Load player name from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("tst_player_name") || "";
+      const stored = getPlayerName();
       setDisplayName(stored);
     }
   }, []);
@@ -119,8 +119,8 @@ function ResultsScreenContent() {
           const targetTyped = targetKeys.reduce((sum, k) => sum + (testTypedCounts[k] || 0), 0);
           const currentAcc = targetTyped > 0 ? Math.round(((targetTyped - targetErrors) / targetTyped) * 100) : 100;
 
-          const rawHistErrors = localStorage.getItem("tst_keyerrors_v1");
-          const rawHistTyped = localStorage.getItem("tst_key_typed_counts_v1");
+          const rawHistErrors = localStorage.getItem(getNamespacedKey("tst_keyerrors_v1"));
+          const rawHistTyped = localStorage.getItem(getNamespacedKey("tst_key_typed_counts_v1"));
           const histErrorsStore = rawHistErrors ? JSON.parse(rawHistErrors) : {};
           const histTypedStore = rawHistTyped ? JSON.parse(rawHistTyped) : {};
 
@@ -242,8 +242,7 @@ function ResultsScreenContent() {
 
     // Save name to localStorage globally as requested
     if (typeof window !== "undefined") {
-      localStorage.setItem("tst_player_name", sanitizedName);
-      window.dispatchEvent(new CustomEvent("tst-name-updated", { detail: sanitizedName }));
+      statsSetPlayerName(sanitizedName);
     }
 
     const insertPayload = {

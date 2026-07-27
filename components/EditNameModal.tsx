@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getPlayerName, setPlayerName } from "../lib/stats";
 
 export default function EditNameModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,7 +10,7 @@ export default function EditNameModal() {
 
   useEffect(() => {
     const handleOpen = () => {
-      const current = typeof window !== "undefined" ? localStorage.getItem("tst_player_name") || "" : "";
+      const current = typeof window !== "undefined" ? getPlayerName() : "";
       setNameInput(current);
       setError("");
       setIsOpen(true);
@@ -30,8 +31,7 @@ export default function EditNameModal() {
       return;
     }
 
-    localStorage.setItem("tst_player_name", sanitized);
-    window.dispatchEvent(new CustomEvent("tst-name-updated", { detail: sanitized }));
+    setPlayerName(sanitized);
     setIsOpen(false);
   };
 
