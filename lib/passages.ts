@@ -1,7 +1,7 @@
 export interface Passage {
   id: string;
   text: string;
-  category: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
+  category: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
 }
 
 export interface PassageBank {
@@ -12,6 +12,21 @@ export interface PassageBank {
 
 export const passageBank: PassageBank = {
   easy: [
+    {
+      id: "easy-drill-1",
+      category: "weak_key_drill",
+      text: "The quick brown fox jumps over the lazy dog.",
+    },
+    {
+      id: "easy-drill-2",
+      category: "weak_key_drill",
+      text: "Pack my box with five dozen liquor jugs.",
+    },
+    {
+      id: "easy-drill-3",
+      category: "weak_key_drill",
+      text: "A quick movement of the enemy will jeopardize six gunboats.",
+    },
     {
       id: "easy-code-1",
       category: "code_arena",
@@ -90,6 +105,16 @@ export const passageBank: PassageBank = {
       text: "The golden retriever is widely celebrated for its gentle temperament and high intelligence. Originally bred for retrieving game during hunting expeditions, these dogs have become beloved family companions worldwide. They possess a natural eagerness to please their owners, making them highly receptive to training. Their beautiful water resistant coats require regular grooming to maintain their healthy shine.",
     },
     {
+      id: "medium-drill-1",
+      category: "weak_key_drill",
+      text: "We promptly judged antique ivory buckles for the next prize. The crazy wizard expressed quiet joy as his complex machine solved the heavy puzzle perfectly.",
+    },
+    {
+      id: "medium-drill-2",
+      category: "weak_key_drill",
+      text: "Sixty zippers were quickly unfastened by the jolly crew during the storm. Exploring the rugged mountain path required extra caution, brave zeal, and steady hands.",
+    },
+    {
       id: "medium-quest-2",
       category: "knowledge_quest",
       text: "The Solar System is an incredibly vast cosmic neighborhood composed of the Sun and all the celestial objects bound to it by gravity. This includes eight major planets, numerous dwarf planets, hundreds of moons, and millions of asteroids. Scientists continue to explore these remote celestial bodies using advanced space telescopes and robotic probes, searching for clues about the origins of life.",
@@ -160,6 +185,16 @@ export const passageBank: PassageBank = {
       id: "hard-world-1",
       category: "world_explorer",
       text: "The ancient silk road was not merely a singular trade route, but a massive web of historical paths that spanned across deserts, mountains, and plains to link China with the Mediterranean world. For centuries, merchant caravans braved unforgiving mountain passes and harsh dust storms to transport rare silk, fine porcelain, exotic spices, and radical scientific ideas. This dynamic cross-cultural exchange forever transformed the architecture, culinary traditions, and linguistic landscapes of legendary oasis cities like Samarkand and Bukhara.",
+    },
+    {
+      id: "hard-drill-1",
+      category: "weak_key_drill",
+      text: "The wizard quickly jinxed the extremely heavy box of porcelain vases, causing a bizarre sequence of events. Quietly, the skeptical observers analyzed the colorful sparks flying in all directions, hoping to decipher the complex, ancient spell before the clock struck midnight.",
+    },
+    {
+      id: "hard-drill-2",
+      category: "weak_key_drill",
+      text: "Juxtaposing abstract concepts with physical realities often requires extreme intellectual agility. Quiet philosophers zealously argue about the mysterious nature of existence, while practical engineers build complex gadgets to solve everyday puzzles with high accuracy.",
     },
     {
       id: "hard-world-2",

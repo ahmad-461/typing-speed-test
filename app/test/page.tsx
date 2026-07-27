@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from "react";
 import LinkIcon from "next/link";
 import { passageBank } from "../../lib/passages";
-import { getPersonalBest, saveKeyErrors } from "../../lib/stats";
+import { getPersonalBest, saveKeyErrors, saveKeyTypedCounts, getWeakestKeys } from "../../lib/stats";
 
 // Helper client-side sanitization function
 function sanitizePassageText(text: string): string {
@@ -69,7 +69,7 @@ function TestScreenContent() {
   const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
 
   const rawCategory = searchParams.get("category") || "code_arena";
-  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
 
   const isGhostEnabled = searchParams.get("ghost") === "true";
 
@@ -83,8 +83,9 @@ function TestScreenContent() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // Key error tracking
+  // Key error and typed count tracking
   const [keyErrors, setKeyErrors] = useState<Record<string, number>>({});
+  const [keyTypedCounts, setKeyTypedCounts] = useState<Record<string, number>>({});
 
   // WPM samples for consistency score
   const wpmSamplesRef = useRef<number[]>([]);
@@ -123,11 +124,23 @@ function TestScreenContent() {
     setGhostPosition(0);
     setIsActive(false);
     setKeyErrors({});
+    setKeyTypedCounts({});
     wpmSamplesRef.current = [];
     lastSampledSecondRef.current = 0;
 
+    let weakestKeysQuery = "";
+    if (category === "weak_key_drill") {
+      const weakest = getWeakestKeys(8);
+      if (weakest.length > 0) {
+        weakestKeysQuery = `&weak_keys=${encodeURIComponent(weakest.join(","))}`;
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("last_drill_keys", JSON.stringify(weakest));
+        }
+      }
+    }
+
     try {
-      const response = await fetch(`/api/generate-passage?difficulty=${difficulty}&category=${category}`);
+      const response = await fetch(`/api/generate-passage?difficulty=${difficulty}&category=${category}${weakestKeysQuery}`);
       if (response.ok) {
         const data = await response.json();
         const rawPassages = data?.passages;
@@ -236,14 +249,18 @@ function TestScreenContent() {
         setStartTime(actualStartTime);
       }
 
-      // Track weak-key errors for newly typed characters
+      // Track weak-key errors and typed counts for newly typed characters
       const updatedErrors = { ...keyErrors };
+      const updatedTypedCounts = { ...keyTypedCounts };
       let hadNewError = false;
+      let hadNewType = false;
       for (let i = typedInput.length; i < newValue.length; i++) {
-        if (newValue[i] !== selectedPassage[i]) {
-          const expectedChar = selectedPassage[i];
-          const tracked = getTrackedKey(expectedChar);
-          if (tracked) {
+        const expectedChar = selectedPassage[i];
+        const tracked = getTrackedKey(expectedChar);
+        if (tracked) {
+          updatedTypedCounts[tracked] = (updatedTypedCounts[tracked] || 0) + 1;
+          hadNewType = true;
+          if (newValue[i] !== expectedChar) {
             updatedErrors[tracked] = (updatedErrors[tracked] || 0) + 1;
             hadNewError = true;
           }
@@ -251,6 +268,9 @@ function TestScreenContent() {
       }
       if (hadNewError) {
         setKeyErrors(updatedErrors);
+      }
+      if (hadNewType) {
+        setKeyTypedCounts(updatedTypedCounts);
       }
 
       setTypedInput(newValue);
@@ -266,16 +286,19 @@ function TestScreenContent() {
         const updatedTotalCount = totalTypedCount + diff;
         const finalAccuracy = Math.round((correctCount / updatedTotalCount) * 100);
 
-        // Save aggregated key errors to localStorage
+        // Save aggregated key errors & typed counts to localStorage
         saveKeyErrors(updatedErrors);
+        saveKeyTypedCounts(updatedTypedCounts);
 
         // Compute consistency score
         const allSamples = [...wpmSamplesRef.current, finalWPM];
         const consistencyScore = calculateConsistencyScore(allSamples);
 
-        // Save passage text in session storage for performance share cards
+        // Save passage text and specific run stats in session storage for performance share cards/coaching
         if (typeof window !== "undefined") {
           sessionStorage.setItem("last_passage", selectedPassage);
+          sessionStorage.setItem("last_test_errors", JSON.stringify(updatedErrors));
+          sessionStorage.setItem("last_test_typed_counts", JSON.stringify(updatedTypedCounts));
         }
 
         // Compare against the ghost if active

@@ -13,6 +13,7 @@ export type TestResult = {
 // Key used in local storage
 const STORAGE_KEY = "tst_history_v1";
 const KEY_ERRORS_STORAGE_KEY = "tst_keyerrors_v1";
+const KEY_TYPED_COUNTS_STORAGE_KEY = "tst_key_typed_counts_v1";
 
 /**
  * Retrieve all local test history.
@@ -138,4 +139,72 @@ export function saveKeyErrors(errors: Record<string, number>) {
   } catch (e) {
     console.error("Failed to save key errors:", e);
   }
+}
+
+/**
+ * Get aggregated key typed counts from local storage.
+ */
+export function getKeyTypedCounts(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(KEY_TYPED_COUNTS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.error("Failed to load key typed counts:", e);
+    return {};
+  }
+}
+
+/**
+ * Save / increment aggregated key typed counts.
+ */
+export function saveKeyTypedCounts(counts: Record<string, number>) {
+  if (typeof window === "undefined") return;
+  try {
+    const current = getKeyTypedCounts();
+    const updated = { ...current };
+    for (const [key, count] of Object.entries(counts)) {
+      const normalizedKey = key.toUpperCase();
+      updated[normalizedKey] = (updated[normalizedKey] || 0) + count;
+    }
+    localStorage.setItem(KEY_TYPED_COUNTS_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error("Failed to save key typed counts:", e);
+  }
+}
+
+/**
+ * Get user's weakest keys (A-Z, SPACE) sorted by highest error rate.
+ * Only returns keys that actually have some errors.
+ */
+export function getWeakestKeys(limit = 8): string[] {
+  const errors = getKeyErrors();
+  const typed = getKeyTypedCounts();
+
+  const validKeys = [
+    "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P",
+    "A", "S", "D", "F", "G", "H", "J", "K", "L",
+    "Z", "X", "C", "V", "B", "N", "M", "SPACE"
+  ];
+
+  const candidates = validKeys.filter((key) => (errors[key] || 0) > 0);
+
+  // Sort candidates by error rate (errors / typed_count) descending.
+  // If a key has errors but no typed count recorded, rate is 1.0 (100% error rate).
+  candidates.sort((a, b) => {
+    const errA = errors[a] || 0;
+    const typA = typed[a] || errA || 1;
+    const rateA = errA / typA;
+
+    const errB = errors[b] || 0;
+    const typB = typed[b] || errB || 1;
+    const rateB = errB / typB;
+
+    if (rateB !== rateA) {
+      return rateB - rateA; // Highest error rate first
+    }
+    return errB - errA; // Tie breaker: higher error count first
+  });
+
+  return candidates.slice(0, limit);
 }
