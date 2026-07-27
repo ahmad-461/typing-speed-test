@@ -9,6 +9,7 @@ export interface GamificationState {
   streakDays: number;
   unlockedAchievements: string[];
   streakResetOccurred: boolean; // Flag to indicate a reset happened
+  achievementUnlockDates: Record<string, number>; // Maps achievement ID to timestamp
 }
 
 export interface Achievement {
@@ -171,6 +172,7 @@ export function computeRetroactiveState(history: TestResult[]): GamificationStat
   let streakDays = 0;
   let lastTimestamp: number | null = null;
   const unlockedAchievements: Set<string> = new Set();
+  const achievementUnlockDates: Record<string, number> = {};
 
   let codeArenaCount = 0;
   let knowledgeQuestCount = 0;
@@ -206,23 +208,29 @@ export function computeRetroactiveState(history: TestResult[]): GamificationStat
     }
 
     // 4. Evaluate achievements
-    if (run.wpm >= 80) {
+    if (run.wpm >= 80 && !unlockedAchievements.has("speed_demon")) {
       unlockedAchievements.add("speed_demon");
+      achievementUnlockDates["speed_demon"] = run.timestamp;
     }
-    if (run.accuracy === 100) {
+    if (run.accuracy === 100 && !unlockedAchievements.has("perfect_accuracy")) {
       unlockedAchievements.add("perfect_accuracy");
+      achievementUnlockDates["perfect_accuracy"] = run.timestamp;
     }
-    if (streakDays >= 7) {
+    if (streakDays >= 7 && !unlockedAchievements.has("seven_day_streak")) {
       unlockedAchievements.add("seven_day_streak");
+      achievementUnlockDates["seven_day_streak"] = run.timestamp;
     }
-    if (codeArenaCount >= 10) {
+    if (codeArenaCount >= 10 && !unlockedAchievements.has("code_warrior")) {
       unlockedAchievements.add("code_warrior");
+      achievementUnlockDates["code_warrior"] = run.timestamp;
     }
-    if (knowledgeQuestCount >= 10) {
+    if (knowledgeQuestCount >= 10 && !unlockedAchievements.has("knowledge_master")) {
       unlockedAchievements.add("knowledge_master");
+      achievementUnlockDates["knowledge_master"] = run.timestamp;
     }
-    if (i + 1 >= 100) {
+    if (i + 1 >= 100 && !unlockedAchievements.has("typing_legend_badge")) {
       unlockedAchievements.add("typing_legend_badge");
+      achievementUnlockDates["typing_legend_badge"] = run.timestamp;
     }
   }
 
@@ -257,6 +265,7 @@ export function computeRetroactiveState(history: TestResult[]): GamificationStat
     streakDays: activeStreak,
     unlockedAchievements: Array.from(unlockedAchievements),
     streakResetOccurred,
+    achievementUnlockDates,
   };
 }
 
@@ -274,6 +283,7 @@ export function getGamificationState(): GamificationState {
       streakDays: 0,
       unlockedAchievements: [],
       streakResetOccurred: false,
+    achievementUnlockDates: {},
     };
   }
 

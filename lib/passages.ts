@@ -1,7 +1,7 @@
 export interface Passage {
   id: string;
   text: string;
-  category: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+  category: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 }
 
 export interface PassageBank {
@@ -77,6 +77,16 @@ export const passageBank: PassageBank = {
       category: "world_explorer",
       text: "Sailing down the winding Nile River at sunset reveals ancient stone temples and golden sand dunes that have stood for thousands of years.",
     },
+    {
+      id: "easy-sprint-1",
+      category: "speed_sprint",
+      text: "The rapid lightning strike illuminated the dark sky for a brief second.",
+    },
+    {
+      id: "easy-sprint-2",
+      category: "speed_sprint",
+      text: "Keep your eyes on the goal and run with absolute focus and determination.",
+    },
   ],
   medium: [
     {
@@ -139,6 +149,16 @@ export const passageBank: PassageBank = {
       category: "world_explorer",
       text: "Deep within the dense and misty Peruvian Andes lies Machu Picchu, the ancient stone citadel built by the Inca Empire. Surrounded by emerald peaks and sheer cliffs, the meticulously crafted terraces and granite temples remain a legendary testament to historical engineering, drawing curious travelers from every corner of the globe.",
     },
+    {
+      id: "medium-sprint-1",
+      category: "speed_sprint",
+      text: "Take a deep breath, coordinate your fingers, and hit every single key with mechanical precision and flow.",
+    },
+    {
+      id: "medium-sprint-2",
+      category: "speed_sprint",
+      text: "Speed is the natural consequence of consistent accuracy, rhythmic pacing, and maintaining absolute mental calmness under pressure.",
+    },
   ],
   hard: [
     {
@@ -200,6 +220,16 @@ export const passageBank: PassageBank = {
       id: "hard-world-2",
       category: "world_explorer",
       text: "The Galapagos archipelago, situated in the vast Pacific Ocean, stands as an extraordinary living laboratory of evolutionary biology and unique ecological diversity. Isolated from the South American mainland for millions of years, these volcanic islands allowed species to adapt to highly specific microclimates, giving rise to marine iguanas, giant tortoises, and flightless cormorants. When Charles Darwin visited these shores aboard the HMS Beagle, his keen observations of these specialized creatures laid the groundwork for his groundbreaking theory of natural selection.",
+    },
+    {
+      id: "hard-sprint-1",
+      category: "speed_sprint",
+      text: "Sprinting successfully requires an extraordinary combination of lightning-fast cognitive processing, flawless tactile execution, and a tranquil mindset.",
+    },
+    {
+      id: "hard-sprint-2",
+      category: "speed_sprint",
+      text: "Pushing your limits on this fast-paced mission will expose spatial inefficiencies and refine critical typing muscle memory.",
     },
   ],
 };

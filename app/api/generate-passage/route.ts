@@ -3,7 +3,7 @@ import { passageBank } from "../../../lib/passages";
 
 export const dynamic = "force-dynamic";
 
-type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     : "medium") as "easy" | "medium" | "hard";
 
   const rawCategory = searchParams.get("category") || "code_arena";
-  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill"].includes(rawCategory)
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill", "speed_sprint"].includes(rawCategory)
     ? rawCategory
     : "code_arena") as NewCategory;
 
@@ -42,7 +42,10 @@ export async function GET(request: NextRequest) {
   // Define word count guidelines
   let wordCountGuide = "approximately 60 words";
   let description = "standard narrative prose, moderate punctuation, and normal vocabulary";
-  if (difficulty === "easy") {
+  if (category === "speed_sprint") {
+    wordCountGuide = "approximately 15 to 20 words";
+    description = "extremely punchy, short, everyday words, very simple punctuation, and optimized for high-speed typing";
+  } else if (difficulty === "easy") {
     wordCountGuide = "approximately 30 words";
     description = "simple vocabulary, short and straightforward sentences, and minimal punctuation";
   } else if (difficulty === "hard") {
@@ -63,6 +66,8 @@ export async function GET(request: NextRequest) {
   } else if (category === "weak_key_drill") {
     const listStr = weakKeys ? weakKeys.split(",").join(", ") : "E, T, A, O, I, N";
     themeInstruction = `specifically designed as a typing drill to help the user practice these weak characters/letters: [${listStr}]. You MUST generate a natural, grammatically correct, and cohesive paragraph in plain English that frequently and density-wise utilizes these target letters: [${listStr}] significantly more often than normal prose. Avoid complex code syntax or symbols; keep it natural-reading.`;
+  } else if (category === "speed_sprint") {
+    themeInstruction = "themed around a fast, high-speed, general positive message or motivation. Keep the language neutral, active, punchy, and highly typeable with standard common words. Do not tie it to coding, science, or geography.";
   }
 
   const prompt = `Generate exactly ONE (1) distinct, high-quality typing test passage of ${wordCountGuide}. The passage must be a single coherent and natural paragraph of ${description} ${themeInstruction}, suitable for a general audience.

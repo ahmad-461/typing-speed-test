@@ -24,7 +24,7 @@ function ResultsScreenContent() {
   // Extract results stats from query parameters or provide polished mock fallback values
   const difficulty = searchParams.get("difficulty") || "medium";
   const category = searchParams.get("category") || "code_arena";
-  const categoryParsed = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer"].includes(category) ? category : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
+  const categoryParsed = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "speed_sprint", "weak_key_drill"].includes(category) ? category : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "speed_sprint" | "weak_key_drill";
 
   const wpm = searchParams.get("wpm") || "72";
   const accuracy = searchParams.get("accuracy") || "98";
@@ -237,7 +237,7 @@ function ResultsScreenContent() {
         wpm: parseInt(wpm, 10),
         accuracy: parseFloat(accuracy),
         difficulty: difficulty,
-        category: categoryParsed,
+        category: categoryParsed === "speed_sprint" || categoryParsed === "weak_key_drill" ? "custom" : categoryParsed,
       };
 
       const { error } = await supabase.from("scores").insert([insertPayload]);

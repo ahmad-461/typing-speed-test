@@ -7,11 +7,39 @@
    - Network:      http://192.168.0.2:3000
 
  ✓ Starting...
- ✓ Ready in 1493ms
+ ✓ Ready in 1458ms
  ○ Compiling / ...
- ✓ Compiled / in 7.9s
- GET / 200 in 9077ms
- GET / 200 in 216ms
+ ✓ Compiled / in 7.5s
+ GET / 200 in 8680ms
  ○ Compiling /test ...
- ✓ Compiled /test in 678ms
- GET /test?difficulty=easy&category=custom&ghost=false 200 in 787ms
+ ✓ Compiled /test in 638ms
+ GET /test?difficulty=easy&category=speed_sprint 200 in 758ms
+ ○ Compiling /api/generate-passage ...
+ ✓ Compiled /api/generate-passage in 634ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=easy&category=speed_sprint 200 in 1063ms
+ GET /api/generate-passage?difficulty=easy&category=speed_sprint 200 in 267ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET / 200 in 227ms
+ GET /test?difficulty=easy&category=speed_sprint 200 in 142ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=easy&category=speed_sprint 200 in 267ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=easy&category=speed_sprint 200 in 320ms
+ GET / 200 in 275ms
+ GET /test?difficulty=easy&category=speed_sprint 200 in 156ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=easy&category=speed_sprint 200 in 297ms
+GEMINI_API_KEY is not defined. Falling back to static passages.
+ GET /api/generate-passage?difficulty=easy&category=speed_sprint 200 in 295ms
+ ○ Compiling /results ...
+ ✓ Compiled /results in 1533ms
+ GET /results?difficulty=easy&category=speed_sprint&wpm=1&accuracy=12&time=20&consistency=0 200 in 1651ms
+ ✓ Compiled /api/coach-feedback in 204ms
+GEMINI_API_KEY is not defined. Falling back to local coach feedback.
+ POST /api/coach-feedback 200 in 508ms
+GEMINI_API_KEY is not defined. Falling back to local coach feedback.
+ POST /api/coach-feedback 200 in 510ms
+ ○ Compiling /history ...
+ ✓ Compiled /history in 599ms
+ GET /history 200 in 764ms

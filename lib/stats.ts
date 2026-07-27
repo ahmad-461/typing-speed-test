@@ -3,7 +3,7 @@ export type TestResult = {
   wpm: number;
   accuracy: number;
   difficulty: "easy" | "medium" | "hard" | "custom";
-  category?: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "programming" | "general_knowledge" | "custom";
+  category?: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "speed_sprint" | "weak_key_drill" | "programming" | "general_knowledge" | "custom";
   consistency?: number;
   timeTaken: number; // in seconds
   timestamp: number; // millisecond timestamp

@@ -45,6 +45,36 @@ export default function HistoryPage() {
   const pbMedium = useMemo(() => getPersonalBest("medium", history), [history]);
   const pbHard = useMemo(() => getPersonalBest("hard", history), [history]);
 
+  // Mode breakdown stats calculations
+  const modeBreakdown = useMemo(() => {
+    const modesList: { value: string; label: string; icon: string }[] = [
+      { value: "code_arena", label: "Code Arena", icon: "💻" },
+      { value: "knowledge_quest", label: "Knowledge Quest", icon: "🧠" },
+      { value: "ai_lab", label: "AI Lab", icon: "🤖" },
+      { value: "world_explorer", label: "World Explorer", icon: "🌍" },
+      { value: "speed_sprint", label: "Speed Sprint", icon: "⚡" },
+      { value: "weak_key_drill", label: "Weak-Key Drill", icon: "🎯" },
+    ];
+
+    return modesList.map((m) => {
+      // Support legacy category naming mapping as well
+      const runs = history.filter((r) => {
+        if (m.value === "code_arena") return r.category === "code_arena" || r.category === "programming";
+        if (m.value === "knowledge_quest") return r.category === "knowledge_quest" || r.category === "general_knowledge";
+        return r.category === m.value;
+      });
+
+      const count = runs.length;
+      const averageWPM = count > 0 ? Math.round(runs.reduce((sum, r) => sum + r.wpm, 0) / count) : 0;
+
+      return {
+        ...m,
+        count,
+        averageWPM,
+      };
+    });
+  }, [history]);
+
   // Last 20 tests for the chart, in chronological order (left to right)
   const chartData = useMemo(() => {
     return [...history].slice(0, 20).reverse();
@@ -219,6 +249,52 @@ export default function HistoryPage() {
     );
   }, [chartData]);
 
+  // Calculate locked achievements details
+  const lockedAchievementsDetails = useMemo(() => {
+    if (!gamification) return [];
+
+    const currentStreak = gamification.streakDays || 0;
+    const codeArenaCount = history.filter((r) => r.category === "code_arena" || r.category === "programming").length;
+    const knowledgeQuestCount = history.filter((r) => r.category === "knowledge_quest" || r.category === "general_knowledge").length;
+    const totalTests = history.length;
+    const maxWpm = history.length > 0 ? Math.max(...history.map((r) => r.wpm), 0) : 0;
+    const hasPerfect = history.some((r) => r.accuracy === 100);
+
+    return ACHIEVEMENTS.map((badge) => {
+      const isUnlocked = gamification.unlockedAchievements.includes(badge.id);
+      let progressString = "";
+      let percentage = 0;
+
+      if (badge.id === "speed_demon") {
+        progressString = `Best: ${maxWpm} / 80 WPM`;
+        percentage = Math.min(100, Math.round((maxWpm / 80) * 100));
+      } else if (badge.id === "perfect_accuracy") {
+        progressString = hasPerfect ? "Achieved" : "Not yet achieved (100% required)";
+        percentage = hasPerfect ? 100 : 0;
+      } else if (badge.id === "seven_day_streak") {
+        progressString = `Streak: ${currentStreak} / 7 days`;
+        percentage = Math.min(100, Math.round((currentStreak / 7) * 100));
+      } else if (badge.id === "code_warrior") {
+        progressString = `Completed: ${codeArenaCount} / 10 tests`;
+        percentage = Math.min(100, Math.round((codeArenaCount / 10) * 100));
+      } else if (badge.id === "knowledge_master") {
+        progressString = `Completed: ${knowledgeQuestCount} / 10 tests`;
+        percentage = Math.min(100, Math.round((knowledgeQuestCount / 10) * 100));
+      } else if (badge.id === "typing_legend_badge") {
+        progressString = `Completed: ${totalTests} / 100 tests`;
+        percentage = Math.min(100, Math.round((totalTests / 100) * 100));
+      }
+
+      return {
+        ...badge,
+        isUnlocked,
+        progressString,
+        percentage,
+        unlockTimestamp: gamification.achievementUnlockDates[badge.id] || null,
+      };
+    });
+  }, [gamification, history]);
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-charcoal-900 flex items-center justify-center">
@@ -228,500 +304,516 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
-      <main className="flex-grow flex flex-col w-full">
-        {/* Page Title */}
-        <div className="text-center space-y-3 mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-charcoal-700 bg-charcoal-800 text-xs font-mono text-slate-400 tracking-wider uppercase">
-            📊 Personal Dashboard
+    <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 animate-fade-in space-y-8">
+
+      {/* BRAND NEW RECRUIT PLAYER CARD SUMMARY (Top profile header) */}
+      <div className="bg-charcoal-800 border-2 border-charcoal-700 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-electric-500 via-sky-500 to-emerald-500" />
+
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl border-2 border-electric-500/40 bg-electric-500/10 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+            {history.length > 0 ? "⚡" : "🔰"}
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-none">
-            Your Performance <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">History</span>
-          </h1>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
-            Analyze your speed progression, view personal records, and race against your past ghost.
-          </p>
+
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-mono font-bold text-electric-400 bg-electric-500/10 px-2 py-0.5 rounded border border-electric-500/20 uppercase tracking-widest">
+                PLAYER RECORD SHEET
+              </span>
+              {history.length === 0 && (
+                <span className="text-[9px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 uppercase tracking-widest">
+                  NEW RECRUIT
+                </span>
+              )}
+            </div>
+            <h1 className="text-2xl font-black text-white uppercase tracking-tight">
+              {gamification ? `${gamification.levelTitle} : Level ${gamification.currentLevel}` : "Beginner : Level 1"}
+            </h1>
+            <p className="text-xs text-slate-400 font-mono">
+              STATUS: {history.length > 0 ? `COMMITTED ${history.length} TESTS` : "INITIALIZING SYSTEMS"}
+            </p>
+          </div>
         </div>
 
-        {history.length === 0 ? (
-          /* Empty State for first-time users */
-          <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-2xl p-12 text-center space-y-6 max-w-xl mx-auto shadow-2xl">
-            <div className="w-16 h-16 rounded-full bg-electric-500/5 border border-electric-500/20 flex items-center justify-center mx-auto text-3xl">
-              ⌨️
+        {/* Profile metrics panel inside Player card */}
+        <div className="w-full md:w-auto grid grid-cols-3 gap-3 md:flex md:items-center">
+          <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl px-4 py-2 text-center min-w-[80px]">
+            <span className="text-[9px] font-mono text-slate-500 uppercase block tracking-wider mb-0.5">Tests</span>
+            <span className="text-base font-extrabold text-white font-mono leading-none">{history.length}</span>
+          </div>
+          <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl px-4 py-2 text-center min-w-[80px]">
+            <span className="text-[9px] font-mono text-slate-500 uppercase block tracking-wider mb-0.5">Streak</span>
+            <span className="text-base font-extrabold text-amber-500 font-mono leading-none flex items-center justify-center gap-1">
+              <span>🔥</span>
+              <span>{gamification ? gamification.streakDays : 0}</span>
+            </span>
+          </div>
+          <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl px-4 py-2 text-center min-w-[80px]">
+            <span className="text-[9px] font-mono text-slate-500 uppercase block tracking-wider mb-0.5">Total XP</span>
+            <span className="text-base font-extrabold text-sky-400 font-mono leading-none">{gamification ? gamification.totalXp.toLocaleString() : 0}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Retroactive XP bar wrapper within player card structure */}
+      {gamification && gamification.nextLevelXp && (
+        <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-2xl p-5 sm:p-6 shadow-xl space-y-3">
+          <div className="flex justify-between items-baseline text-xs font-mono text-slate-400">
+            <span>LEVEL PROGRESSION TRACKING</span>
+            <span>{gamification.nextLevelXp - gamification.totalXp} XP TO LEVEL UP</span>
+          </div>
+          <div className="w-full h-3 bg-charcoal-900 rounded-full border border-charcoal-750 overflow-hidden relative">
+            <div
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.max(
+                    0,
+                    ((gamification.totalXp - gamification.prevLevelXp) /
+                      (gamification.nextLevelXp - gamification.prevLevelXp)) *
+                      100
+                  )
+                )}%`,
+              }}
+              className="h-full bg-gradient-to-r from-electric-500 to-sky-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(59,130,246,0.4)]"
+            />
+          </div>
+          <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">
+            <span>{gamification.prevLevelXp} XP</span>
+            <span>
+              {Math.round(
+                ((gamification.totalXp - gamification.prevLevelXp) /
+                  (gamification.nextLevelXp - gamification.prevLevelXp)) *
+                  100
+              )}
+              % Complete
+            </span>
+            <span>{gamification.nextLevelXp} XP</span>
+          </div>
+        </div>
+      )}
+
+      {history.length === 0 ? (
+        /* Empty State for first-time users */
+        <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-2xl p-12 text-center space-y-6 shadow-2xl">
+          <div className="w-16 h-16 rounded-full bg-electric-500/5 border border-electric-500/20 flex items-center justify-center mx-auto text-3xl">
+            ⌨️
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-white tracking-tight">No Typing History Logged</h2>
+            <p className="text-sm text-slate-400 font-sans leading-relaxed max-w-md mx-auto">
+              Welcome recruit! Initialize your local metrics by completing your first typing test mission. Once complete, your speed progression trends, weak-key heatmap, and achievements will unlock.
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* Main Dashboard Content elements */
+        <div className="space-y-8">
+
+          {/* Summary Stats Cards Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                Average Speed
+              </span>
+              <div className="text-2xl font-extrabold text-electric-400 font-mono leading-none">
+                {summary.avgWpm} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white tracking-tight">No Typing History Found</h2>
-              <p className="text-sm text-slate-400 font-sans leading-relaxed">
-                You haven&apos;t completed any speed typing tests yet on this machine. Take your first test to initialize local tracking metrics and unlock the performance charts.
-              </p>
+
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                Average Accuracy
+              </span>
+              <div className="text-2xl font-extrabold text-emerald-400 font-mono leading-none">
+                {summary.avgAccuracy}%
+              </div>
+            </div>
+
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+                Avg Consistency
+              </span>
+              <div className="text-2xl font-extrabold text-sky-400 font-mono leading-none">
+                {summary.avgConsistency}%
+              </div>
+            </div>
+
+            <div className="bg-charcoal-800 border border-electric-500/30 rounded-xl p-5 relative overflow-hidden group shadow-[0_0_12px_rgba(59,130,246,0.03)]">
+              <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider block font-semibold mb-1">
+                All-time Best
+              </span>
+              <div className="text-2xl font-extrabold text-white font-mono leading-none">
+                {pbOverall ? pbOverall.wpm : 0} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
+              </div>
             </div>
           </div>
-        ) : (
-          /* Main Dashboard View */
-          <div className="space-y-8">
-            {/* Gamification Progress Bar Card */}
-            {gamification && (
-              <div className="bg-charcoal-800 border-2 border-[#3B82F6]/30 rounded-2xl p-6 shadow-xl space-y-4 relative overflow-hidden animate-fade-in">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-400 to-electric-600" />
 
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono text-electric-400 uppercase tracking-widest font-extrabold block">
-                      {"// RECRUIT PROGRESSION TRACKING"}
-                    </span>
-                    <h2 className="text-xl font-extrabold text-white">
-                      {gamification.levelTitle} <span className="text-sm font-mono text-slate-500">(Level {gamification.currentLevel})</span>
-                    </h2>
-                  </div>
-
-                  <div className="text-left sm:text-right font-mono">
-                    <div className="text-sm font-bold text-white">
-                      {gamification.totalXp.toLocaleString()} XP
-                    </div>
-                    {gamification.nextLevelXp ? (
-                      <div className="text-[10px] text-slate-400">
-                        {gamification.nextLevelXp - gamification.totalXp} XP to next level
-                      </div>
-                    ) : (
-                      <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-                        Maximum Level Reached
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Progress Bar Container */}
-                {gamification.nextLevelXp && (
-                  <div className="space-y-1.5">
-                    <div className="w-full h-3 bg-charcoal-900 rounded-full border border-charcoal-700 overflow-hidden relative">
-                      <div
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            Math.max(
-                              0,
-                              ((gamification.totalXp - gamification.prevLevelXp) /
-                                (gamification.nextLevelXp - gamification.prevLevelXp)) *
-                                100
-                            )
-                          )}%`,
-                        }}
-                        className="h-full bg-electric-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                      />
-                    </div>
-                    <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                      <span>{gamification.prevLevelXp} XP</span>
-                      <span>
-                        {Math.round(
-                          ((gamification.totalXp - gamification.prevLevelXp) /
-                            (gamification.nextLevelXp - gamification.prevLevelXp)) *
-                            100
-                        )}
-                        % Complete
-                      </span>
-                      <span>{gamification.nextLevelXp} XP</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Summary Metrics Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-              {/* Metric 1: Total Tests */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
-                  Tests Completed
-                </span>
-                <div className="text-3xl font-extrabold text-white font-mono leading-none">
-                  {summary.totalTests}
-                </div>
-                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
-                  Count
-                </div>
-              </div>
-
-              {/* Metric 2: Avg WPM */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
-                  Average Speed
-                </span>
-                <div className="text-3xl font-extrabold text-electric-400 font-mono leading-none">
-                  {summary.avgWpm} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
-                </div>
-                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
-                  Avg
-                </div>
-              </div>
-
-              {/* Metric 3: Avg Accuracy */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
-                  Average Accuracy
-                </span>
-                <div className="text-3xl font-extrabold text-emerald-400 font-mono leading-none">
-                  {summary.avgAccuracy}%
-                </div>
-                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
-                  Acc
-                </div>
-              </div>
-
-              {/* Metric 4: Avg Consistency */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
-                  Avg Consistency
-                </span>
-                <div className="text-3xl font-extrabold text-sky-400 font-mono leading-none">
-                  {summary.avgConsistency}%
-                </div>
-                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
-                  Pace
-                </div>
-              </div>
-
-              {/* Metric 5: All-time Personal Best */}
-              <div className="bg-charcoal-800 border border-electric-500/40 rounded-xl p-5 relative overflow-hidden group shadow-[0_0_12px_rgba(59,130,246,0.05)] col-span-2 sm:col-span-1">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider block font-semibold">
-                    Personal Best
-                  </span>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-electric-500 text-white leading-none">
-                    PB
-                  </span>
-                </div>
-                <div className="text-3xl font-extrabold text-white font-mono leading-none">
-                  {pbOverall ? pbOverall.wpm : 0} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
-                </div>
-                {pbOverall && (
-                  <div className="text-[9px] font-mono text-slate-500 mt-1 uppercase">
-                    On {pbOverall.difficulty}
-                  </div>
-                )}
-              </div>
+          {/* MODE BREAKDOWN SECTION */}
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+              <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <span>📊</span> Mode Performance Breakdown
+              </h2>
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                6 operational practice vectors
+              </span>
             </div>
 
-            {/* Weak-Key Heatmap Keyboard Visualization */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 pt-1">
+              {modeBreakdown.map((item) => (
+                <div key={item.value} className="bg-charcoal-900/50 border border-charcoal-750 rounded-xl p-4 flex flex-col justify-between h-[110px] transition-all hover:border-charcoal-600">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl leading-none">{item.icon}</span>
+                    <span className="text-[9px] font-mono text-slate-500 bg-charcoal-850 px-1.5 py-0.5 rounded border border-charcoal-750 uppercase">
+                      {item.count} {item.count === 1 ? "run" : "runs"}
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] font-mono text-slate-400 block uppercase truncate">
+                      {item.label}
+                    </span>
+                    <div className="text-lg font-black text-white font-mono leading-none">
+                      {item.averageWPM > 0 ? `${item.averageWPM}` : "—"}
+                      {item.averageWPM > 0 && <span className="text-[10px] font-normal text-slate-500 font-mono ml-0.5">WPM</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CELEBRATORY UNLOCKED ACHIEVEMENTS OVERHAUL */}
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4 animate-fade-in">
+            <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+              <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <span>🏆</span> Unlockable Player Badges
+              </h2>
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                {gamification ? gamification.unlockedAchievements.length : 0} / {ACHIEVEMENTS.length} Unlocked
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 pt-2">
+              {lockedAchievementsDetails.map((badge) => {
+                const isUnlocked = badge.isUnlocked;
+
+                return (
+                  <div
+                    key={badge.id}
+                    className={`p-5 rounded-2xl border flex flex-col justify-between gap-4 transition-all duration-300 relative group select-none min-h-[160px] ${
+                      isUnlocked
+                        ? "border-[#3B82F6]/40 bg-electric-500/[0.04] text-white shadow-[0_0_20px_rgba(59,130,246,0.06)] scale-[1.01]"
+                        : "border-charcoal-700/50 bg-charcoal-900/10 text-slate-500 opacity-70"
+                    }`}
+                  >
+                    <div className="flex gap-3 items-start justify-between">
+                      {/* Custom visual vector indicator based on achievement ID */}
+                      <div className={`w-12 h-12 rounded-xl border flex items-center justify-center flex-shrink-0 transition-all ${
+                        isUnlocked
+                          ? "border-[#3B82F6]/50 bg-[#3B82F6]/15 text-[#3B82F6] shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                          : "border-charcoal-700 bg-charcoal-800/40 text-slate-600"
+                      }`}>
+                        {badge.id === "speed_demon" ? (
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        ) : badge.id === "perfect_accuracy" ? (
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        ) : badge.id === "seven_day_streak" ? (
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                          </svg>
+                        ) : badge.id === "code_warrior" ? (
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                        ) : badge.id === "knowledge_master" ? (
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                        ) : (
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* Locked/Unlocked status text overlay */}
+                      <div className="text-right">
+                        {isUnlocked ? (
+                          <span className="text-[9px] font-mono text-[#3B82F6] font-bold tracking-widest uppercase bg-[#3B82F6]/10 px-2 py-0.5 rounded border border-[#3B82F6]/20">
+                            UNLOCKED
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-mono text-slate-500 font-bold tracking-widest uppercase bg-charcoal-900 px-2 py-0.5 rounded border border-charcoal-700 flex items-center gap-1">
+                            🔒 LOCKED
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Description text */}
+                    <div className="space-y-1">
+                      <h4 className={`text-xs font-extrabold font-sans tracking-wide uppercase transition-colors ${
+                        isUnlocked ? "text-white" : "text-slate-500"
+                      }`}>
+                        {badge.title}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 leading-normal font-sans">
+                        {badge.description}
+                      </p>
+                    </div>
+
+                    {/* Progress tracking display */}
+                    <div className="border-t border-charcoal-750/50 pt-2 flex flex-col gap-1 z-10 font-mono text-[9px] uppercase">
+                      <div className="flex justify-between text-slate-400">
+                        <span>Progress Criteria</span>
+                        <span>{badge.percentage}%</span>
+                      </div>
+                      <div className="w-full h-1 bg-charcoal-900 rounded-full overflow-hidden">
+                        <div
+                          style={{ width: `${badge.percentage}%` }}
+                          className={`h-full rounded-full ${isUnlocked ? "bg-electric-500" : "bg-charcoal-700"}`}
+                        />
+                      </div>
+                      <span className="text-slate-500 mt-0.5 block tracking-wide truncate">
+                        {isUnlocked && badge.unlockTimestamp
+                          ? `Unlocked on ${formatDateShort(badge.unlockTimestamp)}`
+                          : badge.progressString}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Weak-Key Heatmap Keyboard Visualization */}
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+              <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <span>⌨️</span> Weak-Key Error Map
+              </h2>
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                Target expected keys causing mistakes
+              </span>
+            </div>
+
+            <div className="py-4 space-y-4">
+              <div className="flex flex-col items-center gap-2 font-mono">
+                {qwertyRows.map((row, rowIdx) => (
+                  <div key={rowIdx} className="flex gap-1.5 justify-center w-full">
+                    {row.map((key) => {
+                      const isSpace = key === "SPACE";
+                      const count = keyErrors[key] || 0;
+                      const intensity = count / maxErrorCount;
+
+                      const bgStyle = count > 0
+                        ? {
+                            backgroundColor: `rgba(59, 130, 246, ${0.1 + intensity * 0.9})`,
+                            borderColor: `rgba(59, 130, 246, ${0.3 + intensity * 0.7})`,
+                            color: `#FFFFFF`,
+                            boxShadow: intensity > 0.5 ? `0 0 10px rgba(59, 130, 246, ${intensity * 0.25})` : "none",
+                          }
+                        : {
+                            backgroundColor: "rgba(15, 23, 42, 0.4)",
+                            borderColor: "rgba(51, 65, 85, 0.3)",
+                            color: "rgba(148, 163, 184, 0.5)",
+                          };
+
+                      return (
+                        <div
+                          key={key}
+                          style={bgStyle}
+                          className={`flex flex-col items-center justify-center rounded-lg border font-bold text-[10px] sm:text-xs transition-all duration-200 uppercase relative ${
+                            isSpace ? "w-36 sm:w-56 h-9" : "w-8 h-8 sm:w-10 sm:h-10"
+                          }`}
+                          title={`${key}: ${count} mistakes`}
+                        >
+                          <span>{isSpace ? "Spacebar" : key}</span>
+                          {count > 0 && (
+                            <span className="absolute bottom-0.5 right-1 text-[8px] font-normal opacity-70">
+                              {count}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between mt-4 text-[10px] font-mono text-slate-500 w-full max-w-sm mx-auto">
+                <span>Low mistake frequency</span>
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/30" />
+                  <div className="w-3 h-3 rounded bg-blue-500/40 border border-blue-500/50" />
+                  <div className="w-3 h-3 rounded bg-blue-500/70 border border-blue-500/70" />
+                  <div className="w-3 h-3 rounded bg-blue-500/90 border border-blue-500/95 shadow-[0_0_8px_rgba(59,130,246,0.2)]" />
+                </div>
+                <span>High mistake frequency</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Difficulty Personal Records (PBs) Segment */}
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+            <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 border-b border-charcoal-700 pb-3">
+              <span>🏆</span> difficulty personal bests
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+              {/* Easy PB */}
+              <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider font-bold">
+                    Easy
+                  </span>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {pbEasy ? `${formatDateShort(pbEasy.timestamp)} • ${pbEasy.accuracy}% acc` : "No completed runs"}
+                  </div>
+                </div>
+                <div className="text-2xl font-extrabold text-white font-mono">
+                  {pbEasy ? pbEasy.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                </div>
+              </div>
+
+              {/* Medium PB */}
+              <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider font-bold">
+                    Medium
+                  </span>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {pbMedium ? `${formatDateShort(pbMedium.timestamp)} • ${pbMedium.accuracy}% acc` : "No completed runs"}
+                  </div>
+                </div>
+                <div className="text-2xl font-extrabold text-white font-mono">
+                  {pbMedium ? pbMedium.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                </div>
+              </div>
+
+              {/* Hard PB */}
+              <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-mono text-rose-400 uppercase tracking-wider font-bold">
+                    Hard
+                  </span>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {pbHard ? `${formatDateShort(pbHard.timestamp)} • ${pbHard.accuracy}% acc` : "No completed runs"}
+                  </div>
+                </div>
+                <div className="text-2xl font-extrabold text-white font-mono">
+                  {pbHard ? pbHard.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Over Time Chart Section */}
+          {chartData.length >= 2 && (
             <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
                 <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                  <span>⌨️</span> Weak-Key Error Map
+                  <span>📈</span> typing speed progression (WPM)
                 </h2>
                 <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                  Target expected keys causing mistakes
+                  showing last {chartData.length} tests
                 </span>
               </div>
-
-              {history.length < 3 ? (
-                <div className="p-8 text-center text-xs font-mono text-slate-500">
-                  Complete a few more tests to see your weak-key map
-                </div>
-              ) : (
-                <div className="py-4 space-y-4">
-                  <div className="flex flex-col items-center gap-2 font-mono">
-                    {qwertyRows.map((row, rowIdx) => (
-                      <div key={rowIdx} className="flex gap-1.5 justify-center w-full">
-                        {row.map((key) => {
-                          const isSpace = key === "SPACE";
-                          const count = keyErrors[key] || 0;
-                          const intensity = count / maxErrorCount;
-
-                          const bgStyle = count > 0
-                            ? {
-                                backgroundColor: `rgba(59, 130, 246, ${0.1 + intensity * 0.9})`,
-                                borderColor: `rgba(59, 130, 246, ${0.3 + intensity * 0.7})`,
-                                color: `#FFFFFF`,
-                                boxShadow: intensity > 0.5 ? `0 0 10px rgba(59, 130, 246, ${intensity * 0.25})` : "none",
-                              }
-                            : {
-                                backgroundColor: "rgba(15, 23, 42, 0.4)",
-                                borderColor: "rgba(51, 65, 85, 0.3)",
-                                color: "rgba(148, 163, 184, 0.5)",
-                              };
-
-                          return (
-                            <div
-                              key={key}
-                              style={bgStyle}
-                              className={`flex flex-col items-center justify-center rounded-lg border font-bold text-[10px] sm:text-xs transition-all duration-200 uppercase relative ${
-                                isSpace ? "w-36 sm:w-56 h-9" : "w-8 h-8 sm:w-10 sm:h-10"
-                              }`}
-                              title={`${key}: ${count} mistakes`}
-                            >
-                              <span>{isSpace ? "Spacebar" : key}</span>
-                              {count > 0 && (
-                                <span className="absolute bottom-0.5 right-1 text-[8px] font-normal opacity-70">
-                                  {count}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between mt-4 text-[10px] font-mono text-slate-500 w-full max-w-sm mx-auto">
-                    <span>Low mistake frequency</span>
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/30" />
-                      <div className="w-3 h-3 rounded bg-blue-500/40 border border-blue-500/50" />
-                      <div className="w-3 h-3 rounded bg-blue-500/70 border border-blue-500/70" />
-                      <div className="w-3 h-3 rounded bg-blue-500/90 border border-blue-500/95 shadow-[0_0_8px_rgba(59,130,246,0.2)]" />
-                    </div>
-                    <span>High mistake frequency</span>
-                  </div>
-                </div>
-              )}
+              <div className="py-2">
+                {svgChart}
+              </div>
             </div>
+          )}
 
-            {/* Difficulty Personal Records (PBs) Segment */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
-              <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 border-b border-charcoal-700 pb-3">
-                <span>🏆</span> difficulty personal bests
+          {/* History Table Log */}
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-5 border-b border-charcoal-700 flex justify-between items-center bg-charcoal-900/10">
+              <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <span>⏱️</span> chronological test log
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                {/* Easy PB */}
-                <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider font-bold">
-                      Easy
-                    </span>
-                    <div className="text-xs text-slate-400 mt-0.5">
-                      {pbEasy ? `${formatDateShort(pbEasy.timestamp)} • ${pbEasy.accuracy}% acc` : "No completed runs"}
-                    </div>
-                  </div>
-                  <div className="text-2xl font-extrabold text-white font-mono">
-                    {pbEasy ? pbEasy.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
-                  </div>
-                </div>
-
-                {/* Medium PB */}
-                <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider font-bold">
-                      Medium
-                    </span>
-                    <div className="text-xs text-slate-400 mt-0.5">
-                      {pbMedium ? `${formatDateShort(pbMedium.timestamp)} • ${pbMedium.accuracy}% acc` : "No completed runs"}
-                    </div>
-                  </div>
-                  <div className="text-2xl font-extrabold text-white font-mono">
-                    {pbMedium ? pbMedium.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
-                  </div>
-                </div>
-
-                {/* Hard PB */}
-                <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono text-rose-400 uppercase tracking-wider font-bold">
-                      Hard
-                    </span>
-                    <div className="text-xs text-slate-400 mt-0.5">
-                      {pbHard ? `${formatDateShort(pbHard.timestamp)} • ${pbHard.accuracy}% acc` : "No completed runs"}
-                    </div>
-                  </div>
-                  <div className="text-2xl font-extrabold text-white font-mono">
-                    {pbHard ? pbHard.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
-                  </div>
-                </div>
-              </div>
+              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                Total logged: {history.length}
+              </span>
             </div>
 
-            {/* Performance Over Time Chart Section */}
-            {chartData.length >= 2 && (
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <span>📈</span> typing speed progression (WPM)
-                  </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                    showing last {chartData.length} tests
-                  </span>
-                </div>
-                <div className="py-2">
-                  {svgChart}
-                </div>
-              </div>
-            )}
-
-            {/* Unlocked Achievements Section */}
-            {gamification && (
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <span>🏆</span> Unlockable Achievements
-                  </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                    {gamification.unlockedAchievements.length} / {ACHIEVEMENTS.length} Unlocked
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                  {ACHIEVEMENTS.map((badge) => {
-                    const isUnlocked = gamification.unlockedAchievements.includes(badge.id);
-
-                    // Render custom simple inline vector shapes for minimal premium look
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-charcoal-700 bg-charcoal-900/30 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
+                    <th className="py-3 px-6 w-20">Index</th>
+                    <th className="py-3 px-6">Date &amp; Time</th>
+                    <th className="py-3 px-6 text-center w-24">WPM</th>
+                    <th className="py-3 px-6 text-center w-28">Accuracy</th>
+                    <th className="py-3 px-6 text-center w-28">Consistency</th>
+                    <th className="py-3 px-6 text-center w-28">Difficulty</th>
+                    <th className="py-3 px-6 text-center w-28">Duration</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-charcoal-700/40 text-sm">
+                  {history.map((item, idx) => {
+                    const numberIndex = history.length - idx;
                     return (
-                      <div
-                        key={badge.id}
-                        className={`p-4 rounded-xl border flex gap-3.5 transition-all duration-300 relative group select-none ${
-                          isUnlocked
-                            ? "border-[#3B82F6]/30 bg-electric-500/[0.03] text-white shadow-[0_0_12px_rgba(59,130,246,0.03)]"
-                            : "border-charcoal-700/50 bg-charcoal-900/10 text-slate-500"
-                        }`}
-                      >
-                        {/* Custom visual vector indicator based on achievement ID */}
-                        <div className={`w-11 h-11 rounded-lg border flex items-center justify-center flex-shrink-0 transition-colors ${
-                          isUnlocked
-                            ? "border-[#3B82F6]/40 bg-[#3B82F6]/10 text-[#3B82F6]"
-                            : "border-charcoal-700 bg-charcoal-800/40 text-slate-600"
-                        }`}>
-                          {badge.id === "speed_demon" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                          ) : badge.id === "perfect_accuracy" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          ) : badge.id === "seven_day_streak" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                            </svg>
-                          ) : badge.id === "code_warrior" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                            </svg>
-                          ) : badge.id === "knowledge_master" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                            </svg>
-                          )}
-                        </div>
+                      <tr key={item.id} className="hover:bg-charcoal-900/10 transition-colors">
+                        {/* Index */}
+                        <td className="py-3 px-6 font-mono text-xs text-slate-500 font-bold">
+                          #{numberIndex.toString().padStart(2, "0")}
+                        </td>
 
-                        {/* Description block */}
-                        <div className="flex-grow space-y-0.5">
-                          <h4 className={`text-xs font-bold font-sans tracking-wide uppercase transition-colors ${
-                            isUnlocked ? "text-white" : "text-slate-500"
-                          }`}>
-                            {badge.title}
-                          </h4>
-                          <p className="text-[10px] text-slate-500 leading-normal font-sans">
-                            {badge.description}
-                          </p>
-                        </div>
+                        {/* Date and Time */}
+                        <td className="py-3 px-6 font-mono text-slate-300 whitespace-nowrap">
+                          {formatDateLong(item.timestamp)}
+                        </td>
 
-                        {/* Top-right lock/unlock overlay badge */}
-                        <div className="absolute top-3 right-3">
-                          {isUnlocked ? (
-                            <span className="text-[9px] font-mono text-[#3B82F6]/80 font-bold tracking-widest uppercase">
-                              UNLOCKED
-                            </span>
-                          ) : (
-                            <div className="text-slate-600 flex items-center" title={badge.condition}>
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                        {/* WPM */}
+                        <td className="py-3 px-6 text-center font-mono font-extrabold text-white text-base">
+                          {item.wpm}
+                        </td>
+
+                        {/* Accuracy */}
+                        <td className="py-3 px-6 text-center font-mono font-bold text-emerald-400">
+                          {item.accuracy}%
+                        </td>
+
+                        {/* Consistency */}
+                        <td className="py-3 px-6 text-center font-mono font-bold text-sky-400">
+                          {typeof item.consistency === "number" ? `${item.consistency}%` : "—"}
+                        </td>
+
+                        {/* Difficulty */}
+                        <td className="py-3 px-6 text-center">
+                          <span
+                            className={`inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                              item.difficulty === "easy"
+                                ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
+                                : item.difficulty === "medium"
+                                ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
+                                : item.difficulty === "hard"
+                                ? "text-rose-400 bg-rose-500/5 border-rose-500/20"
+                                : "text-sky-400 bg-sky-500/5 border-sky-500/20"
+                            }`}
+                          >
+                            {item.difficulty}
+                          </span>
+                        </td>
+
+                        {/* Duration */}
+                        <td className="py-3 px-6 text-center font-mono text-xs text-slate-400">
+                          {item.timeTaken}s
+                        </td>
+                      </tr>
                     );
                   })}
-                </div>
-              </div>
-            )}
-
-            {/* History Table Log */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl overflow-hidden shadow-xl">
-              <div className="p-5 border-b border-charcoal-700 flex justify-between items-center bg-charcoal-900/10">
-                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                  <span>⏱️</span> chronological test log
-                </h2>
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                  Total logged: {history.length}
-                </span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-charcoal-700 bg-charcoal-900/30 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
-                      <th className="py-3 px-6 w-20">Index</th>
-                      <th className="py-3 px-6">Date &amp; Time</th>
-                      <th className="py-3 px-6 text-center w-24">WPM</th>
-                      <th className="py-3 px-6 text-center w-28">Accuracy</th>
-                      <th className="py-3 px-6 text-center w-28">Consistency</th>
-                      <th className="py-3 px-6 text-center w-28">Difficulty</th>
-                      <th className="py-3 px-6 text-center w-28">Duration</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-charcoal-700/40 text-sm">
-                    {history.map((item, idx) => {
-                      const numberIndex = history.length - idx;
-                      return (
-                        <tr key={item.id} className="hover:bg-charcoal-900/10 transition-colors">
-                          {/* Index */}
-                          <td className="py-3 px-6 font-mono text-xs text-slate-500 font-bold">
-                            #{numberIndex.toString().padStart(2, "0")}
-                          </td>
-
-                          {/* Date and Time */}
-                          <td className="py-3 px-6 font-mono text-slate-300 whitespace-nowrap">
-                            {formatDateLong(item.timestamp)}
-                          </td>
-
-                          {/* WPM */}
-                          <td className="py-3 px-6 text-center font-mono font-extrabold text-white text-base">
-                            {item.wpm}
-                          </td>
-
-                          {/* Accuracy */}
-                          <td className="py-3 px-6 text-center font-mono font-bold text-emerald-400">
-                            {item.accuracy}%
-                          </td>
-
-                          {/* Consistency */}
-                          <td className="py-3 px-6 text-center font-mono font-bold text-sky-400">
-                            {typeof item.consistency === "number" ? `${item.consistency}%` : "—"}
-                          </td>
-
-                          {/* Difficulty */}
-                          <td className="py-3 px-6 text-center">
-                            <span
-                              className={`inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
-                                item.difficulty === "easy"
-                                  ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
-                                  : item.difficulty === "medium"
-                                  ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
-                                  : item.difficulty === "hard"
-                                  ? "text-rose-400 bg-rose-500/5 border-rose-500/20"
-                                  : "text-sky-400 bg-sky-500/5 border-sky-500/20"
-                              }`}
-                            >
-                              {item.difficulty}
-                            </span>
-                          </td>
-
-                          {/* Duration */}
-                          <td className="py-3 px-6 text-center font-mono text-xs text-slate-400">
-                            {item.timeTaken}s
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }

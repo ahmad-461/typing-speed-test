@@ -69,7 +69,7 @@ function TestScreenContent() {
   const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
 
   const rawCategory = searchParams.get("category") || "code_arena";
-  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill", "speed_sprint"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 
   const isGhostEnabled = searchParams.get("ghost") === "true";
 
@@ -82,6 +82,7 @@ function TestScreenContent() {
   const [totalTypedCount, setTotalTypedCount] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [timeLeft, setTimeLeft] = useState<number>(20); // Used for Speed Sprint
 
   // Key error and typed count tracking
   const [keyErrors, setKeyErrors] = useState<Record<string, number>>({});
@@ -166,12 +167,66 @@ function TestScreenContent() {
     }
   }, [difficulty, category]);
 
+  // Handle countdown time-up redirection for Speed Sprint
+  const handleTimeUp = useCallback((finalInput: string, finalErrors: Record<string, number>, finalTypedCounts: Record<string, number>, currentTotalTyped: number) => {
+    // Stop stopwatch and sample
+    const correctCount = (() => {
+      let count = 0;
+      for (let i = 0; i < finalInput.length; i++) {
+        if (finalInput[i] === selectedPassage[i]) {
+          count++;
+        }
+      }
+      return count;
+    })();
+
+    // 20 seconds is exactly 1/3 of a minute (0.3333 minutes)
+    const durationSecs = 20;
+    const finalWPM = Math.round((correctCount / 5) / (durationSecs / 60));
+    const finalAccuracy = currentTotalTyped > 0 ? Math.round((correctCount / currentTotalTyped) * 100) : 100;
+
+    // Save aggregated key errors & typed counts to localStorage
+    saveKeyErrors(finalErrors);
+    saveKeyTypedCounts(finalTypedCounts);
+
+    // Compute consistency score
+    const allSamples = [...wpmSamplesRef.current, finalWPM];
+    const consistencyScore = calculateConsistencyScore(allSamples);
+
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("last_passage", selectedPassage);
+      sessionStorage.setItem("last_test_errors", JSON.stringify(finalErrors));
+      sessionStorage.setItem("last_test_typed_counts", JSON.stringify(finalTypedCounts));
+    }
+
+    router.push(
+      `/results?difficulty=${difficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}&consistency=${consistencyScore}`
+    );
+  }, [selectedPassage, difficulty, category, router]);
+
   // Initial load
   useEffect(() => {
     fetchPassage();
   }, [fetchPassage]);
 
-  // Handle live stopwatch update & WPM sampling
+  // Keep refs for key tracking so that the timer callback can access their exact final values
+  const keyErrorsRef = useRef<Record<string, number>>({});
+  const keyTypedCountsRef = useRef<Record<string, number>>({});
+  const totalTypedCountRef = useRef<number>(0);
+
+  useEffect(() => {
+    keyErrorsRef.current = keyErrors;
+  }, [keyErrors]);
+
+  useEffect(() => {
+    keyTypedCountsRef.current = keyTypedCounts;
+  }, [keyTypedCounts]);
+
+  useEffect(() => {
+    totalTypedCountRef.current = totalTypedCount;
+  }, [totalTypedCount]);
+
+  // Handle live stopwatch update & WPM sampling & Speed Sprint Countdown
   useEffect(() => {
     if (!startTime) return;
 
@@ -180,6 +235,22 @@ function TestScreenContent() {
       const elapsedMs = now - startTime;
       const secs = Math.floor(elapsedMs / 1000);
       setElapsedSeconds(secs);
+
+      if (category === "speed_sprint") {
+        const remaining = Math.max(0, 20 - secs);
+        setTimeLeft(remaining);
+
+        if (remaining <= 0) {
+          clearInterval(interval);
+          handleTimeUp(
+            typedInputRef.current,
+            keyErrorsRef.current,
+            keyTypedCountsRef.current,
+            totalTypedCountRef.current
+          );
+          return;
+        }
+      }
 
       // Sample WPM every second mark
       if (secs > 0 && secs > lastSampledSecondRef.current) {
@@ -199,7 +270,7 @@ function TestScreenContent() {
     }, 200);
 
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, category, handleTimeUp]);
 
   // Handle continuous ghost cursor movement independent of user input
   useEffect(() => {
@@ -423,7 +494,12 @@ function TestScreenContent() {
   }
 
   const stats = [
-    { label: "TIMER", value: formatTime(elapsedSeconds), unit: "", icon: "⏱️" },
+    {
+      label: category === "speed_sprint" ? "COUNTDOWN" : "TIMER",
+      value: category === "speed_sprint" ? `${timeLeft}s` : formatTime(elapsedSeconds),
+      unit: "",
+      icon: "⏱️"
+    },
     { label: "WPM", value: liveWPM.toString(), unit: "wpm", icon: "⚡" },
     { label: "ACCURACY", value: liveAccuracy.toString(), unit: "%", icon: "🎯" },
   ];
@@ -472,25 +548,33 @@ function TestScreenContent() {
 
       {/* Stats Panel */}
       <div className="grid grid-cols-3 gap-4 w-full mb-8">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 text-center flex flex-col justify-center items-center relative overflow-hidden group"
-          >
-            <div className="absolute top-2 right-2 text-xs opacity-20 group-hover:opacity-40 transition-opacity">
-              {stat.icon}
+        {stats.map((stat) => {
+          const isSprintTimer = category === "speed_sprint" && stat.label === "COUNTDOWN";
+          const isUrgent = isSprintTimer && timeLeft <= 5 && timeLeft > 0;
+          return (
+            <div
+              key={stat.label}
+              className={`bg-charcoal-800 border rounded-xl p-4 sm:p-5 text-center flex flex-col justify-center items-center relative overflow-hidden group transition-all ${
+                isUrgent
+                  ? "border-rose-500 bg-rose-500/10 shadow-[0_0_15px_rgba(244,63,94,0.3)] ring-1 ring-rose-500/30"
+                  : "border-charcoal-700"
+              }`}
+            >
+              <div className="absolute top-2 right-2 text-xs opacity-20 group-hover:opacity-40 transition-opacity">
+                {stat.icon}
+              </div>
+              <span className={`text-xs font-mono uppercase tracking-wider mb-1 ${isUrgent ? "text-rose-400 font-bold animate-pulse" : "text-slate-400"}`}>
+                {stat.label}
+              </span>
+              <div className={`text-2xl sm:text-3xl font-bold font-mono leading-none ${isUrgent ? "text-rose-400 font-black scale-105" : "text-white"}`}>
+                {stat.value}
+                {stat.unit && (
+                  <span className="text-xs font-normal text-slate-500 ml-0.5">{stat.unit}</span>
+                )}
+              </div>
             </div>
-            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-              {stat.label}
-            </span>
-            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none">
-              {stat.value}
-              {stat.unit && (
-                <span className="text-xs font-normal text-slate-500 ml-0.5">{stat.unit}</span>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Terminal Typing Block */}
