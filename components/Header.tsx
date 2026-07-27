@@ -74,9 +74,13 @@ export default function Header() {
     window.dispatchEvent(new CustomEvent("tst-open-name-modal"));
   };
 
+  const triggerExitModal = () => {
+    window.dispatchEvent(new CustomEvent("tst-open-exit-modal"));
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full bg-[#121316]/90 backdrop-blur-md border-b border-[#1E293B]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
 
         {/* Left Side: Logo/Wordmark and Navigation Links Inline */}
         <div className="flex items-center gap-3 sm:gap-6">
@@ -139,7 +143,7 @@ export default function Header() {
           {!isTestPage && playerName && (
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 font-mono text-[11px] text-slate-300">
               <span className="text-slate-500 font-bold">&gt;</span>
-              <span className="font-extrabold text-white truncate max-w-[100px]" title={playerName}>
+              <span className="font-extrabold text-white truncate max-w-[100px] normal-case" title={playerName}>
                 {playerName}
               </span>
               <button
@@ -152,14 +156,25 @@ export default function Header() {
                   <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
               </button>
+              <button
+                onClick={triggerExitModal}
+                className="flex items-center justify-center border border-[#3B82F6]/30 hover:border-[#3B82F6] hover:bg-[#3B82F6]/10 text-slate-400 hover:text-white rounded px-1.5 py-0.5 transition-all cursor-pointer ml-1"
+                title="Exit Session"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
             </div>
           )}
 
           {!isTestPage && gamification && (
             <div className="flex flex-col items-end">
-              <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
+              <div className="inline-flex items-center h-7 sm:h-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] text-[9px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
                 {/* Level portion */}
-                <span className="px-2.5 sm:px-3 text-[#3B82F6]">
+                <span className="px-2 sm:px-3 text-[#3B82F6]">
                   Lvl {gamification.level}
                 </span>
 
@@ -167,7 +182,7 @@ export default function Header() {
                 <span className="h-full w-[1px] bg-[#3B82F6]/30" />
 
                 {/* Streak portion */}
-                <span className="px-2.5 sm:px-3 text-amber-500 flex items-center gap-1">
+                <span className="px-2 sm:px-3 text-amber-500 flex items-center gap-1">
                   <span>🔥</span>
                   <span>{gamification.streak}</span>
                   <span className="hidden sm:inline">Streak</span>

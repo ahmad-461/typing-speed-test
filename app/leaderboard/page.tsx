@@ -320,7 +320,7 @@ function LeaderboardContent() {
                     {/* Pedestal Bottom */}
                     <div className="text-center space-y-1.5 z-10">
                       <div className="flex items-center justify-center gap-1 max-w-full">
-                        <span className={`font-sans text-xs sm:text-sm font-bold truncate max-w-full block ${
+                        <span className={`font-sans text-xs sm:text-sm font-bold truncate max-w-full block normal-case ${
                           rank === 1 ? "text-electric-400" : "text-slate-200"
                         }`}>
                           {score.name}
@@ -387,7 +387,7 @@ function LeaderboardContent() {
                         <span className={`font-black tracking-wider ${isMe ? "text-electric-400" : "text-slate-500"}`}>
                           #{rank.toString().padStart(2, "0")}
                         </span>
-                        <span className={`font-bold truncate max-w-[150px] ${isMe ? "text-white" : "text-slate-200"}`} title={score.name}>
+                        <span className={`font-bold truncate max-w-[150px] normal-case ${isMe ? "text-white" : "text-slate-200"}`} title={score.name}>
                           {score.name}
                         </span>
                         {isMe && (
