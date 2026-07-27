@@ -208,3 +208,61 @@ export function getWeakestKeys(limit = 8): string[] {
 
   return candidates.slice(0, limit);
 }
+
+export interface TrendComparison {
+  thisWeekWpm: number | null;
+  thisWeekAcc: number | null;
+  lastWeekWpm: number | null;
+  lastWeekAcc: number | null;
+  wpmDiff: number | null;
+  accDiff: number | null;
+}
+
+/**
+ * Calculates average WPM and Accuracy comparison between:
+ * - This Week: rolling last 7 days (now back to now - 7 days)
+ * - Last Week: rolling 7 days prior (now - 7 days back to now - 14 days)
+ */
+export function getTrendComparison(preloadedHistory?: TestResult[]): TrendComparison {
+  const history = preloadedHistory || getHistory();
+  const now = Date.now();
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const SEVEN_DAYS_MS = 7 * ONE_DAY_MS;
+
+  const thisWeekTests = history.filter(
+    (r) => r.timestamp >= now - SEVEN_DAYS_MS && r.timestamp <= now
+  );
+  const lastWeekTests = history.filter(
+    (r) => r.timestamp >= now - 2 * SEVEN_DAYS_MS && r.timestamp < now - SEVEN_DAYS_MS
+  );
+
+  const thisWeekWpm = thisWeekTests.length > 0
+    ? Math.round(thisWeekTests.reduce((sum, r) => sum + r.wpm, 0) / thisWeekTests.length)
+    : null;
+  const thisWeekAcc = thisWeekTests.length > 0
+    ? Math.round((thisWeekTests.reduce((sum, r) => sum + r.accuracy, 0) / thisWeekTests.length) * 10) / 10
+    : null;
+
+  const lastWeekWpm = lastWeekTests.length > 0
+    ? Math.round(lastWeekTests.reduce((sum, r) => sum + r.wpm, 0) / lastWeekTests.length)
+    : null;
+  const lastWeekAcc = lastWeekTests.length > 0
+    ? Math.round((lastWeekTests.reduce((sum, r) => sum + r.accuracy, 0) / lastWeekTests.length) * 10) / 10
+    : null;
+
+  const wpmDiff = (thisWeekWpm !== null && lastWeekWpm !== null)
+    ? thisWeekWpm - lastWeekWpm
+    : null;
+  const accDiff = (thisWeekAcc !== null && lastWeekAcc !== null)
+    ? Math.round((thisWeekAcc - lastWeekAcc) * 10) / 10
+    : null;
+
+  return {
+    thisWeekWpm,
+    thisWeekAcc,
+    lastWeekWpm,
+    lastWeekAcc,
+    wpmDiff,
+    accDiff,
+  };
+}

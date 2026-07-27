@@ -27,6 +27,10 @@ export default function Home() {
   const [initialNameInput, setInitialNameInput] = useState("");
   const [initialNameError, setInitialNameError] = useState("");
 
+  // Goal and PB stats
+  const [overallPbWPM, setOverallPbWPM] = useState<number>(0);
+  const [personalGoal, setPersonalGoal] = useState<number | null>(null);
+
   useEffect(() => {
     const stored = localStorage.getItem("tst_player_name") || "";
     setPlayerName(stored);
@@ -43,6 +47,20 @@ export default function Home() {
     return () => {
       window.removeEventListener("tst-name-updated", handleUpdate);
     };
+  }, []);
+
+  useEffect(() => {
+    // Load PB and Goal
+    const best = getPersonalBest();
+    setOverallPbWPM(best ? best.wpm : 0);
+
+    const storedGoal = localStorage.getItem("tst_personal_wpm_goal_v1");
+    if (storedGoal) {
+      const g = parseInt(storedGoal, 10);
+      if (!isNaN(g) && g > 0) {
+        setPersonalGoal(g);
+      }
+    }
   }, []);
 
   const handleInitialNameSubmit = (e: React.FormEvent) => {
@@ -312,6 +330,41 @@ export default function Home() {
           <p className="text-base text-slate-400 max-w-xl font-sans leading-relaxed">
             Reject the ordinary. NOKY is a premium editorial environment designed to evaluate spatial keyboard accuracy and words-per-minute with deliberate intent. Choose your parameters and type with absolute confidence.
           </p>
+
+          {/* Goal Progress HUD Panel */}
+          {personalGoal !== null && (
+            <div className="p-4 rounded-xl border border-charcoal-700 bg-charcoal-800/50 max-w-xl space-y-2.5 font-mono text-xs text-slate-300 animate-fade-in relative overflow-hidden">
+              <div className="absolute top-0 left-0 h-0.5 bg-[#3B82F6]" style={{ width: `${Math.min(100, Math.round((overallPbWPM / personalGoal) * 100))}%` }} />
+              <div className="flex justify-between items-center">
+                <span className="font-extrabold text-[#3B82F6] flex items-center gap-1">
+                  <span>🎯</span> TARGET PROGRESS
+                </span>
+                <span className="text-[10px] text-slate-500 font-bold">
+                  {overallPbWPM} / {personalGoal} WPM
+                </span>
+              </div>
+              <div className="w-full h-1.5 bg-charcoal-900 rounded-full overflow-hidden relative">
+                <div
+                  style={{ width: `${Math.min(100, Math.round((overallPbWPM / personalGoal) * 100))}%` }}
+                  className="h-full bg-[#3B82F6] rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                />
+              </div>
+              <div className="flex justify-between items-center text-[10px]">
+                {overallPbWPM >= personalGoal ? (
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <span>🎉</span> Goal Met! Raise it on Dashboard.
+                  </span>
+                ) : (
+                  <span className="text-slate-400">
+                    Almost there! {personalGoal - overallPbWPM} WPM left to goal.
+                  </span>
+                )}
+                <span className="text-slate-500">
+                  {Math.min(100, Math.round((overallPbWPM / personalGoal) * 100))}%
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Interactive Live Demonstration Panel (~40% width equivalent) */}

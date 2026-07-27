@@ -18,21 +18,30 @@ export default function Header() {
   } | null>(null);
 
   useEffect(() => {
-    const best = getPersonalBest();
-    if (best) {
-      setPbWPM(best.wpm);
-    } else {
-      setPbWPM(null);
-    }
+    const refreshHeader = () => {
+      const best = getPersonalBest();
+      if (best) {
+        setPbWPM(best.wpm);
+      } else {
+        setPbWPM(null);
+      }
 
-    // Read gamification state on route change to keep header accurate
-    const state = getGamificationState();
-    setGamification({
-      level: state.currentLevel,
-      title: state.levelTitle,
-      streak: state.streakDays,
-      resetOccurred: state.streakResetOccurred,
-    });
+      // Read gamification state to keep header accurate
+      const state = getGamificationState();
+      setGamification({
+        level: state.currentLevel,
+        title: state.levelTitle,
+        streak: state.streakDays,
+        resetOccurred: state.streakResetOccurred,
+      });
+    };
+
+    refreshHeader();
+
+    window.addEventListener("tst-gamification-updated", refreshHeader);
+    return () => {
+      window.removeEventListener("tst-gamification-updated", refreshHeader);
+    };
   }, [pathname]);
 
   const navItems = [

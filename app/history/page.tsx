@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { getHistory, getHistorySummary, getPersonalBest, TestResult, getKeyErrors } from "../../lib/stats";
-import { getGamificationState, ACHIEVEMENTS, GamificationState } from "../../lib/gamification";
+import { getHistory, getHistorySummary, getPersonalBest, TestResult, getKeyErrors, getTrendComparison, TrendComparison } from "../../lib/stats";
+import { getGamificationState, ACHIEVEMENTS, GamificationState, computeMilestones, MilestoneEvent } from "../../lib/gamification";
 
 function formatDateShort(timestamp: number) {
   const d = new Date(timestamp);
@@ -30,20 +30,118 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<TestResult[]>([]);
   const [keyErrors, setKeyErrors] = useState<Record<string, number>>({});
   const [gamification, setGamification] = useState<GamificationState | null>(null);
+  const [trend, setTrend] = useState<TrendComparison | null>(null);
+  const [milestones, setMilestones] = useState<MilestoneEvent[]>([]);
+  const [personalGoal, setPersonalGoal] = useState<number | null>(null);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    setHistory(getHistory());
+    const hist = getHistory();
+    setHistory(hist);
     setKeyErrors(getKeyErrors());
     setGamification(getGamificationState());
+    setTrend(getTrendComparison(hist));
+    setMilestones(computeMilestones(hist));
+
+    // Load WPM goal
+    const stored = localStorage.getItem("tst_personal_wpm_goal_v1");
+    if (stored) {
+      const parsed = parseInt(stored, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        setPersonalGoal(parsed);
+      }
+    }
+
     setIsLoaded(true);
   }, []);
+
+  const handleSaveGoal = (val: string) => {
+    const parsed = parseInt(val, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      localStorage.setItem("tst_personal_wpm_goal_v1", parsed.toString());
+      setPersonalGoal(parsed);
+      setIsEditingGoal(false);
+      // Recalculate gamification state (to immediately recognize Goal Crusher unlock if applicable)
+      setGamification(getGamificationState());
+    } else {
+      localStorage.removeItem("tst_personal_wpm_goal_v1");
+      setPersonalGoal(null);
+      setIsEditingGoal(false);
+      setGamification(getGamificationState());
+    }
+  };
 
   const summary = useMemo(() => getHistorySummary(history), [history]);
   const pbOverall = useMemo(() => getPersonalBest(undefined, history), [history]);
   const pbEasy = useMemo(() => getPersonalBest("easy", history), [history]);
   const pbMedium = useMemo(() => getPersonalBest("medium", history), [history]);
   const pbHard = useMemo(() => getPersonalBest("hard", history), [history]);
+
+  const skillProfile = useMemo(() => {
+    const recentTests = [...history].slice(0, 10);
+    if (recentTests.length === 0) return null;
+
+    const avgWpm = recentTests.reduce((sum, r) => sum + r.wpm, 0) / recentTests.length;
+    const avgAccuracy = recentTests.reduce((sum, r) => sum + r.accuracy, 0) / recentTests.length;
+
+    const testsWithConsistency = recentTests.filter((r) => typeof r.consistency === "number");
+    const avgConsistency = testsWithConsistency.length > 0
+      ? testsWithConsistency.reduce((sum, r) => sum + (r.consistency || 0), 0) / testsWithConsistency.length
+      : 0;
+
+    const speedRating = Math.round(Math.min(100, (avgWpm / 120) * 100));
+    const accuracyRating = Math.round(avgAccuracy);
+    const consistencyRating = Math.round(avgConsistency);
+
+    return {
+      speed: speedRating,
+      accuracy: accuracyRating,
+      consistency: consistencyRating,
+      avgWpm: Math.round(avgWpm),
+      avgAccuracy: Math.round(avgAccuracy * 10) / 10,
+      avgConsistency: Math.round(avgConsistency),
+      count: recentTests.length,
+    };
+  }, [history]);
+
+  const modeBreakdown = useMemo(() => {
+    const categoriesList = [
+      { id: "code_arena", label: "Code Arena", icon: "💻" },
+      { id: "knowledge_quest", label: "Knowledge Quest", icon: "🧠" },
+      { id: "ai_lab", label: "AI Lab", icon: "🤖" },
+      { id: "world_explorer", label: "World Explorer", icon: "🌍" },
+      { id: "weak_key_drill", label: "Weak-Key Drill", icon: "🎯" },
+      { id: "speed_sprint", label: "Speed Sprint", icon: "⚡" },
+    ];
+
+    return categoriesList.map((cat) => {
+      const matching = history.filter((r) => {
+        if (cat.id === "code_arena") return r.category === "code_arena" || r.category === "programming";
+        if (cat.id === "knowledge_quest") return r.category === "knowledge_quest" || r.category === "general_knowledge";
+        return r.category === cat.id;
+      });
+
+      if (matching.length === 0) {
+        return {
+          ...cat,
+          count: 0,
+          avgWpm: 0,
+          avgAccuracy: 0,
+        };
+      }
+
+      const totalWpm = matching.reduce((sum, r) => sum + r.wpm, 0);
+      const totalAcc = matching.reduce((sum, r) => sum + r.accuracy, 0);
+
+      return {
+        ...cat,
+        count: matching.length,
+        avgWpm: Math.round(totalWpm / matching.length),
+        avgAccuracy: Math.round((totalAcc / matching.length) * 10) / 10,
+      };
+    });
+  }, [history]);
 
   // Last 20 tests for the chart, in chronological order (left to right)
   const chartData = useMemo(() => {
@@ -326,6 +424,191 @@ export default function HistoryPage() {
               </div>
             )}
 
+            {/* Trends and Goal Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Progress Trends Card */}
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>📈</span> performance trends
+                  </h2>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    Rolling 7-day windows
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 py-2">
+                  {/* WPM Trend */}
+                  <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 space-y-1">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">
+                      WPM Trend
+                    </span>
+                    {trend && trend.thisWeekWpm !== null ? (
+                      <div className="space-y-1">
+                        <div className="text-2xl font-extrabold text-white font-mono">
+                          {trend.thisWeekWpm} <span className="text-xs font-normal text-slate-500 font-mono">WPM avg</span>
+                        </div>
+                        {trend.wpmDiff !== null ? (
+                          <div className={`text-xs font-mono font-bold ${trend.wpmDiff >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            {trend.wpmDiff >= 0 ? `+${trend.wpmDiff}` : trend.wpmDiff} WPM vs last week
+                          </div>
+                        ) : (
+                          <div className="text-[10px] font-mono text-electric-400 font-semibold bg-electric-500/10 px-2 py-0.5 rounded inline-block">
+                            First week of training!
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-500 italic py-2">No tests this week</div>
+                    )}
+                  </div>
+
+                  {/* Accuracy Trend */}
+                  <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 space-y-1">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">
+                      Accuracy Trend
+                    </span>
+                    {trend && trend.thisWeekAcc !== null ? (
+                      <div className="space-y-1">
+                        <div className="text-2xl font-extrabold text-white font-mono">
+                          {trend.thisWeekAcc}% <span className="text-xs font-normal text-slate-500 font-mono">avg</span>
+                        </div>
+                        {trend.accDiff !== null ? (
+                          <div className={`text-xs font-mono font-bold ${trend.accDiff >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            {trend.accDiff >= 0 ? `+${trend.accDiff}` : trend.accDiff}% vs last week
+                          </div>
+                        ) : (
+                          <div className="text-[10px] font-mono text-electric-400 font-semibold bg-electric-500/10 px-2 py-0.5 rounded inline-block">
+                            First week of training!
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-500 italic py-2">No tests this week</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Goal Setting Card */}
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4 relative overflow-hidden">
+                <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>🎯</span> personal speed target
+                  </h2>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    deliberate practice goal
+                  </span>
+                </div>
+
+                {personalGoal === null ? (
+                  /* No Goal Defined State */
+                  <div className="py-4 text-center space-y-3">
+                    <p className="text-xs text-slate-400 leading-relaxed font-sans max-w-sm mx-auto">
+                      Define a clear target WPM to unlock interactive goal-tracking and focus on deliberate skill acquisition.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 max-w-xs mx-auto">
+                      <input
+                        type="number"
+                        placeholder="e.g. 70"
+                        id="goal-input-init"
+                        className="w-24 bg-charcoal-900 border border-charcoal-700 rounded-lg px-3 py-1.5 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500/20"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            const val = (e.target as HTMLInputElement).value;
+                            handleSaveGoal(val);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const input = document.getElementById("goal-input-init") as HTMLInputElement;
+                          if (input) handleSaveGoal(input.value);
+                        }}
+                        className="px-3 py-1.5 bg-electric-500 hover:bg-electric-400 text-white font-mono text-xs font-bold rounded-lg transition-all"
+                      >
+                        Set Goal
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Goal Defined State with Progress Bar */
+                  <div className="space-y-4 py-2">
+                    <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                      <span>Current PB: <strong className="text-white font-mono">{pbOverall ? pbOverall.wpm : 0} WPM</strong></span>
+                      <span>Target: <strong className="text-electric-400 font-mono">{personalGoal} WPM</strong></span>
+                    </div>
+
+                    {/* Progress Bar Container */}
+                    <div className="space-y-1">
+                      <div className="w-full h-2 bg-charcoal-900 rounded-full border border-charcoal-700 overflow-hidden relative">
+                        <div
+                          style={{
+                            width: `${Math.min(100, Math.max(0, ((pbOverall ? pbOverall.wpm : 0) / personalGoal) * 100))}%`,
+                          }}
+                          className="h-full bg-electric-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                        <span>0 WPM</span>
+                        <span>
+                          {Math.min(100, Math.round(((pbOverall ? pbOverall.wpm : 0) / personalGoal) * 100))}% Completed
+                        </span>
+                        <span>{personalGoal} WPM</span>
+                      </div>
+                    </div>
+
+                    {/* Completion Celebration Message and Edit Actions */}
+                    <div className="flex justify-between items-center pt-2">
+                      {pbOverall && pbOverall.wpm >= personalGoal ? (
+                        <div className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded inline-flex items-center gap-1">
+                          <span>🎉</span> Goal Met! Level Up Target.
+                        </div>
+                      ) : (
+                        <div className="text-[10px] font-mono text-slate-500 italic">
+                          Keep pushing to meet your target.
+                        </div>
+                      )}
+
+                      {isEditingGoal ? (
+                        <div className="flex items-center gap-1.5 animate-fade-in">
+                          <input
+                            type="number"
+                            defaultValue={personalGoal}
+                            id="goal-input-edit"
+                            className="w-16 bg-charcoal-900 border border-charcoal-700 rounded px-2 py-0.5 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                const val = (e.target as HTMLInputElement).value;
+                                handleSaveGoal(val);
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => {
+                              const input = document.getElementById("goal-input-edit") as HTMLInputElement;
+                              if (input) handleSaveGoal(input.value);
+                            }}
+                            className="text-[10px] font-mono text-emerald-400 border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 rounded hover:bg-emerald-500/10"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setIsEditingGoal(true)}
+                          className="text-[10px] font-mono text-slate-400 hover:text-white border border-charcoal-750 px-2.5 py-1 rounded transition-colors"
+                        >
+                          Modify Target
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Summary Metrics Row */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {/* Metric 1: Total Tests */}
@@ -398,6 +681,115 @@ export default function HistoryPage() {
                     On {pbOverall.difficulty}
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Skill Profile & Mode Breakdown Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Active Skill Profile */}
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>👤</span> Active Skill Profile
+                  </h2>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    Recent 10 completed tests
+                  </span>
+                </div>
+
+                {skillProfile ? (
+                  <div className="space-y-4 py-2">
+                    {/* Speed Bar */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-mono">
+                        <span className="text-white">SPEED RATING</span>
+                        <span className="text-electric-400 font-bold">
+                          {skillProfile.speed}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgWpm} WPM)</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-charcoal-900 rounded-full overflow-hidden relative">
+                        <div
+                          style={{ width: `${skillProfile.speed}%` }}
+                          className="h-full bg-[#3B82F6] rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-fade-in"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Accuracy Bar */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-mono">
+                        <span className="text-white">ACCURACY RATING</span>
+                        <span className="text-emerald-400 font-bold">
+                          {skillProfile.accuracy}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgAccuracy}%)</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-charcoal-900 rounded-full overflow-hidden relative">
+                        <div
+                          style={{ width: `${skillProfile.accuracy}%` }}
+                          className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-fade-in"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Consistency Bar */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-mono">
+                        <span className="text-white">CONSISTENCY RATING</span>
+                        <span className="text-sky-400 font-bold">
+                          {skillProfile.consistency}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgConsistency}%)</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-charcoal-900 rounded-full overflow-hidden relative">
+                        <div
+                          style={{ width: `${skillProfile.consistency}%` }}
+                          className="h-full bg-sky-500 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.5)] animate-fade-in"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-xs font-mono text-slate-500">
+                    Complete your first test to initialize your active skill profile.
+                  </div>
+                )}
+              </div>
+
+              {/* Mode Breakdown */}
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>🎮</span> Practice Mode Breakdown
+                  </h2>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    Lifetime category performance
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  {modeBreakdown.map((mode) => (
+                    <div
+                      key={mode.id}
+                      className={`p-3 rounded-xl border font-mono text-[11px] flex flex-col justify-between min-h-[64px] ${
+                        mode.count > 0
+                          ? "border-charcoal-700 bg-charcoal-900/30 text-white"
+                          : "border-charcoal-800/40 bg-charcoal-900/10 text-slate-500"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span>{mode.icon}</span>
+                        <span className="font-bold truncate" title={mode.label}>{mode.label}</span>
+                      </div>
+                      <div className="flex justify-between text-[9px] text-slate-400 pt-1 border-t border-charcoal-700/30">
+                        <span>{mode.count} {mode.count === 1 ? "run" : "runs"}</span>
+                        {mode.count > 0 && (
+                          <span className="text-[#3B82F6] font-bold">
+                            {mode.avgWpm} WPM / {mode.avgAccuracy}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -545,94 +937,152 @@ export default function HistoryPage() {
               </div>
             )}
 
-            {/* Unlocked Achievements Section */}
+            {/* Unlocked Achievements & Milestone Timeline Section */}
             {gamification && (
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <span>🏆</span> Unlockable Achievements
-                  </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                    {gamification.unlockedAchievements.length} / {ACHIEVEMENTS.length} Unlocked
-                  </span>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left Column: Achievements (8/12 span) */}
+                <div className="lg:col-span-8 bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                    <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                      <span>🏆</span> Unlockable Achievements
+                    </h2>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                      {gamification.unlockedAchievements.length} / {ACHIEVEMENTS.length} Unlocked
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    {ACHIEVEMENTS.map((badge) => {
+                      const isUnlocked = gamification.unlockedAchievements.includes(badge.id);
+                      const unlockTimestamp = gamification.achievementUnlockDates[badge.id];
+
+                      return (
+                        <div
+                          key={badge.id}
+                          className={`p-4 rounded-xl border flex gap-3.5 transition-all duration-300 relative group select-none ${
+                            isUnlocked
+                              ? "border-[#3B82F6]/30 bg-electric-500/[0.03] text-white shadow-[0_0_12px_rgba(59,130,246,0.03)]"
+                              : "border-charcoal-700/50 bg-charcoal-900/10 text-slate-500"
+                          }`}
+                        >
+                          {/* Custom visual vector indicator based on achievement ID */}
+                          <div className={`w-11 h-11 rounded-lg border flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isUnlocked
+                              ? "border-[#3B82F6]/40 bg-[#3B82F6]/10 text-[#3B82F6]"
+                              : "border-charcoal-700 bg-charcoal-800/40 text-slate-600"
+                          }`}>
+                            {badge.id === "speed_demon" ? (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                            ) : badge.id === "perfect_accuracy" ? (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            ) : badge.id === "seven_day_streak" ? (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                              </svg>
+                            ) : badge.id === "code_warrior" ? (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                              </svg>
+                            ) : badge.id === "knowledge_master" ? (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                              </svg>
+                            ) : badge.id === "goal_crusher" ? (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                              </svg>
+                            ) : badge.id === "trend_setter" ? (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                              </svg>
+                            )}
+                          </div>
+
+                          {/* Description block */}
+                          <div className="flex-grow space-y-1">
+                            <h4 className={`text-xs font-bold font-sans tracking-wide uppercase transition-colors ${
+                              isUnlocked ? "text-white" : "text-slate-500"
+                            }`}>
+                              {badge.title}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 leading-normal font-sans">
+                              {badge.description}
+                            </p>
+                            {isUnlocked && unlockTimestamp && (
+                              <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase block pt-0.5">
+                                Unlocked: {formatDateShort(unlockTimestamp)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Top-right lock/unlock overlay badge */}
+                          <div className="absolute top-3 right-3">
+                            {isUnlocked ? (
+                              <span className="text-[9px] font-mono text-[#3B82F6]/80 font-bold tracking-widest uppercase">
+                                UNLOCKED
+                              </span>
+                            ) : (
+                              <div className="text-slate-600 flex items-center" title={badge.condition}>
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                  {ACHIEVEMENTS.map((badge) => {
-                    const isUnlocked = gamification.unlockedAchievements.includes(badge.id);
+                {/* Right Column: Milestone Timeline (4/12 span) */}
+                <div className="lg:col-span-4 bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4 flex flex-col justify-between">
+                  <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                    <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                      <span>🗺️</span> Journey Timeline
+                    </h2>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                      Key milestones
+                    </span>
+                  </div>
 
-                    // Render custom simple inline vector shapes for minimal premium look
-                    return (
-                      <div
-                        key={badge.id}
-                        className={`p-4 rounded-xl border flex gap-3.5 transition-all duration-300 relative group select-none ${
-                          isUnlocked
-                            ? "border-[#3B82F6]/30 bg-electric-500/[0.03] text-white shadow-[0_0_12px_rgba(59,130,246,0.03)]"
-                            : "border-charcoal-700/50 bg-charcoal-900/10 text-slate-500"
-                        }`}
-                      >
-                        {/* Custom visual vector indicator based on achievement ID */}
-                        <div className={`w-11 h-11 rounded-lg border flex items-center justify-center flex-shrink-0 transition-colors ${
-                          isUnlocked
-                            ? "border-[#3B82F6]/40 bg-[#3B82F6]/10 text-[#3B82F6]"
-                            : "border-charcoal-700 bg-charcoal-800/40 text-slate-600"
-                        }`}>
-                          {badge.id === "speed_demon" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                          ) : badge.id === "perfect_accuracy" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          ) : badge.id === "seven_day_streak" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                            </svg>
-                          ) : badge.id === "code_warrior" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                            </svg>
-                          ) : badge.id === "knowledge_master" ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                            </svg>
-                          )}
-                        </div>
-
-                        {/* Description block */}
-                        <div className="flex-grow space-y-0.5">
-                          <h4 className={`text-xs font-bold font-sans tracking-wide uppercase transition-colors ${
-                            isUnlocked ? "text-white" : "text-slate-500"
-                          }`}>
-                            {badge.title}
-                          </h4>
-                          <p className="text-[10px] text-slate-500 leading-normal font-sans">
-                            {badge.description}
-                          </p>
-                        </div>
-
-                        {/* Top-right lock/unlock overlay badge */}
-                        <div className="absolute top-3 right-3">
-                          {isUnlocked ? (
-                            <span className="text-[9px] font-mono text-[#3B82F6]/80 font-bold tracking-widest uppercase">
-                              UNLOCKED
-                            </span>
-                          ) : (
-                            <div className="text-slate-600 flex items-center" title={badge.condition}>
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
+                  <div className="flex-grow overflow-y-auto max-h-[380px] pr-1.5 space-y-4 scrollbar-thin scrollbar-thumb-charcoal-700 scrollbar-track-transparent">
+                    {milestones.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-center p-8 text-xs font-mono text-slate-500 italic">
+                        Your milestones will appear here chronologically as you complete speed typing tests.
                       </div>
-                    );
-                  })}
+                    ) : (
+                      <div className="relative border-l border-charcoal-700/60 pl-4 ml-2.5 space-y-6">
+                        {milestones.map((milestone) => (
+                          <div key={milestone.id} className="relative animate-fade-in">
+                            {/* Dot indicator */}
+                            <span className="absolute -left-[27px] top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-charcoal-900 border border-charcoal-700 text-[10px] select-none">
+                              {milestone.icon}
+                            </span>
+                            <div className="space-y-0.5">
+                              <span className="text-[9px] font-mono text-slate-500 block uppercase">
+                                {formatDateShort(milestone.timestamp)}
+                              </span>
+                              <h4 className="text-xs font-bold text-white uppercase tracking-wide">
+                                {milestone.title}
+                              </h4>
+                              <p className="text-[10px] text-slate-400 font-sans leading-normal">
+                                {milestone.description}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

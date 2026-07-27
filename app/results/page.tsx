@@ -173,6 +173,7 @@ function ResultsScreenContent() {
         });
 
         const afterState = getGamificationState();
+        window.dispatchEvent(new CustomEvent("tst-gamification-updated"));
 
         // Determine difficulty multiplier safe type cast
         const diffMultiplierKey = (["easy", "medium", "hard", "custom"].includes(difficulty) ? difficulty : "medium") as "easy" | "medium" | "hard" | "custom";
