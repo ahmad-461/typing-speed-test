@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getPersonalBest } from "../lib/stats";
+import { getPersonalBest, getHistory } from "../lib/stats";
 
 type Difficulty = "easy" | "medium" | "hard";
-type Category = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
+type Category = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
 
 const SNIPPETS = [
   "A compiler translates human-readable code into efficient machine language instructions.",
@@ -24,6 +24,13 @@ export default function Home() {
   const [hasPB, setHasPB] = useState(false);
   const [ghostEnabled, setGhostEnabled] = useState(false);
   const [pbWPM, setPbWPM] = useState<number | null>(null);
+  const [historyLength, setHistoryLength] = useState(0);
+
+  // PB check when difficulty changes
+  useEffect(() => {
+    const history = getHistory();
+    setHistoryLength(history.length);
+  }, []);
 
   // Live typing animation state for right column
   const [typedSnippet, setTypedSnippet] = useState("");
@@ -283,6 +290,63 @@ export default function Home() {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Step 3: Spaced Repetition Training (Weak-Key Drill) */}
+        <div className="space-y-4 pt-4 border-t border-charcoal-750/60">
+          <div className="flex items-baseline gap-3">
+            <span className="font-mono text-xs text-electric-400 font-bold bg-electric-500/10 px-2.5 py-0.5 rounded border border-electric-500/20">03</span>
+            <h2 className="text-lg font-bold text-white uppercase tracking-wider font-sans">Adaptive Training Mode</h2>
+          </div>
+
+          <div>
+            {historyLength >= 3 ? (
+              <button
+                type="button"
+                onClick={() => setCategory("weak_key_drill")}
+                className={`w-full flex flex-col md:flex-row items-start md:items-center justify-between text-left p-6 rounded-xl border transition-all duration-200 cursor-pointer focus:outline-none focus:ring-1 ${
+                  category === "weak_key_drill"
+                    ? "border-electric-500 bg-electric-500/5 shadow-[0_0_20px_rgba(59,130,246,0.15)] ring-1 ring-electric-500/20"
+                    : "border-charcoal-700 bg-charcoal-900/40 text-slate-300 hover:border-charcoal-600 hover:bg-charcoal-900/60"
+                }`}
+              >
+                <div className="space-y-1 max-w-2xl">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🎯</span>
+                    <span className="font-mono text-sm uppercase tracking-wider font-bold text-white">
+                      Weak-Key Drill Mode
+                    </span>
+                    <span className="px-2 py-0.5 text-[9px] font-mono font-bold bg-[#3B82F6]/20 text-[#3B82F6] rounded border border-[#3B82F6]/30 uppercase tracking-widest animate-pulse">
+                      RECOMMENDED
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                    Runs spaced repetition algorithms targeting your weakest characters. Generates a custom letters-dense paragraph based on your history error patterns to accelerate precision.
+                  </p>
+                </div>
+                <div className="mt-4 md:mt-0 font-mono text-xs text-electric-400 font-semibold uppercase tracking-wider flex items-center gap-1.5 self-stretch md:self-auto justify-end">
+                  {category === "weak_key_drill" ? "Selected ✓" : "Activate Drill →"}
+                </div>
+              </button>
+            ) : (
+              <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-xl border border-charcoal-700/60 bg-charcoal-900/10 text-slate-500 select-none">
+                <div className="space-y-1 max-w-2xl">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🔒</span>
+                    <span className="font-mono text-sm uppercase tracking-wider font-bold text-slate-400">
+                      Weak-Key Drill Mode
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed font-sans">
+                    Complete at least <span className="font-semibold text-slate-400">{3 - historyLength} more</span> standard typing runs to build up error history data and unlock personalized spaced-repetition training.
+                  </p>
+                </div>
+                <div className="mt-4 md:mt-0 font-mono text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                  {historyLength}/3 runs complete
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

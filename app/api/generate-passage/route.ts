@@ -3,7 +3,7 @@ import { passageBank } from "../../../lib/passages";
 
 export const dynamic = "force-dynamic";
 
-type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
+type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -13,9 +13,11 @@ export async function GET(request: NextRequest) {
     : "medium") as "easy" | "medium" | "hard";
 
   const rawCategory = searchParams.get("category") || "code_arena";
-  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer"].includes(rawCategory)
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill"].includes(rawCategory)
     ? rawCategory
     : "code_arena") as NewCategory;
+
+  const weakKeys = searchParams.get("weak_keys") || "";
 
   // Select a single random static fallback passage from the matching category and difficulty
   const getStaticFallback = () => {
@@ -58,6 +60,9 @@ export async function GET(request: NextRequest) {
     themeInstruction = "themed specifically around artificial intelligence, machine learning, neural networks, futures, emerging technologies, or human-machine interaction. Focus on modern ML advancements and future tech concepts.";
   } else if (category === "world_explorer") {
     themeInstruction = "themed around world geography, cultural traditions, travel, natural wonders, scenic landscapes, or narrative world history. It should have a vivid, narrative, storytelling tone like a travel magazine rather than dry facts.";
+  } else if (category === "weak_key_drill") {
+    const listStr = weakKeys ? weakKeys.split(",").join(", ") : "E, T, A, O, I, N";
+    themeInstruction = `specifically designed as a typing drill to help the user practice these weak characters/letters: [${listStr}]. You MUST generate a natural, grammatically correct, and cohesive paragraph in plain English that frequently and density-wise utilizes these target letters: [${listStr}] significantly more often than normal prose. Avoid complex code syntax or symbols; keep it natural-reading.`;
   }
 
   const prompt = `Generate exactly ONE (1) distinct, high-quality typing test passage of ${wordCountGuide}. The passage must be a single coherent and natural paragraph of ${description} ${themeInstruction}, suitable for a general audience.

@@ -44,78 +44,97 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full bg-[#121316]/90 backdrop-blur-md border-b border-[#1E293B]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
-        {/* Brand/Logo Left */}
-        <Link
-          href="/"
-          className="flex items-center gap-3 font-mono text-base sm:text-lg font-bold tracking-wide text-[#F1F5F9] hover:opacity-90 transition-opacity select-none"
-        >
-          <Image
-            src="/logo.svg"
-            alt="TST Logo"
-            width={36}
-            height={36}
-            className="object-contain"
-            priority
-          />
-          <span>TST</span>
-        </Link>
+        {/* Left Side: Logo/Wordmark and Navigation Links Inline */}
+        <div className="flex items-center gap-3 sm:gap-6">
+          {/* Brand/Logo */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-mono text-sm sm:text-base font-bold tracking-wide text-[#F1F5F9] hover:opacity-90 transition-opacity select-none"
+          >
+            <Image
+              src="/logo.svg"
+              alt="TST Logo"
+              width={26}
+              height={26}
+              className="object-contain sm:w-8 sm:h-8"
+              priority
+            />
+            <span className="hidden sm:inline">TST</span>
+          </Link>
 
-        {/* Navigation Center */}
-        <nav className="flex items-center gap-4 sm:gap-8">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`group relative flex items-center py-1.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider transition-colors duration-200 ${
-                  isActive ? "text-[#3B82F6]" : "text-[#94A3B8] hover:text-[#3B82F6]"
-                }`}
-              >
-                {/* Subtle glowing dot indicator to the left of active/hovered link */}
-                <span
-                  className={`w-1.5 h-1.5 rounded-full bg-[#3B82F6] shadow-[0_0_8px_#3B82F6] transition-all duration-200 mr-2 ${
-                    isActive
-                      ? "opacity-100 scale-100"
-                      : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+          {/* Navigation links inline */}
+          <nav className="flex items-center gap-2.5 sm:gap-5">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`group relative flex items-center py-1 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-200 ${
+                    isActive ? "text-[#3B82F6]" : "text-[#94A3B8] hover:text-[#3B82F6]"
                   }`}
-                />
+                >
+                  {/* Subtle glowing dot indicator to the left of active/hovered link on desktop */}
+                  <span
+                    className={`hidden sm:inline-block w-1 h-1 rounded-full bg-[#3B82F6] shadow-[0_0_8px_#3B82F6] transition-all duration-200 mr-1.5 ${
+                      isActive
+                        ? "opacity-100 scale-100"
+                        : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+                    }`}
+                  />
 
-                {/* Text */}
-                <span>{item.label}</span>
+                  {/* Text */}
+                  <span>{item.label}</span>
 
-                {/* Underline for active link only (animates in from center) */}
-                <span
-                  className={`absolute bottom-[-6px] left-0 right-0 h-[2px] bg-[#3B82F6] transition-transform duration-300 origin-center ${
-                    isActive ? "scale-x-100" : "scale-x-0"
-                  }`}
-                />
-              </Link>
-            );
-          })}
-        </nav>
+                  {/* Underline for active link only (animates in from center) */}
+                  <span
+                    className={`absolute bottom-[-4px] left-0 right-0 h-[1.5px] bg-[#3B82F6] transition-transform duration-300 origin-center ${
+                      isActive ? "scale-x-100" : "scale-x-0"
+                    }`}
+                  />
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-        {/* Gamification & PB Badges Right */}
-        <div className="flex items-center gap-3 justify-end select-none">
+        {/* Right Side: Cohesive Player Status Pill */}
+        <div className="flex items-center justify-end select-none">
           {gamification && (
-            <div className="flex flex-col items-end gap-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.08] text-[11px] font-mono text-white font-bold uppercase tracking-wider animate-fade-in">
-                <span className="text-[#3B82F6]">Lvl {gamification.level}</span>
-                <span className="text-slate-500 font-normal">•</span>
-                <span className="text-amber-500">🔥 {gamification.streak} Day Streak</span>
+            <div className="flex flex-col items-end">
+              <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
+                {/* Level portion */}
+                <span className="px-2.5 sm:px-3 text-[#3B82F6]">
+                  Lvl {gamification.level}
+                </span>
+
+                {/* Partition Line */}
+                <span className="h-full w-[1px] bg-[#3B82F6]/30" />
+
+                {/* Streak portion */}
+                <span className="px-2.5 sm:px-3 text-amber-500 flex items-center gap-1">
+                  <span>🔥</span>
+                  <span>{gamification.streak}</span>
+                  <span className="hidden sm:inline">Streak</span>
+                </span>
+
+                {/* Personal Best portion - Desktop only */}
+                {pbWPM !== null && (
+                  <>
+                    <span className="hidden md:inline-block h-full w-[1px] bg-[#3B82F6]/30" />
+                    <span className="hidden md:inline-flex px-3 text-sky-400 items-center gap-1">
+                      <span>PB:</span>
+                      <span>{pbWPM} WPM</span>
+                    </span>
+                  </>
+                )}
               </div>
+
               {gamification.resetOccurred && (
-                <div className="text-[9px] font-mono text-rose-400 font-semibold tracking-wider uppercase animate-pulse">
+                <div className="text-[8px] sm:text-[9px] font-mono text-rose-400 font-semibold tracking-wider uppercase mt-0.5 animate-pulse">
                   Streak reset — start fresh today
                 </div>
               )}
-            </div>
-          )}
-
-          {pbWPM !== null && (
-            <div className="hidden min-[640px]:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-700 bg-charcoal-800 text-[11px] font-mono text-[#3B82F6] font-bold uppercase tracking-wider animate-fade-in">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-pulse"></span>
-              <span>PB: {pbWPM} WPM</span>
             </div>
           )}
         </div>

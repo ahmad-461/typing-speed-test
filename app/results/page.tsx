@@ -43,8 +43,102 @@ function ResultsScreenContent() {
   const [toastMessage, setToastMessage] = useState("");
   const [xpEarned, setXpEarned] = useState<number | null>(null);
 
+  // Coach and Drill States
+  const [coachFeedback, setCoachFeedback] = useState<string | null>(null);
+  const [coachLoading, setCoachLoading] = useState(true);
+  const [drillComparison, setDrillComparison] = useState<{
+    targetKeys: string[];
+    currentAcc: number;
+    histAcc: number;
+  } | null>(null);
+
   const cardRef = useRef<HTMLDivElement>(null);
   const hasSaved = useRef(false);
+
+  // Fetch Coach Feedback asynchronously
+  useEffect(() => {
+    async function fetchFeedback() {
+      setCoachLoading(true);
+      try {
+        const testErrors = JSON.parse(sessionStorage.getItem("last_test_errors") || "{}");
+        const res = await fetch("/api/coach-feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            wpm,
+            accuracy,
+            consistency,
+            difficulty,
+            category,
+            errors: testErrors,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCoachFeedback(data.feedback);
+        } else {
+          throw new Error("Feedback fetch failed");
+        }
+      } catch (err) {
+        console.error("Failed to fetch coach feedback:", err);
+        const fallbackTips = [
+          "Maintain a steady cadence. Focus on flowing smoothly between letters rather than rushing individual words.",
+          "When encountering tricky letters, reduce your speed slightly to reinforce correct muscle memory.",
+          "Keep your wrists floating gently above the keyboard to reach keys without awkward angles.",
+          "If you notice mistakes on a specific character, practice common words containing that letter to build speed.",
+          "Take deep, relaxed breaths. A calm posture drastically reduces keyboard tension and improves consistency."
+        ];
+        const idx = Math.abs(parseInt(wpm, 10) || 0) % fallbackTips.length;
+        setCoachFeedback(fallbackTips[idx]);
+      } finally {
+        setCoachLoading(false);
+      }
+    }
+
+    fetchFeedback();
+  }, [wpm, accuracy, consistency, difficulty, category]);
+
+  // Compute Weak-Key Drill comparison stats
+  useEffect(() => {
+    if (category === "weak_key_drill" && typeof window !== "undefined") {
+      try {
+        const targetKeys: string[] = JSON.parse(sessionStorage.getItem("last_drill_keys") || "[]");
+        const testErrors = JSON.parse(sessionStorage.getItem("last_test_errors") || "{}");
+        const testTypedCounts = JSON.parse(sessionStorage.getItem("last_test_typed_counts") || "{}");
+
+        if (targetKeys.length > 0) {
+          const targetErrors = targetKeys.reduce((sum, k) => sum + (testErrors[k] || 0), 0);
+          const targetTyped = targetKeys.reduce((sum, k) => sum + (testTypedCounts[k] || 0), 0);
+          const currentAcc = targetTyped > 0 ? Math.round(((targetTyped - targetErrors) / targetTyped) * 100) : 100;
+
+          const rawHistErrors = localStorage.getItem("tst_keyerrors_v1");
+          const rawHistTyped = localStorage.getItem("tst_key_typed_counts_v1");
+          const histErrorsStore = rawHistErrors ? JSON.parse(rawHistErrors) : {};
+          const histTypedStore = rawHistTyped ? JSON.parse(rawHistTyped) : {};
+
+          let totalHistErrors = 0;
+          let totalHistTyped = 0;
+
+          targetKeys.forEach((key) => {
+            const priorErrors = Math.max(0, (histErrorsStore[key] || 0) - (testErrors[key] || 0));
+            const priorTyped = Math.max(0, (histTypedStore[key] || 0) - (testTypedCounts[key] || 0));
+            totalHistErrors += priorErrors;
+            totalHistTyped += priorTyped;
+          });
+
+          const histAcc = totalHistTyped > 0 ? Math.round(((totalHistTyped - totalHistErrors) / totalHistTyped) * 100) : 100;
+
+          setDrillComparison({
+            targetKeys,
+            currentAcc,
+            histAcc,
+          });
+        }
+      } catch (err) {
+        console.error("Error computing drill comparison:", err);
+      }
+    }
+  }, [category]);
 
   // Automatically save result to localStorage history on load exactly once
   useEffect(() => {
@@ -490,6 +584,55 @@ function ResultsScreenContent() {
               <span className="text-xs font-mono text-slate-500 mt-1">Evaluation Tier</span>
             </div>
 
+          </div>
+
+          {/* Drill Comparison Panel */}
+          {category === "weak_key_drill" && drillComparison && (
+            <div className="bg-[#3B82F6]/5 border border-[#3B82F6]/30 rounded-xl p-5 text-left font-mono space-y-3 animate-fade-in">
+              <div className="flex items-center gap-1.5 text-xs text-electric-400 font-bold uppercase tracking-wider">
+                <span>🎯</span> target keys training results
+              </div>
+              <div className="text-slate-400 text-[11px] leading-relaxed">
+                Targeted keys in this drill: <span className="text-white font-bold">{drillComparison.targetKeys.join(", ")}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <div className="bg-charcoal-900/60 border border-charcoal-700/60 rounded-lg p-3 text-center">
+                  <span className="text-[9px] text-slate-500 uppercase tracking-wider block mb-1">Drill Accuracy</span>
+                  <span className="text-xl font-extrabold text-emerald-400">{drillComparison.currentAcc}%</span>
+                </div>
+                <div className="bg-charcoal-900/60 border border-charcoal-700/60 rounded-lg p-3 text-center">
+                  <span className="text-[9px] text-slate-500 uppercase tracking-wider block mb-1">Historical Avg</span>
+                  <span className="text-xl font-extrabold text-slate-400">{drillComparison.histAcc}%</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 text-center italic">
+                {drillComparison.currentAcc > drillComparison.histAcc
+                  ? "⚡ Outstanding progress! You beat your historical average on these keys."
+                  : "💡 Keep practicing to build solid muscle memory on these keys."}
+              </p>
+            </div>
+          )}
+
+          {/* Coach's Note Panel */}
+          <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-5 font-mono text-left space-y-2 animate-fade-in">
+            <div className="flex items-center justify-between border-b border-charcoal-700/60 pb-2 mb-2">
+              <span className="text-xs text-electric-400 font-bold tracking-wider">
+                &gt;_ COACH_ANALYSIS
+              </span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
+                Adaptive AI Coach
+              </span>
+            </div>
+            {coachLoading ? (
+              <div className="space-y-2 animate-pulse py-1">
+                <div className="h-3 bg-charcoal-700 rounded w-3/4"></div>
+                <div className="h-3 bg-charcoal-700 rounded w-1/2"></div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-300 leading-relaxed italic">
+                &ldquo;{coachFeedback}&rdquo;
+              </p>
+            )}
           </div>
 
           {/* Export Share Section */}
