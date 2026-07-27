@@ -132,6 +132,10 @@ export default function Home() {
     window.dispatchEvent(new CustomEvent("tst-open-name-modal"));
   };
 
+  const triggerExitModal = () => {
+    window.dispatchEvent(new CustomEvent("tst-open-exit-modal"));
+  };
+
   // Setup click target for footer scroll-to-element
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -321,48 +325,71 @@ export default function Home() {
   const isNewRecruit = historyLength === 0;
 
   return (
-    <div className="flex-grow flex flex-col w-full max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8 animate-fade-in space-y-10">
+    <div className="flex-grow flex flex-col w-full max-w-5xl mx-auto px-4 py-4 sm:py-8 lg:px-8 animate-fade-in space-y-6 sm:space-y-10">
 
       {/* SYSTEM DIAGNOSTICS & HUB NAVIGATION (Compact System Label) */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#1E293B]">
-        <div className="space-y-1">
-          <span className="font-mono text-[10px] text-electric-400 uppercase tracking-widest font-black block">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 pb-3 sm:pb-4 border-b border-[#1E293B]">
+        <div className="space-y-0.5 sm:space-y-1">
+          <span className="font-mono text-[9px] sm:text-[10px] text-electric-400 uppercase tracking-widest font-black block">
             {"// TERMINAL OVERVIEW"}
           </span>
-          <h1 className="text-xl font-bold text-white tracking-wider font-mono">
+          <h1 className="text-sm sm:text-xl font-bold text-white tracking-wider font-mono">
             NOKY // MISSION CONTROL
           </h1>
         </div>
 
         {/* Dynamic Player Status HUD Header (compact game HUD save-file style) */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
           {isNewRecruit ? (
-            <div className="inline-flex items-center h-8 px-4 rounded-full border border-rose-500/30 bg-rose-500/[0.04] text-[10px] font-mono text-rose-400 font-extrabold uppercase tracking-widest animate-pulse">
+            <div className="inline-flex items-center h-7 sm:h-8 px-3 sm:px-4 rounded-full border border-rose-500/30 bg-rose-500/[0.04] text-[9px] sm:text-[10px] font-mono text-rose-400 font-extrabold uppercase tracking-widest animate-pulse">
               <span>⚠️ Status: New Recruit</span>
             </div>
           ) : (
             gamificationState && (
-              <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/20 bg-charcoal-800 text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider">
-                <span className="px-3 text-slate-400">{gamificationState.levelTitle}</span>
-                <span className="h-full w-[1px] bg-charcoal-700" />
-                <span className="px-3 text-[#3B82F6]">Lvl {gamificationState.currentLevel}</span>
-                <span className="h-full w-[1px] bg-charcoal-700" />
-                <span className="px-3 text-amber-500 flex items-center gap-1">
-                  <span>🔥</span> {gamificationState.streakDays} Day Streak
-                </span>
-                {overallPbWPM > 0 && (
-                  <>
+              <>
+                {/* Mobile view: Stack into exactly two clean, deliberate, and compact rows */}
+                <div className="flex flex-col gap-1.5 sm:hidden w-full">
+                  {/* Row 1: Level Title + Level + Streak */}
+                  <div className="inline-flex items-center h-7 rounded-full border border-[#3B82F6]/20 bg-charcoal-800 text-[9px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden">
+                    <span className="px-2.5 text-slate-400">{gamificationState.levelTitle}</span>
                     <span className="h-full w-[1px] bg-charcoal-700" />
-                    <span className="px-3 text-emerald-400 font-bold">PB: {overallPbWPM} WPM</span>
-                  </>
-                )}
-              </div>
+                    <span className="px-2.5 text-[#3B82F6]">Lvl {gamificationState.currentLevel}</span>
+                    <span className="h-full w-[1px] bg-charcoal-700" />
+                    <span className="px-2.5 text-amber-500 flex items-center gap-0.5">
+                      <span>🔥</span> {gamificationState.streakDays}
+                    </span>
+                  </div>
+                  {/* Row 2: Personal Best if available */}
+                  {overallPbWPM > 0 && (
+                    <div className="self-start inline-flex items-center h-7 px-2.5 rounded-full border border-emerald-500/20 bg-charcoal-800 text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                      <span>PB: {overallPbWPM} WPM</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Desktop view: Single horizontal pill container */}
+                <div className="hidden sm:inline-flex items-center h-8 rounded-full border border-[#3B82F6]/20 bg-charcoal-800 text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider">
+                  <span className="px-3 text-slate-400">{gamificationState.levelTitle}</span>
+                  <span className="h-full w-[1px] bg-charcoal-700" />
+                  <span className="px-3 text-[#3B82F6]">Lvl {gamificationState.currentLevel}</span>
+                  <span className="h-full w-[1px] bg-charcoal-700" />
+                  <span className="px-3 text-amber-500 flex items-center gap-1">
+                    <span>🔥</span> {gamificationState.streakDays} Day Streak
+                  </span>
+                  {overallPbWPM > 0 && (
+                    <>
+                      <span className="h-full w-[1px] bg-charcoal-700" />
+                      <span className="px-3 text-emerald-400 font-bold">PB: {overallPbWPM} WPM</span>
+                    </>
+                  )}
+                </div>
+              </>
             )
           )}
-          {/* Global player identity pencil edit */}
-          <div className="flex items-center gap-1.5 font-mono text-xs text-slate-400 bg-charcoal-800 border border-charcoal-750 px-3 py-1.5 rounded-lg">
+          {/* Global player identity pencil edit (reduced padding / simple inline treatment on mobile) */}
+          <div className="flex items-center gap-1.5 font-mono text-xs text-slate-400 sm:bg-charcoal-800 sm:border sm:border-charcoal-750 sm:px-3 sm:py-1.5 rounded-lg">
             <span>Playing as:</span>
-            <span className="font-extrabold text-white underline decoration-electric-500 decoration-2 underline-offset-2">{playerName}</span>
+            <span className="font-extrabold text-white underline decoration-electric-500 decoration-2 underline-offset-2 normal-case">{playerName}</span>
             <button
               onClick={triggerEditModal}
               className="text-slate-500 hover:text-white transition-colors cursor-pointer p-0.5 ml-1"
@@ -371,6 +398,17 @@ export default function Home() {
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </button>
+            <button
+              onClick={triggerExitModal}
+              className="flex items-center justify-center border border-[#3B82F6]/30 hover:border-[#3B82F6] hover:bg-[#3B82F6]/10 text-slate-400 hover:text-white rounded px-1.5 py-0.5 transition-all cursor-pointer ml-1"
+              title="Exit Session"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </button>
           </div>

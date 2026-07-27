@@ -59,7 +59,10 @@ export default function Footer() {
   };
 
   return (
-    <footer className="w-full bg-[#0E0F11] border-t border-[#1E293B] pt-16 pb-12 select-none text-[13px] relative overflow-hidden">
+    <footer className="w-full bg-[#0E0F11] border-t border-[#3B82F6]/20 pt-10 pb-8 sm:pt-16 sm:pb-12 select-none text-[13px] relative overflow-hidden shadow-[0_-4px_30px_rgba(59,130,246,0.12)]">
+      {/* Soft electric-blue top border glow strip */}
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#3B82F6]/60 to-transparent" />
+
       {/* Subtle background scanline/grid grid simulation */}
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.02]"
@@ -72,10 +75,10 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         {/* ASYMMETRIC TALL COLUMN LAYOUT */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
 
           {/* Dominant Left Side: Call-to-Action Closing Block (65% width equivalent) */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-4 sm:space-y-6">
 
             {isTypingActive ? (
               /* Subdued view during active typing */
@@ -84,22 +87,22 @@ export default function Footer() {
                   <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                   <span>TRANSMISSION IN PROGRESS</span>
                 </div>
-                <p className="text-xl font-bold font-mono text-slate-400 uppercase tracking-wide">
+                <p className="text-lg sm:text-xl font-bold font-mono text-slate-400 uppercase tracking-wide">
                   Focus engaged. Complete the terminal passage.
                 </p>
               </div>
             ) : (
               /* Prominent prominent CTA view */
               <div className="space-y-4 animate-fade-in">
-                <span className="font-mono text-xs text-electric-400 tracking-widest uppercase font-black block">
+                <span className="font-mono text-xs text-[#3B82F6] tracking-widest uppercase font-black block">
                   {"// CHASE THE NEXT HIGHSCORE"}
                 </span>
 
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight uppercase leading-tight font-sans max-w-xl">
+                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight uppercase leading-tight font-sans max-w-xl">
                   Ready to benchmark your keyboard response?
                 </h2>
 
-                <p className="text-slate-400 text-sm max-w-lg leading-relaxed">
+                <p className="text-slate-400 text-xs sm:text-sm max-w-lg leading-relaxed">
                   Your spatial muscle memory updates dynamically with every keystroke. Jump straight back in to establish a new peak performance standard.
                 </p>
 
@@ -107,14 +110,14 @@ export default function Footer() {
                   {pathname === "/" ? (
                     <button
                       onClick={handleCtaClick}
-                      className="inline-flex items-center px-8 py-4 bg-electric-500/10 hover:bg-electric-500 border border-electric-500/40 hover:border-electric-500 text-white hover:text-[#0E0F11] font-mono text-sm uppercase tracking-wider font-extrabold rounded-xl transition-all duration-200 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] cursor-pointer"
+                      className="inline-flex items-center px-6 py-3.5 sm:px-8 sm:py-4 bg-[#3B82F6]/10 hover:bg-[#3B82F6] border border-[#3B82F6]/40 hover:border-[#3B82F6] text-white hover:text-[#0E0F11] font-mono text-xs sm:text-sm uppercase tracking-wider font-extrabold rounded-xl transition-all duration-200 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] cursor-pointer"
                     >
                       [ SCROLL TO CONFIGURATIONS ]
                     </button>
                   ) : (
                     <Link
                       href="/"
-                      className="inline-flex items-center px-8 py-4 bg-electric-500/10 hover:bg-electric-500 border border-electric-500/40 hover:border-electric-500 text-white hover:text-[#0E0F11] font-mono text-sm uppercase tracking-wider font-extrabold rounded-xl transition-all duration-200 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] cursor-pointer"
+                      className="inline-flex items-center px-6 py-3.5 sm:px-8 sm:py-4 bg-[#3B82F6]/10 hover:bg-[#3B82F6] border border-[#3B82F6]/40 hover:border-[#3B82F6] text-white hover:text-[#0E0F11] font-mono text-xs sm:text-sm uppercase tracking-wider font-extrabold rounded-xl transition-all duration-200 hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] cursor-pointer"
                     >
                       [ START NEW TYPING RUN ]
                     </Link>
@@ -125,10 +128,10 @@ export default function Footer() {
           </div>
 
           {/* Smaller Right Side: System telemetry dashboard and links (35% width equivalent) */}
-          <div className="lg:col-span-4 space-y-6 w-full lg:border-l lg:border-charcoal-700/60 lg:pl-8">
+          <div className="lg:col-span-4 space-y-6 w-full lg:border-l lg:border-[#1E293B]/60 lg:pl-8">
 
             {/* System Status telemetry container */}
-            <div className="bg-[#121316] border border-[#1E293B] rounded-xl p-5 font-mono text-[11px] text-slate-400 flex flex-col justify-center space-y-2 shadow-inner">
+            <div className="bg-[#121316] border border-[#1E293B] rounded-xl p-4 sm:p-5 font-mono text-[11px] text-slate-400 flex flex-col justify-center space-y-2 shadow-inner">
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 font-bold">&gt; SYSTEM STATUS</span>
                 <div className="flex items-center gap-1.5">
@@ -152,7 +155,7 @@ export default function Footer() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between border-t border-slate-850/40 pt-2 mt-2">
+              <div className="flex items-center justify-between border-t border-[#1E293B] pt-2 mt-2">
                 <span className="text-slate-500 font-bold">&gt; VERSION</span>
                 <div className="flex items-center gap-2">
                   {showSecret && (
@@ -201,7 +204,7 @@ export default function Footer() {
         </div>
 
         {/* Separator */}
-        <div className="h-[1px] bg-[#1E293B]/60 w-full my-8" />
+        <div className="h-[1px] bg-[#1E293B]/60 w-full my-6 sm:my-8" />
 
         {/* Bottom copyright branding */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[11px] text-slate-500">

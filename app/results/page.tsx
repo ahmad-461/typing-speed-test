@@ -742,7 +742,7 @@ function ResultsScreenContent() {
               <div className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-charcoal-900 border border-charcoal-700 text-xs font-mono">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span className="text-slate-500 uppercase tracking-widest text-[9px]">Competitor Name:</span>
-                <span className="text-emerald-400 font-bold">{displayName.trim() || "Anonymous"}</span>
+                <span className="text-emerald-400 font-bold normal-case">{displayName.trim() || "Anonymous"}</span>
               </div>
 
               {/* Persistent direct CTA Link */}
