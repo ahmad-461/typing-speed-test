@@ -3,7 +3,7 @@ import { passageBank } from "../../../lib/passages";
 
 export const dynamic = "force-dynamic";
 
-type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     : "medium") as "easy" | "medium" | "hard";
 
   const rawCategory = searchParams.get("category") || "code_arena";
-  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill"].includes(rawCategory)
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill", "speed_sprint"].includes(rawCategory)
     ? rawCategory
     : "code_arena") as NewCategory;
 
@@ -21,8 +21,18 @@ export async function GET(request: NextRequest) {
 
   // Select a single random static fallback passage from the matching category and difficulty
   const getStaticFallback = () => {
+    // Speed sprint always bypasses standard difficulty, but we check if we can get a matching sprint passage
     const list = passageBank[difficulty].filter((p) => p.category === category);
     if (list.length === 0) {
+      // Find sprint in any difficulty if currently on one where none is defined
+      if (category === "speed_sprint") {
+        for (const diff of ["easy", "medium", "hard"] as const) {
+          const sprintList = passageBank[diff].filter((p) => p.category === "speed_sprint");
+          if (sprintList.length > 0) {
+            return [sprintList[Math.floor(Math.random() * sprintList.length)].text];
+          }
+        }
+      }
       const anyList = passageBank[difficulty];
       const fallbackItem = anyList[Math.floor(Math.random() * anyList.length)]?.text || "Practice typing daily to enhance your speed and accuracy.";
       return [fallbackItem];
@@ -42,7 +52,10 @@ export async function GET(request: NextRequest) {
   // Define word count guidelines
   let wordCountGuide = "approximately 60 words";
   let description = "standard narrative prose, moderate punctuation, and normal vocabulary";
-  if (difficulty === "easy") {
+  if (category === "speed_sprint") {
+    wordCountGuide = "strictly approximately 15-20 words";
+    description = "highly punchy, neutral sentences designed for quick typing tests";
+  } else if (difficulty === "easy") {
     wordCountGuide = "approximately 30 words";
     description = "simple vocabulary, short and straightforward sentences, and minimal punctuation";
   } else if (difficulty === "hard") {
@@ -63,6 +76,8 @@ export async function GET(request: NextRequest) {
   } else if (category === "weak_key_drill") {
     const listStr = weakKeys ? weakKeys.split(",").join(", ") : "E, T, A, O, I, N";
     themeInstruction = `specifically designed as a typing drill to help the user practice these weak characters/letters: [${listStr}]. You MUST generate a natural, grammatically correct, and cohesive paragraph in plain English that frequently and density-wise utilizes these target letters: [${listStr}] significantly more often than normal prose. Avoid complex code syntax or symbols; keep it natural-reading.`;
+  } else if (category === "speed_sprint") {
+    themeInstruction = "designed as a high-pressure typing sprint. It must consist of simple, neutral, punchy words without complex punctuation, structured as a clean and motivating single sentence of exactly 15 to 20 words.";
   }
 
   const prompt = `Generate exactly ONE (1) distinct, high-quality typing test passage of ${wordCountGuide}. The passage must be a single coherent and natural paragraph of ${description} ${themeInstruction}, suitable for a general audience.

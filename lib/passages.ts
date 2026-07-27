@@ -1,7 +1,7 @@
 export interface Passage {
   id: string;
   text: string;
-  category: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+  category: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 }
 
 export interface PassageBank {
@@ -12,6 +12,21 @@ export interface PassageBank {
 
 export const passageBank: PassageBank = {
   easy: [
+    {
+      id: "easy-sprint-1",
+      category: "speed_sprint",
+      text: "Speed typing requires absolute focus and quick finger movements across the keys.",
+    },
+    {
+      id: "easy-sprint-2",
+      category: "speed_sprint",
+      text: "Every perfect keystroke builds momentum and elevates your final words per minute.",
+    },
+    {
+      id: "easy-sprint-3",
+      category: "speed_sprint",
+      text: "Keep a relaxed posture to easily reduce tension while typing fast under pressure.",
+    },
     {
       id: "easy-drill-1",
       category: "weak_key_drill",
@@ -80,6 +95,16 @@ export const passageBank: PassageBank = {
   ],
   medium: [
     {
+      id: "medium-sprint-1",
+      category: "speed_sprint",
+      text: "Precision and rhythm are essential for achieving outstanding speed on mechanical keyboard switches.",
+    },
+    {
+      id: "medium-sprint-2",
+      category: "speed_sprint",
+      text: "Challenge yourself with short daily typing practice sessions to consistently improve hand eye coordination.",
+    },
+    {
       id: "medium-code-1",
       category: "code_arena",
       text: "Python has grown to become one of the most influential programming languages in existence today. Its elegant design and emphasis on readability allow both beginners and experts to write clean and concise code. Python excels in scientific computing, machine learning, and automation, supported by a massive global community that continuously builds open source libraries to solve complex modern challenges.",
@@ -141,6 +166,11 @@ export const passageBank: PassageBank = {
     },
   ],
   hard: [
+    {
+      id: "hard-sprint-1",
+      category: "speed_sprint",
+      text: "Absolute cognitive sync and rapid muscle reflexes allow top competitors to exceed hundred words per minute.",
+    },
     {
       id: "hard-code-1",
       category: "code_arena",

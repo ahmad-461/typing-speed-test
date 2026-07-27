@@ -69,9 +69,11 @@ function TestScreenContent() {
   const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
 
   const rawCategory = searchParams.get("category") || "code_arena";
-  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill", "speed_sprint"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 
-  const isGhostEnabled = searchParams.get("ghost") === "true";
+  const isSpeedSprint = category === "speed_sprint";
+  // Speed Sprint has no Ghost Mode or difficulty tiers
+  const isGhostEnabled = !isSpeedSprint && searchParams.get("ghost") === "true";
 
   const [selectedPassage, setSelectedPassage] = useState<string>("");
   const [isActive, setIsActive] = useState(false);
@@ -156,6 +158,7 @@ function TestScreenContent() {
       throw new Error("Failed to load valid passage from API");
     } catch (err) {
       console.warn("Client fetch error, using local fallback:", err);
+      // Fallback: for speed sprint find speed sprint fallback passage
       const list = passageBank[difficulty].filter((p) => p.category === category);
       const fallbackList = list.length > 0 ? list : passageBank[difficulty];
       const randomItem = fallbackList[Math.floor(Math.random() * fallbackList.length)];
@@ -171,6 +174,58 @@ function TestScreenContent() {
     fetchPassage();
   }, [fetchPassage]);
 
+  // Function to finalize and redirect cleanly
+  const finalizeTestAndRedirect = useCallback((durationSecs: number) => {
+    const activePassage = selectedPassageRef.current;
+    const activeInput = typedInputRef.current;
+
+    let correctCount = 0;
+    for (let i = 0; i < activeInput.length; i++) {
+      if (activeInput[i] === activePassage[i]) {
+        correctCount++;
+      }
+    }
+
+    const duration = Math.max(1, durationSecs);
+    const finalWPM = Math.round((correctCount / 5) / (duration / 60));
+    const totalCount = totalTypedCount || activeInput.length || 1;
+    const finalAccuracy = Math.round((correctCount / totalCount) * 100);
+
+    // Save aggregated key errors & typed counts to localStorage
+    saveKeyErrors(keyErrors);
+    saveKeyTypedCounts(keyTypedCounts);
+
+    // Compute consistency score
+    const allSamples = [...wpmSamplesRef.current, finalWPM];
+    const consistencyScore = calculateConsistencyScore(allSamples);
+
+    // Save passage text and specific run stats in session storage for performance share cards/coaching
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("last_passage", activePassage);
+      sessionStorage.setItem("last_test_errors", JSON.stringify(keyErrors));
+      sessionStorage.setItem("last_test_typed_counts", JSON.stringify(keyTypedCounts));
+    }
+
+    // Compare against the ghost if active
+    let ghostMsg = "";
+    if (isGhostEnabled && ghostPB) {
+      const ghostTargetSecs = (activePassage.length * 12) / ghostPB.wpm;
+      const diffVal = Math.abs(duration - ghostTargetSecs).toFixed(1);
+      if (duration < ghostTargetSecs) {
+        ghostMsg = `You beat your ghost by ${diffVal} seconds! ⚡`;
+      } else {
+        ghostMsg = `Your ghost finished ${diffVal} seconds ahead — try again! 👻`;
+      }
+    }
+
+    const testDifficulty = isSpeedSprint ? "custom" : difficulty;
+
+    // Immediate redirection on correct completion
+    router.push(
+      `/results?difficulty=${testDifficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${duration}&consistency=${consistencyScore}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}`
+    );
+  }, [difficulty, category, isGhostEnabled, ghostPB, keyErrors, keyTypedCounts, totalTypedCount, isSpeedSprint, router]);
+
   // Handle live stopwatch update & WPM sampling
   useEffect(() => {
     if (!startTime) return;
@@ -180,6 +235,13 @@ function TestScreenContent() {
       const elapsedMs = now - startTime;
       const secs = Math.floor(elapsedMs / 1000);
       setElapsedSeconds(secs);
+
+      // Speed Sprint Countdown check: terminates immediately at 20 seconds
+      if (isSpeedSprint && secs >= 20) {
+        clearInterval(interval);
+        finalizeTestAndRedirect(20);
+        return;
+      }
 
       // Sample WPM every second mark
       if (secs > 0 && secs > lastSampledSecondRef.current) {
@@ -199,7 +261,7 @@ function TestScreenContent() {
     }, 200);
 
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, isSpeedSprint, finalizeTestAndRedirect]);
 
   // Handle continuous ghost cursor movement independent of user input
   useEffect(() => {
@@ -280,43 +342,7 @@ function TestScreenContent() {
         const endTime = Date.now();
         const durationMs = actualStartTime ? endTime - actualStartTime : 0;
         const durationSecs = Math.max(1, Math.round(durationMs / 1000));
-
-        const correctCount = selectedPassage.length;
-        const finalWPM = Math.round((correctCount / 5) / (durationSecs / 60));
-        const updatedTotalCount = totalTypedCount + diff;
-        const finalAccuracy = Math.round((correctCount / updatedTotalCount) * 100);
-
-        // Save aggregated key errors & typed counts to localStorage
-        saveKeyErrors(updatedErrors);
-        saveKeyTypedCounts(updatedTypedCounts);
-
-        // Compute consistency score
-        const allSamples = [...wpmSamplesRef.current, finalWPM];
-        const consistencyScore = calculateConsistencyScore(allSamples);
-
-        // Save passage text and specific run stats in session storage for performance share cards/coaching
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("last_passage", selectedPassage);
-          sessionStorage.setItem("last_test_errors", JSON.stringify(updatedErrors));
-          sessionStorage.setItem("last_test_typed_counts", JSON.stringify(updatedTypedCounts));
-        }
-
-        // Compare against the ghost if active
-        let ghostMsg = "";
-        if (isGhostEnabled && ghostPB) {
-          const ghostTargetSecs = (selectedPassage.length * 12) / ghostPB.wpm;
-          const diffVal = Math.abs(durationSecs - ghostTargetSecs).toFixed(1);
-          if (durationSecs < ghostTargetSecs) {
-            ghostMsg = `You beat your ghost by ${diffVal} seconds! ⚡`;
-          } else {
-            ghostMsg = `Your ghost finished ${diffVal} seconds ahead — try again! 👻`;
-          }
-        }
-
-        // Immediate redirection on correct completion
-        router.push(
-          `/results?difficulty=${difficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}&consistency=${consistencyScore}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}`
-        );
+        finalizeTestAndRedirect(durationSecs);
       }
     } else if (diff < 0) {
       // Characters were deleted (Backspace)
@@ -359,6 +385,11 @@ function TestScreenContent() {
     : 100;
 
   const formatTime = (seconds: number) => {
+    if (isSpeedSprint) {
+      // Display countdown style for Speed Sprint
+      const remaining = Math.max(0, 20 - seconds);
+      return `${remaining}s`;
+    }
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -422,8 +453,9 @@ function TestScreenContent() {
     );
   }
 
+  const timerLabel = isSpeedSprint ? "COUNTDOWN" : "TIMER";
   const stats = [
-    { label: "TIMER", value: formatTime(elapsedSeconds), unit: "", icon: "⏱️" },
+    { label: timerLabel, value: formatTime(elapsedSeconds), unit: "", icon: "⏱️" },
     { label: "WPM", value: liveWPM.toString(), unit: "wpm", icon: "⚡" },
     { label: "ACCURACY", value: liveAccuracy.toString(), unit: "%", icon: "🎯" },
   ];
@@ -440,19 +472,23 @@ function TestScreenContent() {
             ← Back
           </LinkIcon>
           <div className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <span>DIFFICULTY:</span>
-            <span
-              className={`font-bold ${
-                difficulty === "easy"
-                  ? "text-emerald-400"
-                  : difficulty === "medium"
-                  ? "text-electric-400"
-                  : "text-rose-400"
-              }`}
-            >
-              {difficulty}
-            </span>
-            <span className="text-slate-600">•</span>
+            {!isSpeedSprint && (
+              <>
+                <span>DIFFICULTY:</span>
+                <span
+                  className={`font-bold ${
+                    difficulty === "easy"
+                      ? "text-emerald-400"
+                      : difficulty === "medium"
+                      ? "text-electric-400"
+                      : "text-rose-400"
+                  }`}
+                >
+                  {difficulty}
+                </span>
+                <span className="text-slate-600">•</span>
+              </>
+            )}
             <span>CATEGORY:</span>
             <span className="font-bold text-sky-400 uppercase">
               {category.replace("_", " ")}
