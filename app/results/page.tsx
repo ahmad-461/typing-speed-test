@@ -39,6 +39,14 @@ function ResultsScreenContent() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Read player callsign from localstorage on load
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("tst_player_name") || "";
+      setDisplayName(stored);
+    }
+  }, []);
+
   // Toast notifications for clipboard actions
   const [toastMessage, setToastMessage] = useState("");
   const [xpEarned, setXpEarned] = useState<number | null>(null);
@@ -229,6 +237,12 @@ function ResultsScreenContent() {
 
     if (!sanitizedName) {
       sanitizedName = "Anonymous";
+    }
+
+    // Persist and synchronize to global player name in localStorage on submit
+    if (typeof window !== "undefined") {
+      localStorage.setItem("tst_player_name", sanitizedName);
+      window.dispatchEvent(new Event("tst-name-updated"));
     }
 
     const insertPayload = {

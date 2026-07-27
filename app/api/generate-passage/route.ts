@@ -3,7 +3,7 @@ import { passageBank } from "../../../lib/passages";
 
 export const dynamic = "force-dynamic";
 
-type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+type NewCategory = "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     : "medium") as "easy" | "medium" | "hard";
 
   const rawCategory = searchParams.get("category") || "code_arena";
-  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill"].includes(rawCategory)
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill", "speed_sprint"].includes(rawCategory)
     ? rawCategory
     : "code_arena") as NewCategory;
 
@@ -52,7 +52,11 @@ export async function GET(request: NextRequest) {
 
   // Inject category descriptions (system prompts for themed categories)
   let themeInstruction = "";
-  if (category === "code_arena") {
+  if (category === "speed_sprint") {
+    wordCountGuide = "strictly approximately 15-20 words";
+    description = "highly punchy, simple, and neutral sentences";
+    themeInstruction = "designed as a rapid typing sprint. It must consist of simple, powerful words. It MUST be extremely short (strictly 15 to 20 words maximum) regardless of any other parameter, and highly focus on high-frequency letters.";
+  } else if (category === "code_arena") {
     themeInstruction = "themed specifically around a software concept, history, or use-case of one of these programming technologies: Python, JavaScript, HTML/CSS, or SQL. It must be written entirely in normal, natural, typeable English prose (plain prose) and MUST NOT contain any actual code syntax, symbols like brackets or braces, or code snippets. Keep it focused on the conceptual, historic, or cultural aspects of Python, JavaScript, HTML/CSS, or SQL.";
   } else if (category === "knowledge_quest") {
     themeInstruction = "themed around factual general knowledge and trivia, including science, astronomy, history, discoveries, or general factual information. Keep it informative and highly educational.";

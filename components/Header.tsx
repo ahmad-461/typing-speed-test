@@ -10,6 +10,7 @@ import { getGamificationState } from "../lib/gamification";
 export default function Header() {
   const pathname = usePathname();
   const [pbWPM, setPbWPM] = useState<number | null>(null);
+  const [playerName, setPlayerName] = useState<string>("");
   const [gamification, setGamification] = useState<{
     level: number;
     title: string;
@@ -17,12 +18,16 @@ export default function Header() {
     resetOccurred: boolean;
   } | null>(null);
 
-  useEffect(() => {
+  const loadPlayerData = () => {
     const best = getPersonalBest();
     if (best) {
       setPbWPM(best.wpm);
     } else {
       setPbWPM(null);
+    }
+
+    if (typeof window !== "undefined") {
+      setPlayerName(localStorage.getItem("tst_player_name") || "");
     }
 
     // Read gamification state on route change to keep header accurate
@@ -33,7 +38,22 @@ export default function Header() {
       streak: state.streakDays,
       resetOccurred: state.streakResetOccurred,
     });
+  };
+
+  useEffect(() => {
+    loadPlayerData();
   }, [pathname]);
+
+  useEffect(() => {
+    window.addEventListener("tst-name-updated", loadPlayerData);
+    return () => {
+      window.removeEventListener("tst-name-updated", loadPlayerData);
+    };
+  }, []);
+
+  const handleOpenEditModal = () => {
+    window.dispatchEvent(new Event("tst-open-name-modal"));
+  };
 
   const navItems = [
     { label: "Leaderboard", href: "/leaderboard" },
@@ -102,32 +122,51 @@ export default function Header() {
         <div className="flex items-center justify-end select-none">
           {gamification && (
             <div className="flex flex-col items-end">
-              <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
-                {/* Level portion */}
-                <span className="px-2.5 sm:px-3 text-[#3B82F6]">
-                  Lvl {gamification.level}
-                </span>
-
-                {/* Partition Line */}
-                <span className="h-full w-[1px] bg-[#3B82F6]/30" />
-
-                {/* Streak portion */}
-                <span className="px-2.5 sm:px-3 text-amber-500 flex items-center gap-1">
-                  <span>🔥</span>
-                  <span>{gamification.streak}</span>
-                  <span className="hidden sm:inline">Streak</span>
-                </span>
-
-                {/* Personal Best portion - Desktop only */}
-                {pbWPM !== null && (
-                  <>
-                    <span className="hidden md:inline-block h-full w-[1px] bg-[#3B82F6]/30" />
-                    <span className="hidden md:inline-flex px-3 text-sky-400 items-center gap-1">
-                      <span>PB:</span>
-                      <span>{pbWPM} WPM</span>
-                    </span>
-                  </>
+              <div className="flex items-center gap-2 sm:gap-3">
+                {/* Playing as: [Name] + Edit Pencil (hidden on /test page) */}
+                {playerName && pathname !== "/test" && (
+                  <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-slate-400">
+                    <span className="hidden sm:inline">Playing as:</span>
+                    <span className="text-white font-bold max-w-[80px] sm:max-w-[120px] truncate">{playerName}</span>
+                    <button
+                      onClick={handleOpenEditModal}
+                      className="text-[#3B82F6] hover:text-[#3B82F6]/80 p-1 cursor-pointer transition-colors"
+                      title="Edit Callsign"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                  </div>
                 )}
+
+                <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
+                  {/* Level portion */}
+                  <span className="px-2.5 sm:px-3 text-[#3B82F6]">
+                    Lvl {gamification.level}
+                  </span>
+
+                  {/* Partition Line */}
+                  <span className="h-full w-[1px] bg-[#3B82F6]/30" />
+
+                  {/* Streak portion */}
+                  <span className="px-2.5 sm:px-3 text-amber-500 flex items-center gap-1">
+                    <span>🔥</span>
+                    <span>{gamification.streak}</span>
+                    <span className="hidden sm:inline">Streak</span>
+                  </span>
+
+                  {/* Personal Best portion - Desktop only */}
+                  {pbWPM !== null && (
+                    <>
+                      <span className="hidden md:inline-block h-full w-[1px] bg-[#3B82F6]/30" />
+                      <span className="hidden md:inline-flex px-3 text-sky-400 items-center gap-1">
+                        <span>PB:</span>
+                        <span>{pbWPM} WPM</span>
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
 
               {gamification.resetOccurred && (

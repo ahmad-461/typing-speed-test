@@ -1,7 +1,7 @@
 export interface Passage {
   id: string;
   text: string;
-  category: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+  category: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 }
 
 export interface PassageBank {
@@ -12,6 +12,21 @@ export interface PassageBank {
 
 export const passageBank: PassageBank = {
   easy: [
+    {
+      id: "easy-sprint-1",
+      category: "speed_sprint",
+      text: "The sun is hot today.",
+    },
+    {
+      id: "easy-sprint-2",
+      category: "speed_sprint",
+      text: "We run fast to win the race.",
+    },
+    {
+      id: "easy-sprint-3",
+      category: "speed_sprint",
+      text: "Code simple and test often for good results.",
+    },
     {
       id: "easy-drill-1",
       category: "weak_key_drill",
@@ -80,6 +95,21 @@ export const passageBank: PassageBank = {
   ],
   medium: [
     {
+      id: "medium-sprint-1",
+      category: "speed_sprint",
+      text: "A quick response is critical during high pressure situations.",
+    },
+    {
+      id: "medium-sprint-2",
+      category: "speed_sprint",
+      text: "Great ideas require persistent execution to yield amazing results.",
+    },
+    {
+      id: "medium-sprint-3",
+      category: "speed_sprint",
+      text: "Focus your energy on writing clean code step by step.",
+    },
+    {
       id: "medium-code-1",
       category: "code_arena",
       text: "Python has grown to become one of the most influential programming languages in existence today. Its elegant design and emphasis on readability allow both beginners and experts to write clean and concise code. Python excels in scientific computing, machine learning, and automation, supported by a massive global community that continuously builds open source libraries to solve complex modern challenges.",
@@ -141,6 +171,21 @@ export const passageBank: PassageBank = {
     },
   ],
   hard: [
+    {
+      id: "hard-sprint-1",
+      category: "speed_sprint",
+      text: "A meticulous approach ensures absolute precision in complex data structures.",
+    },
+    {
+      id: "hard-sprint-2",
+      category: "speed_sprint",
+      text: "Sleek architectural design harmonizes performance, readability, and speed perfectly.",
+    },
+    {
+      id: "hard-sprint-3",
+      category: "speed_sprint",
+      text: "Execute rapid keystrokes to establish a legendary peak words per minute standing.",
+    },
     {
       id: "hard-code-1",
       category: "code_arena",

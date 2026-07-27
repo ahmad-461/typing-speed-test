@@ -69,7 +69,7 @@ function TestScreenContent() {
   const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
 
   const rawCategory = searchParams.get("category") || "code_arena";
-  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill";
+  const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill", "speed_sprint"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 
   const isGhostEnabled = searchParams.get("ghost") === "true";
 
@@ -82,6 +82,7 @@ function TestScreenContent() {
   const [totalTypedCount, setTotalTypedCount] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [countdownSeconds, setCountdownSeconds] = useState(20);
 
   // Key error and typed count tracking
   const [keyErrors, setKeyErrors] = useState<Record<string, number>>({});
@@ -121,6 +122,7 @@ function TestScreenContent() {
     setTotalTypedCount(0);
     setStartTime(null);
     setElapsedSeconds(0);
+    setCountdownSeconds(20);
     setGhostPosition(0);
     setIsActive(false);
     setKeyErrors({});
@@ -181,6 +183,43 @@ function TestScreenContent() {
       const secs = Math.floor(elapsedMs / 1000);
       setElapsedSeconds(secs);
 
+      if (category === "speed_sprint") {
+        const remaining = Math.max(0, 20 - secs);
+        setCountdownSeconds(remaining);
+
+        if (remaining <= 0) {
+          clearInterval(interval);
+          // End test immediately and evaluate correct characters so far
+          const currentTyped = typedInputRef.current;
+          const currentPassage = selectedPassageRef.current;
+          let correctCount = 0;
+          for (let i = 0; i < currentTyped.length; i++) {
+            if (currentTyped[i] === currentPassage[i]) {
+              correctCount++;
+            }
+          }
+
+          const durationSecs = 20;
+          const finalWPM = Math.round((correctCount / 5) / (durationSecs / 60));
+          const finalAccuracy = totalTypedCount > 0 ? Math.round((correctCount / totalTypedCount) * 100) : 100;
+
+          // Compute consistency score
+          const allSamples = [...wpmSamplesRef.current, finalWPM];
+          const consistencyScore = calculateConsistencyScore(allSamples);
+
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("last_passage", currentPassage);
+            sessionStorage.setItem("last_test_errors", JSON.stringify(keyErrors));
+            sessionStorage.setItem("last_test_typed_counts", JSON.stringify(keyTypedCounts));
+          }
+
+          router.push(
+            `/results?difficulty=${difficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${durationSecs}&consistency=${consistencyScore}`
+          );
+          return;
+        }
+      }
+
       // Sample WPM every second mark
       if (secs > 0 && secs > lastSampledSecondRef.current) {
         lastSampledSecondRef.current = secs;
@@ -199,7 +238,7 @@ function TestScreenContent() {
     }, 200);
 
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, category, router, difficulty, totalTypedCount, keyErrors, keyTypedCounts]);
 
   // Handle continuous ghost cursor movement independent of user input
   useEffect(() => {
@@ -423,7 +462,12 @@ function TestScreenContent() {
   }
 
   const stats = [
-    { label: "TIMER", value: formatTime(elapsedSeconds), unit: "", icon: "⏱️" },
+    {
+      label: category === "speed_sprint" ? "COUNTDOWN" : "TIMER",
+      value: category === "speed_sprint" ? `${countdownSeconds}s` : formatTime(elapsedSeconds),
+      unit: "",
+      icon: "⏱️"
+    },
     { label: "WPM", value: liveWPM.toString(), unit: "wpm", icon: "⚡" },
     { label: "ACCURACY", value: liveAccuracy.toString(), unit: "%", icon: "🎯" },
   ];

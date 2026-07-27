@@ -1,17 +1,10 @@
-
-> nextjs-setup@0.1.0 dev
-> next dev --turbopack
-
-   ▲ Next.js 15.5.22 (Turbopack)
-   - Local:        http://localhost:3000
-   - Network:      http://192.168.0.2:3000
-
- ✓ Starting...
- ✓ Ready in 1493ms
- ○ Compiling / ...
- ✓ Compiled / in 7.9s
- GET / 200 in 9077ms
- GET / 200 in 216ms
- ○ Compiling /test ...
- ✓ Compiled /test in 678ms
- GET /test?difficulty=easy&category=custom&ghost=false 200 in 787ms
+ ⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3000
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
