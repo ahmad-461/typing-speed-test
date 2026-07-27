@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getPersonalBest, getHistory } from "../lib/stats";
+import { getPersonalBest, getHistory, getPlayerName, setPlayerName as statsSetPlayerName, getNamespacedKey } from "../lib/stats";
 import { getGamificationState, ACHIEVEMENTS, GamificationState } from "../lib/gamification";
 
 type Difficulty = "easy" | "medium" | "hard";
@@ -40,13 +40,13 @@ export default function Home() {
   const configSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("tst_player_name") || "";
+    const stored = getPlayerName();
     setPlayerName(stored);
     setHasNameLoaded(true);
 
     const handleUpdate = (e: Event) => {
       const customEvent = e as CustomEvent;
-      if (customEvent.detail) {
+      if (customEvent.detail !== undefined) {
         setPlayerName(customEvent.detail);
       }
     };
@@ -74,7 +74,7 @@ export default function Home() {
     const best = getPersonalBest();
     setOverallPbWPM(best ? best.wpm : 0);
 
-    const storedGoal = localStorage.getItem("tst_personal_wpm_goal_v1");
+    const storedGoal = localStorage.getItem(getNamespacedKey("tst_personal_wpm_goal_v1"));
     if (storedGoal) {
       const g = parseInt(storedGoal, 10);
       if (!isNaN(g) && g > 0) {
@@ -123,9 +123,8 @@ export default function Home() {
 
     sanitized = sanitized.slice(0, 20);
 
-    localStorage.setItem("tst_player_name", sanitized);
+    statsSetPlayerName(sanitized);
     setPlayerName(sanitized);
-    window.dispatchEvent(new CustomEvent("tst-name-updated", { detail: sanitized }));
   };
 
   const triggerEditModal = () => {

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { getPersonalBest } from "../lib/stats";
+import { getPersonalBest, getPlayerName } from "../lib/stats";
 import { getGamificationState } from "../lib/gamification";
 
 export default function Header() {
@@ -54,12 +54,12 @@ export default function Header() {
   const [playerName, setPlayerName] = useState<string>("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("tst_player_name") || "";
+    const stored = getPlayerName();
     setPlayerName(stored);
 
     const handleUpdate = (e: Event) => {
       const customEvent = e as CustomEvent;
-      if (customEvent.detail) {
+      if (customEvent.detail !== undefined) {
         setPlayerName(customEvent.detail);
       }
     };

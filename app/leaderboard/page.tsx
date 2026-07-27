@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
+import { getPlayerName } from "../../lib/stats";
 
 type ScoreEntry = {
   id: string;
@@ -31,7 +32,7 @@ function LeaderboardContent() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("tst_player_name") || "";
+      const stored = getPlayerName();
       setCurrentPlayerName(stored);
     }
   }, []);
