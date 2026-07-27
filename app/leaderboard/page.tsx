@@ -43,26 +43,83 @@ function LeaderboardContent() {
     setError(null);
 
     try {
-      let query = supabase
-        .from("scores")
-        .select("id, name, wpm, accuracy, difficulty, created_at")
-        .order("wpm", { ascending: false })
-        .order("accuracy", { ascending: false })
-        .order("created_at", { ascending: true })
-        // Fetch up to the current page size, capped at the top 50 maximum entries constraint
-        .limit(Math.min(pageSize, 50));
+      let fetched: ScoreEntry[] = [];
+      const isPlaceholder = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder-project");
+      let hasDbFetchError = false;
 
+      if (!isPlaceholder) {
+        try {
+          let query = supabase
+            .from("scores")
+            .select("id, name, wpm, accuracy, difficulty, created_at")
+            .order("wpm", { ascending: false })
+            .order("accuracy", { ascending: false })
+            .order("created_at", { ascending: true })
+            .limit(Math.min(pageSize, 50));
+
+          if (filter !== "all") {
+            query = query.eq("difficulty", filter);
+          }
+
+          const { data, error: queryError } = await query;
+          if (queryError) {
+            throw queryError;
+          }
+          fetched = (data as ScoreEntry[]) || [];
+        } catch (dbErr) {
+          console.warn("Supabase fetch failed, relying on local scores fallback:", dbErr);
+          hasDbFetchError = true;
+        }
+      }
+
+      // Load local scores from localStorage
+      let local: ScoreEntry[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("tst_local_scores_v1");
+          if (stored) {
+            local = JSON.parse(stored) as ScoreEntry[];
+          }
+        } catch (e) {
+          console.error("Error reading tst_local_scores_v1:", e);
+        }
+      }
+
+      // Filter local scores by difficulty filter if selected
       if (filter !== "all") {
-        query = query.eq("difficulty", filter);
+        local = local.filter((s) => s.difficulty === filter);
       }
 
-      const { data, error: queryError } = await query;
+      // Merge fetched and local scores, de-duplicating by ID
+      const seenIds = new Set<string>();
+      const merged: ScoreEntry[] = [];
 
-      if (queryError) {
-        throw queryError;
+      for (const score of [...fetched, ...local]) {
+        if (!seenIds.has(score.id)) {
+          seenIds.add(score.id);
+          merged.push(score);
+        }
       }
 
-      setScores((data as ScoreEntry[]) || []);
+      // Sort merged standings by WPM (descending), then Accuracy (descending), then Date (ascending)
+      merged.sort((a, b) => {
+        if (b.wpm !== a.wpm) {
+          return b.wpm - a.wpm;
+        }
+        if (b.accuracy !== a.accuracy) {
+          return b.accuracy - a.accuracy;
+        }
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+
+      // If we had a database fetch error and we have no local scores either, then raise the error
+      if (hasDbFetchError && merged.length === 0) {
+        throw new Error("Unable to connect to database");
+      }
+
+      // Limit to current page size (max 50)
+      const finalized = merged.slice(0, Math.min(pageSize, 50));
+      setScores(finalized);
     } catch (err: unknown) {
       console.error("Failed to fetch leaderboard scores:", err);
       setError("Failed to load leaderboard data. Please check your connection.");
@@ -75,8 +132,9 @@ function LeaderboardContent() {
     fetchScores();
   }, [fetchScores]);
 
-  // Reset page size back to initial 20 when filter changes
+  // Reset page size back to initial 20 and clear scores when filter changes
   const handleFilterChange = (newFilter: DifficultyFilter) => {
+    setScores([]);
     setFilter(newFilter);
     setPageSize(20);
   };
@@ -180,87 +238,144 @@ function LeaderboardContent() {
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-charcoal-700 bg-charcoal-900/40 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
-                  <th className="py-4 px-4 sm:px-6 text-center w-16">Rank</th>
-                  <th className="py-4 px-4">Name</th>
-                  <th className="py-4 px-4 text-center w-24">WPM</th>
-                  <th className="py-4 px-4 text-center w-28">Accuracy</th>
-                  <th className="py-4 px-4 text-center w-28">Difficulty</th>
-                  <th className="py-4 px-4 text-right pr-6 sm:pr-8 w-36">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-charcoal-700/50">
-                {scores.map((score, idx) => {
-                  const rank = idx + 1;
-                  let rankBadge = `${rank}`;
-                  let rankColorClass = "text-slate-400";
-                  let bgRowClass = "hover:bg-charcoal-900/10";
+          <div className="w-full flex flex-col">
+            {/* Header row */}
+            <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-charcoal-700 bg-charcoal-900/40 text-[10px] font-mono text-slate-400 uppercase tracking-widest font-semibold items-center">
+              <div className="col-span-1 text-center">Rank</div>
+              <div className="col-span-11 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
+                <div className="col-span-4 pl-2">Name</div>
+                <div className="col-span-6 grid grid-cols-3 md:grid-cols-6 gap-2 items-center text-center">
+                  <div className="col-span-2">WPM</div>
+                  <div className="col-span-2">Accuracy</div>
+                  <div className="col-span-2">Difficulty</div>
+                </div>
+                <div className="col-span-2 text-right pr-2">Date</div>
+              </div>
+            </div>
 
-                  if (rank === 1) {
-                    rankBadge = "🥇";
-                    rankColorClass = "text-amber-400 font-extrabold text-base";
-                    bgRowClass = "bg-amber-500/5 hover:bg-amber-500/10";
-                  } else if (rank === 2) {
-                    rankBadge = "🥈";
-                    rankColorClass = "text-slate-300 font-bold text-base";
-                    bgRowClass = "bg-slate-300/5 hover:bg-slate-300/10";
-                  } else if (rank === 3) {
-                    rankBadge = "🥉";
-                    rankColorClass = "text-amber-600 font-bold text-base";
-                    bgRowClass = "bg-amber-600/5 hover:bg-amber-600/10";
-                  }
+            {/* Scores container */}
+            <div className="divide-y divide-charcoal-700/50 flex flex-col">
+              {scores.map((score, idx) => {
+                const rank = idx + 1;
 
-                  return (
-                    <tr key={score.id} className={`transition-colors duration-150 ${bgRowClass}`}>
-                      {/* Rank */}
-                      <td className={`py-4 px-4 sm:px-6 text-center font-mono font-bold ${rankColorClass}`}>
-                        {rankBadge}
-                      </td>
+                // Base design parameters
+                let rankVisual = <span className="font-mono text-slate-400 font-bold">{rank}</span>;
+                let containerClass = "hover:bg-charcoal-900/10 border-transparent";
+                let wpmSizeClass = "text-white text-base font-extrabold";
+                let nameColorClass = "text-slate-100";
+
+                if (rank === 1) {
+                  rankVisual = (
+                    <div className="flex items-center justify-center relative w-8 h-8 rounded-full bg-electric-500/10 border border-electric-500/30 shadow-[0_0_10px_rgba(59,130,246,0.15)] mx-auto animate-pulse">
+                      {/* Premium Custom crown-like SVG */}
+                      <svg className="w-4 h-4 text-electric-400" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 16L3 5L8.5 10L12 3L15.5 10L21 5L19 16H5ZM19 18H5V20H19V18Z"/>
+                      </svg>
+                    </div>
+                  );
+                  containerClass = "bg-electric-500/5 hover:bg-electric-500/10 border-electric-500/30 shadow-[0_0_15px_rgba(59,130,246,0.05)] scale-[1.01] ring-1 ring-electric-500/15";
+                  wpmSizeClass = "text-electric-400 text-xl font-black font-mono tracking-tight";
+                  nameColorClass = "text-white font-black";
+                } else if (rank === 2) {
+                  rankVisual = (
+                    <div className="flex items-center justify-center relative w-7 h-7 rounded-full bg-electric-500/10 border border-electric-500/20 mx-auto">
+                      {/* Premium Medal-like SVG */}
+                      <svg className="w-3.5 h-3.5 text-electric-400/80" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="8" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                        <path d="M9 13L7 21L12 18.5L17 21L15 13H9Z"/>
+                      </svg>
+                    </div>
+                  );
+                  containerClass = "bg-charcoal-900/40 hover:bg-charcoal-900/60 border-electric-500/10";
+                  wpmSizeClass = "text-white text-lg font-black font-mono";
+                  nameColorClass = "text-slate-100 font-bold";
+                } else if (rank === 3) {
+                  rankVisual = (
+                    <div className="flex items-center justify-center relative w-7 h-7 rounded-full bg-charcoal-900 border border-charcoal-700 mx-auto">
+                      {/* Premium Medal-like SVG (More translucent) */}
+                      <svg className="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="8" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                        <path d="M9 13L7 21L12 18.5L17 21L15 13H9Z"/>
+                      </svg>
+                    </div>
+                  );
+                  containerClass = "bg-charcoal-900/20 hover:bg-charcoal-900/40 border-charcoal-750";
+                  wpmSizeClass = "text-slate-200 text-base font-extrabold font-mono";
+                }
+
+                return (
+                  <div
+                    key={score.id}
+                    style={{ animationDelay: `${idx * 40}ms` }}
+                    className={`grid grid-cols-12 gap-4 px-6 py-4 transition-all duration-200 border-l-2 items-center text-sm md:text-base ${containerClass} animate-slide-up-fade`}
+                  >
+                    {/* Rank */}
+                    <div className="col-span-2 md:col-span-1 text-center font-mono">
+                      {rankVisual}
+                    </div>
+
+                    {/* Mobile Details Grouping */}
+                    <div className="col-span-10 md:col-span-11 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
 
                       {/* Name */}
-                      <td className="py-4 px-4 font-sans font-semibold text-slate-100 max-w-[150px] sm:max-w-[200px] truncate">
-                        {score.name}
-                      </td>
-
-                      {/* WPM */}
-                      <td className="py-4 px-4 text-center font-mono font-extrabold text-white text-base">
-                        {score.wpm}
-                      </td>
-
-                      {/* Accuracy */}
-                      <td className="py-4 px-4 text-center font-mono font-bold text-emerald-400">
-                        {Number(score.accuracy).toFixed(1)}%
-                      </td>
-
-                      {/* Difficulty */}
-                      <td className="py-4 px-4 text-center">
-                        <span
-                          className={`inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
-                            score.difficulty === "easy"
-                              ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
-                              : score.difficulty === "medium"
-                              ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
-                              : score.difficulty === "hard"
-                              ? "text-rose-400 bg-rose-500/5 border-rose-500/20"
-                              : "text-sky-400 bg-sky-500/5 border-sky-500/20"
-                          }`}
-                        >
-                          {score.difficulty}
+                      <div className="col-span-1 md:col-span-4 pl-2">
+                        <span className={`block font-sans truncate tracking-tight ${nameColorClass}`}>
+                          {score.name}
                         </span>
-                      </td>
+                        <div className="md:hidden flex gap-2 items-center mt-1">
+                          <span className="text-[10px] font-mono text-slate-500">Rank #{rank}</span>
+                          <span className="text-[10px] text-slate-600">•</span>
+                          <span className="text-[10px] font-mono text-slate-500">{formatDate(score.created_at)}</span>
+                        </div>
+                      </div>
 
-                      {/* Date */}
-                      <td className="py-4 px-4 pr-6 sm:pr-8 text-right font-mono text-xs text-slate-400 whitespace-nowrap">
+                      {/* Stats columns */}
+                      <div className="col-span-1 md:col-span-6 grid grid-cols-3 md:grid-cols-6 gap-2 items-center">
+                        {/* WPM */}
+                        <div className="col-span-1 md:col-span-2 text-left md:text-center">
+                          <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block md:hidden mb-0.5">WPM</span>
+                          <span className={wpmSizeClass}>
+                            {score.wpm} <span className="text-[10px] font-normal text-slate-500 font-mono">wpm</span>
+                          </span>
+                        </div>
+
+                        {/* Accuracy */}
+                        <div className="col-span-1 md:col-span-2 text-left md:text-center">
+                          <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block md:hidden mb-0.5">Accuracy</span>
+                          <span className="font-mono font-bold text-emerald-400">
+                            {Number(score.accuracy).toFixed(1)}%
+                          </span>
+                        </div>
+
+                        {/* Difficulty */}
+                        <div className="col-span-1 md:col-span-2 text-left md:text-center">
+                          <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block md:hidden mb-0.5">Tier</span>
+                          <span
+                            className={`inline-block text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                              score.difficulty === "easy"
+                                ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
+                                : score.difficulty === "medium"
+                                ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
+                                : score.difficulty === "hard"
+                                ? "text-rose-400 bg-rose-500/5 border-rose-500/20"
+                                : "text-sky-400 bg-sky-500/5 border-sky-500/20"
+                            }`}
+                          >
+                            {score.difficulty}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Date (hidden on mobile, shown on md screens up) */}
+                      <div className="hidden md:block md:col-span-2 text-right pr-2 font-mono text-xs text-slate-400 whitespace-nowrap">
                         {formatDate(score.created_at)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

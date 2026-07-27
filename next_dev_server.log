@@ -1,32 +1,17 @@
-
-> nextjs-setup@0.1.0 dev
-> next dev --turbopack
-
-   ▲ Next.js 15.5.22 (Turbopack)
+   ▲ Next.js 15.5.22
    - Local:        http://localhost:3000
    - Network:      http://192.168.0.2:3000
 
  ✓ Starting...
- ✓ Ready in 1513ms
- ○ Compiling / ...
- ✓ Compiled / in 7.8s
- HEAD / 200 in 8854ms
- GET / 200 in 272ms
- GET / 200 in 186ms
- ○ Compiling /history ...
- ✓ Compiled /history in 685ms
- GET /history 200 in 855ms
- ○ Compiling /leaderboard ...
- GET /leaderboard 200 in 1639ms
- ✓ Compiled /leaderboard in 3.2s
+ ✓ Ready in 2s
+ ○ Compiling /results ...
+ ✓ Compiled /results in 7.7s (785 modules)
 Supabase URL or Anon Key is missing from environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set. Falling back to placeholder client to prevent build errors.
- GET /results?difficulty=medium&category=weak_key_drill&wpm=82&accuracy=96&time=45&consistency=88 200 in 2517ms
+ GET /results?difficulty=medium&category=code_arena&wpm=78&accuracy=99&time=45&consistency=95 200 in 8665ms
  ○ Compiling /api/coach-feedback ...
- ✓ Compiled /api/coach-feedback in 1113ms
+ ✓ Compiled /api/coach-feedback in 1485ms (787 modules)
 GEMINI_API_KEY is not defined. Falling back to local coach feedback.
- POST /api/coach-feedback 200 in 1460ms
- GET / 200 in 218ms
- GET / 200 in 228ms
- GET /results?difficulty=medium&category=weak_key_drill&wpm=82&accuracy=96&time=45&consistency=88 200 in 229ms
-GEMINI_API_KEY is not defined. Falling back to local coach feedback.
- POST /api/coach-feedback 200 in 276ms
+ POST /api/coach-feedback 200 in 1712ms
+ GET /results?difficulty=medium&category=code_arena&wpm=78&accuracy=99&time=45&consistency=95 200 in 338ms
+ ✓ Compiled /leaderboard in 481ms (780 modules)
+ GET /leaderboard 200 in 675ms
