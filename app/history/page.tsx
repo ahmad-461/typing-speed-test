@@ -34,7 +34,6 @@ export default function HistoryPage() {
   const [milestones, setMilestones] = useState<MilestoneEvent[]>([]);
   const [personalGoal, setPersonalGoal] = useState<number | null>(null);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const hist = getHistory();
@@ -52,8 +51,6 @@ export default function HistoryPage() {
         setPersonalGoal(parsed);
       }
     }
-
-    setIsLoaded(true);
   }, []);
 
   const handleSaveGoal = (val: string) => {
@@ -317,14 +314,6 @@ export default function HistoryPage() {
     );
   }, [chartData]);
 
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-charcoal-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-electric-500"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
       <main className="flex-grow flex flex-col w-full">
@@ -336,7 +325,7 @@ export default function HistoryPage() {
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-none">
             Your Performance <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">History</span>
           </h1>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
+          <p className="text-sm text-slate-400 max-w-md mx-auto font-sans">
             Analyze your speed progression, view personal records, and race against your past ghost.
           </p>
         </div>
@@ -357,41 +346,43 @@ export default function HistoryPage() {
         ) : (
           /* Main Dashboard View */
           <div className="space-y-8">
-            {/* Gamification Progress Bar Card */}
+            {/* Gamification Player profile card Summary Block */}
             {gamification && (
               <div className="bg-charcoal-800 border-2 border-[#3B82F6]/30 rounded-2xl p-6 shadow-xl space-y-4 relative overflow-hidden animate-fade-in">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-400 to-electric-600" />
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-electric-400 to-electric-600" />
 
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                   <div className="space-y-1">
                     <span className="text-[10px] font-mono text-electric-400 uppercase tracking-widest font-extrabold block">
                       {"// RECRUIT PROGRESSION TRACKING"}
                     </span>
-                    <h2 className="text-xl font-extrabold text-white">
+                    <h2 className="text-xl font-extrabold text-white font-mono">
                       {gamification.levelTitle} <span className="text-sm font-mono text-slate-500">(Level {gamification.currentLevel})</span>
                     </h2>
                   </div>
 
-                  <div className="text-left sm:text-right font-mono">
-                    <div className="text-sm font-bold text-white">
-                      {gamification.totalXp.toLocaleString()} XP
+                  <div className="flex gap-6 items-center text-left sm:text-right font-mono text-xs">
+                    <div>
+                      <span className="text-[9px] text-slate-500 uppercase block">Total Tests</span>
+                      <strong className="text-white text-sm font-black">{history.length}</strong>
                     </div>
-                    {gamification.nextLevelXp ? (
-                      <div className="text-[10px] text-slate-400">
-                        {gamification.nextLevelXp - gamification.totalXp} XP to next level
-                      </div>
-                    ) : (
-                      <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-                        Maximum Level Reached
-                      </div>
-                    )}
+                    <div>
+                      <span className="text-[9px] text-slate-500 uppercase block">Active Streak</span>
+                      <strong className="text-amber-500 text-sm font-black flex items-center gap-0.5">
+                        <span>🔥</span> {gamification.streakDays}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-500 uppercase block">XP Base</span>
+                      <strong className="text-white text-sm font-black">{gamification.totalXp.toLocaleString()} XP</strong>
+                    </div>
                   </div>
                 </div>
 
                 {/* Progress Bar Container */}
                 {gamification.nextLevelXp && (
                   <div className="space-y-1.5">
-                    <div className="w-full h-3 bg-charcoal-900 rounded-full border border-charcoal-700 overflow-hidden relative">
+                    <div className="w-full h-3 bg-[#121316] rounded-full border border-charcoal-700 overflow-hidden relative">
                       <div
                         style={{
                           width: `${Math.min(
@@ -512,7 +503,7 @@ export default function HistoryPage() {
                         type="number"
                         placeholder="e.g. 70"
                         id="goal-input-init"
-                        className="w-24 bg-charcoal-900 border border-charcoal-700 rounded-lg px-3 py-1.5 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500/20"
+                        className="w-24 bg-[#121316] border border-[#23272F] rounded-lg px-3 py-1.5 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500/20"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             const val = (e.target as HTMLInputElement).value;
@@ -541,7 +532,7 @@ export default function HistoryPage() {
 
                     {/* Progress Bar Container */}
                     <div className="space-y-1">
-                      <div className="w-full h-2 bg-charcoal-900 rounded-full border border-charcoal-700 overflow-hidden relative">
+                      <div className="w-full h-2 bg-[#121316] rounded-full border border-charcoal-700 overflow-hidden relative">
                         <div
                           style={{
                             width: `${Math.min(100, Math.max(0, ((pbOverall ? pbOverall.wpm : 0) / personalGoal) * 100))}%`,
@@ -576,7 +567,7 @@ export default function HistoryPage() {
                             type="number"
                             defaultValue={personalGoal}
                             id="goal-input-edit"
-                            className="w-16 bg-charcoal-900 border border-charcoal-700 rounded px-2 py-0.5 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500"
+                            className="w-16 bg-[#121316] border border-[#23272F] rounded px-2 py-0.5 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 const val = (e.target as HTMLInputElement).value;
@@ -702,12 +693,12 @@ export default function HistoryPage() {
                     {/* Speed Bar */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-mono">
-                        <span className="text-white">SPEED RATING</span>
+                        <span className="text-white font-bold uppercase">SPEED RATING</span>
                         <span className="text-electric-400 font-bold">
                           {skillProfile.speed}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgWpm} WPM)</span>
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-charcoal-900 rounded-full overflow-hidden relative">
+                      <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
                         <div
                           style={{ width: `${skillProfile.speed}%` }}
                           className="h-full bg-[#3B82F6] rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-fade-in"
@@ -718,12 +709,12 @@ export default function HistoryPage() {
                     {/* Accuracy Bar */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-mono">
-                        <span className="text-white">ACCURACY RATING</span>
+                        <span className="text-white font-bold uppercase">ACCURACY RATING</span>
                         <span className="text-emerald-400 font-bold">
                           {skillProfile.accuracy}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgAccuracy}%)</span>
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-charcoal-900 rounded-full overflow-hidden relative">
+                      <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
                         <div
                           style={{ width: `${skillProfile.accuracy}%` }}
                           className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-fade-in"
@@ -734,12 +725,12 @@ export default function HistoryPage() {
                     {/* Consistency Bar */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-mono">
-                        <span className="text-white">CONSISTENCY RATING</span>
+                        <span className="text-white font-bold uppercase">CONSISTENCY RATING</span>
                         <span className="text-sky-400 font-bold">
                           {skillProfile.consistency}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgConsistency}%)</span>
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-charcoal-900 rounded-full overflow-hidden relative">
+                      <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
                         <div
                           style={{ width: `${skillProfile.consistency}%` }}
                           className="h-full bg-sky-500 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.5)] animate-fade-in"
@@ -772,7 +763,7 @@ export default function HistoryPage() {
                       className={`p-3 rounded-xl border font-mono text-[11px] flex flex-col justify-between min-h-[64px] ${
                         mode.count > 0
                           ? "border-charcoal-700 bg-charcoal-900/30 text-white"
-                          : "border-charcoal-800/40 bg-charcoal-900/10 text-slate-500"
+                          : "border-charcoal-850 bg-charcoal-900/10 text-slate-500"
                       }`}
                     >
                       <div className="flex items-center gap-1.5 mb-1">
@@ -1068,7 +1059,7 @@ export default function HistoryPage() {
                               {milestone.icon}
                             </span>
                             <div className="space-y-0.5">
-                              <span className="text-[9px] font-mono text-slate-500 block uppercase">
+                              <span className="text-[9px] font-mono text-slate-500 block uppercase font-bold">
                                 {formatDateShort(milestone.timestamp)}
                               </span>
                               <h4 className="text-xs font-bold text-white uppercase tracking-wide">

@@ -9,6 +9,8 @@ import { getGamificationState } from "../lib/gamification";
 
 export default function Header() {
   const pathname = usePathname();
+  const isTestPage = pathname === "/test";
+
   const [pbWPM, setPbWPM] = useState<number | null>(null);
   const [gamification, setGamification] = useState<{
     level: number;
@@ -95,44 +97,46 @@ export default function Header() {
           </Link>
 
           {/* Navigation links inline */}
-          <nav className="flex items-center gap-2.5 sm:gap-5">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`group relative flex items-center py-1 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-200 ${
-                    isActive ? "text-[#3B82F6]" : "text-[#94A3B8] hover:text-[#3B82F6]"
-                  }`}
-                >
-                  {/* Subtle glowing dot indicator to the left of active/hovered link on desktop */}
-                  <span
-                    className={`hidden sm:inline-block w-1 h-1 rounded-full bg-[#3B82F6] shadow-[0_0_8px_#3B82F6] transition-all duration-200 mr-1.5 ${
-                      isActive
-                        ? "opacity-100 scale-100"
-                        : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+          {!isTestPage && (
+            <nav className="flex items-center gap-2.5 sm:gap-5">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`group relative flex items-center py-1 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-200 ${
+                      isActive ? "text-[#3B82F6]" : "text-[#94A3B8] hover:text-[#3B82F6]"
                     }`}
-                  />
+                  >
+                    {/* Subtle glowing dot indicator to the left of active/hovered link on desktop */}
+                    <span
+                      className={`hidden sm:inline-block w-1 h-1 rounded-full bg-[#3B82F6] shadow-[0_0_8px_#3B82F6] transition-all duration-200 mr-1.5 ${
+                        isActive
+                          ? "opacity-100 scale-100"
+                          : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+                      }`}
+                    />
 
-                  {/* Text */}
-                  <span>{item.label}</span>
+                    {/* Text */}
+                    <span>{item.label}</span>
 
-                  {/* Underline for active link only (animates in from center) */}
-                  <span
-                    className={`absolute bottom-[-4px] left-0 right-0 h-[1.5px] bg-[#3B82F6] transition-transform duration-300 origin-center ${
-                      isActive ? "scale-x-100" : "scale-x-0"
-                    }`}
-                  />
-                </Link>
-              );
-            })}
-          </nav>
+                    {/* Underline for active link only (animates in from center) */}
+                    <span
+                      className={`absolute bottom-[-4px] left-0 right-0 h-[1.5px] bg-[#3B82F6] transition-transform duration-300 origin-center ${
+                        isActive ? "scale-x-100" : "scale-x-0"
+                      }`}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
         </div>
 
         {/* Right Side: Cohesive Player Status Pill & Callsign display */}
         <div className="flex items-center gap-3 justify-end select-none">
-          {playerName && (
+          {!isTestPage && playerName && (
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 font-mono text-[11px] text-slate-300">
               <span className="text-slate-500 font-bold">&gt;</span>
               <span className="font-extrabold text-white truncate max-w-[100px]" title={playerName}>
@@ -151,7 +155,7 @@ export default function Header() {
             </div>
           )}
 
-          {gamification && (
+          {!isTestPage && gamification && (
             <div className="flex flex-col items-end">
               <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
                 {/* Level portion */}
