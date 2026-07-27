@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ToastProvider } from "../components/ToastContext";
+import EditNameModal from "../components/EditNameModal";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
               {children}
             </div>
             <Footer />
+            <EditNameModal />
           </div>
         </ToastProvider>
       </body>

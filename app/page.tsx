@@ -20,6 +20,49 @@ interface CustomWindow extends Window {
 export default function Home() {
   const router = useRouter();
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+
+  // Name state
+  const [playerName, setPlayerName] = useState<string>("");
+  const [hasNameLoaded, setHasNameLoaded] = useState(false);
+  const [initialNameInput, setInitialNameInput] = useState("");
+  const [initialNameError, setInitialNameError] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("tst_player_name") || "";
+    setPlayerName(stored);
+    setHasNameLoaded(true);
+
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setPlayerName(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("tst-name-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("tst-name-updated", handleUpdate);
+    };
+  }, []);
+
+  const handleInitialNameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let sanitized = initialNameInput.trim();
+    sanitized = sanitized.replace(/<\/?[^>]+(>|$)/g, "").slice(0, 20);
+
+    if (!sanitized) {
+      setInitialNameError("Callsign cannot be empty");
+      return;
+    }
+
+    localStorage.setItem("tst_player_name", sanitized);
+    setPlayerName(sanitized);
+    window.dispatchEvent(new CustomEvent("tst-name-updated", { detail: sanitized }));
+  };
+
+  const triggerEditModal = () => {
+    window.dispatchEvent(new CustomEvent("tst-open-name-modal"));
+  };
   const [category, setCategory] = useState<Category>("code_arena");
   const [hasPB, setHasPB] = useState(false);
   const [ghostEnabled, setGhostEnabled] = useState(false);
@@ -158,6 +201,75 @@ export default function Home() {
     },
   ];
 
+  if (!hasNameLoaded) {
+    return (
+      <div className="flex-grow flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-electric-500"></div>
+      </div>
+    );
+  }
+
+  if (!playerName) {
+    return (
+      <div className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-md mx-auto w-full animate-fade-in">
+        <div className="w-full bg-charcoal-800 border-2 border-charcoal-700 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          {/* Top subtle gradient highlight */}
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-electric-500/30 to-transparent" />
+
+          <div className="flex items-center justify-between border-b border-charcoal-700 pb-3 mb-6 font-mono text-xs text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <span className="text-electric-400 font-bold">&gt;_</span>
+              <span>IDENTITY_INITIALIZATION.sh</span>
+            </div>
+            <span className="text-[9px] uppercase tracking-widest font-bold text-rose-400 animate-pulse">Required</span>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-white tracking-tight uppercase font-sans">
+              Establish identity
+            </h2>
+            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+              Welcome to the NOKY Typing Speed Test. Before selecting your parameters, choose a callsign. This identity will carry through your sessions and define your leaderboard entries.
+            </p>
+
+            <form onSubmit={handleInitialNameSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="initial-callsign" className="block text-[11px] font-mono text-slate-400 uppercase tracking-widest mb-1.5">
+                  &gt; ENTER YOUR CALLSIGN
+                </label>
+                <input
+                  id="initial-callsign"
+                  type="text"
+                  maxLength={20}
+                  value={initialNameInput}
+                  onChange={(e) => {
+                    setInitialNameInput(e.target.value);
+                    setInitialNameError("");
+                  }}
+                  placeholder="e.g. SpeedTyper99"
+                  className="w-full bg-charcoal-900 border border-charcoal-700 rounded-xl px-4 py-3 text-sm font-mono text-white placeholder-slate-600 focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500/20 transition-all"
+                  autoFocus
+                />
+                {initialNameError && (
+                  <p className="text-rose-400 text-[10px] font-mono mt-1.5">
+                    ⚠️ {initialNameError}
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 px-4 bg-electric-500 text-white font-semibold rounded-xl shadow-lg shadow-electric-500/15 hover:bg-electric-400 active:bg-electric-600 focus:outline-none focus:ring-2 focus:ring-electric-500 transition-all duration-200 hover-glow-electric cursor-pointer text-sm uppercase tracking-wider font-mono text-center"
+              >
+                Confirm Identity
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-grow flex flex-col w-full max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 animate-fade-in">
 
@@ -176,9 +288,26 @@ export default function Home() {
             Chases <span className="text-electric-500 bg-gradient-to-r from-electric-400 to-electric-600 bg-clip-text text-transparent">Speed.</span>
           </h1>
 
-          <p className="text-sm font-mono text-slate-400 tracking-wider uppercase">
-            {"// TERMINAL PROTOCOLS ENGAGED"}
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-mono text-slate-400 tracking-wider uppercase">
+              {"// TERMINAL PROTOCOLS ENGAGED"}
+            </span>
+            <span className="text-slate-600">•</span>
+            <div className="flex items-center gap-1.5 font-mono text-xs text-electric-400">
+              <span>Playing as:</span>
+              <span className="font-extrabold text-white underline decoration-electric-500 decoration-2 underline-offset-2">{playerName}</span>
+              <button
+                onClick={triggerEditModal}
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer p-0.5"
+                title="Edit Callsign"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
           <p className="text-base text-slate-400 max-w-xl font-sans leading-relaxed">
             Reject the ordinary. NOKY is a premium editorial environment designed to evaluate spatial keyboard accuracy and words-per-minute with deliberate intent. Choose your parameters and type with absolute confidence.

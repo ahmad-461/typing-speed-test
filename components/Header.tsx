@@ -40,6 +40,29 @@ export default function Header() {
     { label: "History", href: "/history" },
   ];
 
+  const [playerName, setPlayerName] = useState<string>("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("tst_player_name") || "";
+    setPlayerName(stored);
+
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setPlayerName(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("tst-name-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("tst-name-updated", handleUpdate);
+    };
+  }, []);
+
+  const triggerEditModal = () => {
+    window.dispatchEvent(new CustomEvent("tst-open-name-modal"));
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full bg-[#121316]/90 backdrop-blur-md border-b border-[#1E293B]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -98,8 +121,27 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* Right Side: Cohesive Player Status Pill */}
-        <div className="flex items-center justify-end select-none">
+        {/* Right Side: Cohesive Player Status Pill & Callsign display */}
+        <div className="flex items-center gap-3 justify-end select-none">
+          {playerName && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 font-mono text-[11px] text-slate-300">
+              <span className="text-slate-500 font-bold">&gt;</span>
+              <span className="font-extrabold text-white truncate max-w-[100px]" title={playerName}>
+                {playerName}
+              </span>
+              <button
+                onClick={triggerEditModal}
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer ml-1 p-0.5"
+                title="Edit Callsign"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {gamification && (
             <div className="flex flex-col items-end">
               <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
