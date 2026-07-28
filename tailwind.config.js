@@ -18,9 +18,9 @@ module.exports = {
         },
         // Electric blue accents
         electric: {
-          500: '#3B82F6', // Main primary accent
-          400: '#60A5FA', // Light hover state
-          600: '#2563EB', // Darker active state
+          500: 'var(--color-accent)', // Main primary accent
+          400: 'var(--color-accent-hover)', // Light hover state
+          600: 'var(--color-accent-active)', // Darker active state
         },
       },
       fontFamily: {

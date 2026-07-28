@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useRef } from "react";
+import { playLevelUpChime, playAchievementChime } from "../lib/sounds";
 
 export interface Toast {
   id: string;
@@ -29,6 +30,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const id = Math.random().toString(36).substring(2, 9);
 
     setActiveToast({ ...nextToast, id });
+
+    if (nextToast.type === "level_up") {
+      playLevelUpChime();
+    } else if (nextToast.type === "achievement") {
+      playAchievementChime();
+    }
 
     // Show toast for 4 seconds, then fade out and handle next toast
     setTimeout(() => {
@@ -69,7 +76,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
       {/* Slide-in subtle celebratory Toast notification */}
       {activeToast && (
-        <div className="fixed bottom-6 right-6 z-[9999] max-w-sm w-full bg-[#121316] border-2 border-[#3B82F6] rounded-2xl p-5 shadow-2xl shadow-[#3B82F6]/10 flex items-start gap-4 animate-slide-in select-none">
+        <div className="fixed bottom-6 right-6 z-[9999] max-w-sm w-full bg-[#121316] border-2 border-electric-500 rounded-2xl p-5 shadow-2xl shadow-electric-500/10 flex items-start gap-4 animate-toast-pop select-none">
           {/* Subtle electric blue decoration bar */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-400 to-electric-600 rounded-t-2xl" />
 
@@ -80,7 +87,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
           {/* Content */}
           <div className="flex-grow space-y-1">
-            <span className="font-mono text-[10px] uppercase tracking-widest font-extrabold text-[#3B82F6] block">
+            <span className="font-mono text-[10px] uppercase tracking-widest font-extrabold text-electric-500 block">
               {activeToast.type === "level_up" ? "// LEVEL UP" : "// ACHIEVEMENT UNLOCKED"}
             </span>
             <h4 className="text-sm font-extrabold text-white font-sans leading-snug">

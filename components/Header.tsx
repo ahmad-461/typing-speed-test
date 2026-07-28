@@ -52,6 +52,7 @@ export default function Header() {
   ];
 
   const [playerName, setPlayerName] = useState<string>("");
+  const [soundEnabled, setSoundEnabled] = useState(false);
 
   useEffect(() => {
     const stored = getPlayerName();
@@ -69,6 +70,50 @@ export default function Header() {
       window.removeEventListener("tst-name-updated", handleUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSoundEnabled(localStorage.getItem("tst_sound_enabled") === "true");
+    }
+
+    const handleSoundChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail !== undefined) {
+        setSoundEnabled(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("tst-sound-changed", handleSoundChange);
+    return () => {
+      window.removeEventListener("tst-sound-changed", handleSoundChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const applySkin = () => {
+      const activeSkin = localStorage.getItem("tst_active_skin") || "electric-blue";
+      document.documentElement.classList.remove("skin-emerald", "skin-amber", "skin-crimson");
+      if (activeSkin !== "electric-blue") {
+        document.documentElement.classList.add(`skin-${activeSkin.split("-")[0]}`);
+      }
+    };
+
+    applySkin();
+
+    window.addEventListener("tst-skin-changed", applySkin);
+    return () => {
+      window.removeEventListener("tst-skin-changed", applySkin);
+    };
+  }, []);
+
+  const toggleSound = () => {
+    const newVal = !soundEnabled;
+    setSoundEnabled(newVal);
+    localStorage.setItem("tst_sound_enabled", newVal ? "true" : "false");
+    window.dispatchEvent(new CustomEvent("tst-sound-changed", { detail: newVal }));
+  };
 
   const triggerEditModal = () => {
     window.dispatchEvent(new CustomEvent("tst-open-name-modal"));
@@ -110,12 +155,12 @@ export default function Header() {
                     key={item.label}
                     href={item.href}
                     className={`group relative flex items-center py-1 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-200 ${
-                      isActive ? "text-[#3B82F6]" : "text-[#94A3B8] hover:text-[#3B82F6]"
+                      isActive ? "text-electric-500" : "text-slate-400 hover:text-electric-500"
                     }`}
                   >
                     {/* Subtle glowing dot indicator to the left of active/hovered link on desktop */}
                     <span
-                      className={`hidden sm:inline-block w-1 h-1 rounded-full bg-[#3B82F6] shadow-[0_0_8px_#3B82F6] transition-all duration-200 mr-1.5 ${
+                      className={`hidden sm:inline-block w-1 h-1 rounded-full bg-electric-500 shadow-[0_0_8px_var(--color-accent)] transition-all duration-200 mr-1.5 ${
                         isActive
                           ? "opacity-100 scale-100"
                           : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
@@ -127,7 +172,7 @@ export default function Header() {
 
                     {/* Underline for active link only (animates in from center) */}
                     <span
-                      className={`absolute bottom-[-4px] left-0 right-0 h-[1.5px] bg-[#3B82F6] transition-transform duration-300 origin-center ${
+                      className={`absolute bottom-[-4px] left-0 right-0 h-[1.5px] bg-electric-500 transition-transform duration-300 origin-center ${
                         isActive ? "scale-x-100" : "scale-x-0"
                       }`}
                     />
@@ -140,6 +185,23 @@ export default function Header() {
 
         {/* Right Side: Cohesive Player Status Pill & Callsign display */}
         <div className="flex items-center gap-3 justify-end select-none">
+          {/* Sound Toggle Icon Button */}
+          <button
+            onClick={toggleSound}
+            className="flex items-center justify-center border border-charcoal-700 bg-charcoal-800 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-lg p-2 transition-all cursor-pointer h-7 sm:h-8"
+            title={soundEnabled ? "Mute Keyboard Sounds" : "Unmute Keyboard Sounds"}
+          >
+            {soundEnabled ? (
+              <svg className="w-3.5 h-3.5 text-electric-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6L4.75 9H3a1 1 0 00-1 1v4a1 1 0 001 1h1.75l3.5 3V6z" />
+              </svg>
+            )}
+          </button>
+
           {!isTestPage && playerName && (
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 font-mono text-[11px] text-slate-300">
               <span className="text-slate-500 font-bold">&gt;</span>
@@ -158,7 +220,7 @@ export default function Header() {
               </button>
               <button
                 onClick={triggerExitModal}
-                className="flex items-center justify-center border border-[#3B82F6]/30 hover:border-[#3B82F6] hover:bg-[#3B82F6]/10 text-slate-400 hover:text-white rounded px-1.5 py-0.5 transition-all cursor-pointer ml-1"
+                className="flex items-center justify-center border border-electric-500/30 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded px-1.5 py-0.5 transition-all cursor-pointer ml-1"
                 title="Exit Session"
               >
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -172,14 +234,14 @@ export default function Header() {
 
           {!isTestPage && gamification && (
             <div className="flex flex-col items-end">
-              <div className="inline-flex items-center h-7 sm:h-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/[0.06] text-[9px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
+              <div className="inline-flex items-center h-7 sm:h-8 rounded-full border border-electric-500/30 bg-electric-500/[0.06] text-[9px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
                 {/* Level portion */}
-                <span className="px-2 sm:px-3 text-[#3B82F6]">
+                <span className="px-2 sm:px-3 text-electric-500">
                   Lvl {gamification.level}
                 </span>
 
                 {/* Partition Line */}
-                <span className="h-full w-[1px] bg-[#3B82F6]/30" />
+                <span className="h-full w-[1px] bg-electric-500/30" />
 
                 {/* Streak portion */}
                 <span className="px-2 sm:px-3 text-amber-500 flex items-center gap-1">
@@ -191,7 +253,7 @@ export default function Header() {
                 {/* Personal Best portion - Desktop only */}
                 {pbWPM !== null && (
                   <>
-                    <span className="hidden md:inline-block h-full w-[1px] bg-[#3B82F6]/30" />
+                    <span className="hidden md:inline-block h-full w-[1px] bg-electric-500/30" />
                     <span className="hidden md:inline-flex px-3 text-sky-400 items-center gap-1">
                       <span>PB:</span>
                       <span>{pbWPM} WPM</span>
