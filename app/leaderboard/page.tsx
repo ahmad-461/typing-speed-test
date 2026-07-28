@@ -167,18 +167,18 @@ function LeaderboardContent() {
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
+            className="btn-secondary min-h-[44px] px-4 py-2 hover:bg-charcoal-800 text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 rounded-xl border border-charcoal-700 transition-all duration-200 active:scale-[0.97]"
           >
             ← Home
           </Link>
           <Link
             href="/history"
-            className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
+            className="btn-secondary min-h-[44px] px-4 py-2 hover:bg-charcoal-800 text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 rounded-xl border border-charcoal-700 transition-all duration-200 active:scale-[0.97]"
           >
             History ⏳
           </Link>
         </div>
-        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest hidden sm:inline-block">
+        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest hidden sm:inline-block font-bold">
           🏆 global speed typing standings
         </span>
       </div>
@@ -195,14 +195,14 @@ function LeaderboardContent() {
 
       {/* Difficulty Filter Tabs */}
       <div className="w-full flex justify-center mb-10">
-        <div className="flex bg-charcoal-800 p-1 rounded-xl border border-charcoal-700 max-w-md w-full shadow-lg">
+        <div className="flex bg-charcoal-800 p-1.5 rounded-xl border border-charcoal-700 max-w-md w-full shadow-lg gap-1">
           {(["all", "easy", "medium", "hard"] as DifficultyFilter[]).map((tab) => {
             const isActive = filter === tab;
             return (
               <button
                 key={tab}
                 onClick={() => handleFilterChange(tab)}
-                className={`flex-1 text-center py-2 text-xs font-mono font-bold rounded-lg uppercase tracking-wider transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-electric-500 ${
+                className={`flex-1 text-center py-2.5 text-xs font-mono font-bold rounded-lg uppercase tracking-wider transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-electric-500 min-h-[44px] active:scale-[0.97] ${
                   isActive
                     ? "bg-electric-500 text-white shadow-md shadow-electric-500/15"
                     : "text-slate-400 hover:text-white hover:bg-charcoal-900/40"
@@ -223,17 +223,24 @@ function LeaderboardContent() {
           <p className="text-slate-400 text-xs">Couldn&apos;t load leaderboard — try again</p>
           <button
             onClick={fetchScores}
-            className="px-5 py-2 rounded-lg bg-charcoal-700 hover:bg-charcoal-600 text-slate-200 border border-charcoal-600 text-xs font-bold transition-all hover-glow-electric focus:outline-none focus:ring-1 focus:ring-electric-500 cursor-pointer"
+            className="btn-secondary py-2.5 px-5 text-xs text-slate-200 border border-charcoal-600 rounded-xl transition-all duration-200 hover:bg-charcoal-700 active:scale-[0.97] cursor-pointer min-h-[44px]"
           >
             Retry Connection 🔄
           </button>
         </div>
       ) : loading && scores.length === 0 ? (
-        <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-3 shadow-2xl">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-electric-500"></div>
-          <p className="text-xs text-slate-400 font-mono tracking-widest uppercase">
-            Fetching rankings...
-          </p>
+        <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-2xl p-12 text-center shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-500 to-sky-500" />
+          <div className="max-w-xs mx-auto font-mono text-sm space-y-3 py-4">
+            <div className="text-slate-450 flex items-center justify-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-electric-500 animate-pulse" />
+              <span>leaderboard_registry.sh</span>
+            </div>
+            <div className="text-emerald-400 font-bold flex items-center justify-center gap-1">
+              <span>&gt; FETCHING_STANDINGS_MANIFEST...</span>
+              <span className="inline-block w-2 h-4 bg-emerald-400 animate-blink" />
+            </div>
+          </div>
         </div>
       ) : scores.length === 0 ? (
         <div className="w-full bg-charcoal-800 border border-charcoal-700 rounded-2xl p-16 text-center space-y-4 font-mono shadow-2xl">
@@ -241,9 +248,9 @@ function LeaderboardContent() {
           <p className="text-xs text-slate-500">Be the very first typist to secure a legendary spot!</p>
           <Link
             href="/"
-            className="inline-block px-5 py-2.5 bg-electric-500 text-white text-xs font-bold rounded-lg hover-glow-electric transition-colors cursor-pointer"
+            className="btn-primary min-h-[44px] px-6 py-2.5 bg-electric-500 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer active:scale-[0.97]"
           >
-            Start Typing Test Now ⚡
+            [ START TYPING TEST NOW ⚡ ]
           </Link>
         </div>
       ) : (
@@ -299,7 +306,7 @@ function LeaderboardContent() {
                   </div>
 
                   {/* Pedestal block */}
-                  <div className={`w-full border-2 rounded-t-2xl flex flex-col justify-between p-4 relative overflow-hidden transition-all duration-300 ${borderStyles} ${
+                  <div className={`w-full border-2 rounded-t-2xl flex flex-col justify-between p-4 relative overflow-hidden card-hover-lift ${borderStyles} ${
                     isMe ? "ring-2 ring-electric-400/40" : ""
                   } ${heightClass}`}>
 
@@ -344,7 +351,7 @@ function LeaderboardContent() {
           </div>
 
           {/* SYSTEM OVERHAUL SEPARATOR */}
-          <div className="max-w-2xl mx-auto flex items-center justify-between font-mono text-[10px] text-slate-500 uppercase tracking-widest">
+          <div className="max-w-2xl mx-auto flex items-center justify-between font-mono text-[10px] text-slate-500 uppercase tracking-widest font-bold">
             <span className="h-[1px] bg-charcoal-700/60 flex-grow mr-4"></span>
             <span>REST OF THE FIELD</span>
             <span className="h-[1px] bg-charcoal-700/60 flex-grow ml-4"></span>
@@ -358,7 +365,7 @@ function LeaderboardContent() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>SYSTEM_LOG::ACTIVE_STANDINGS_STREAM</span>
               </div>
-              <span className="hidden sm:inline-block">CAPPED_LIMIT::50_ENTRIES</span>
+              <span className="hidden sm:inline-block font-bold">CAPPED_LIMIT::50_ENTRIES</span>
             </div>
 
             {terminalLogEntries.length === 0 ? (
@@ -392,7 +399,7 @@ function LeaderboardContent() {
                           {score.name}
                         </span>
                         {isMe && (
-                          <span className="text-[9px] font-bold bg-electric-500/20 text-electric-400 border border-electric-500/30 px-1 rounded leading-none">
+                          <span className="text-[9px] font-bold bg-electric-500/20 text-electric-400 border border-electric-500/30 px-1 rounded leading-none font-mono">
                             YOU
                           </span>
                         )}
@@ -429,7 +436,7 @@ function LeaderboardContent() {
             <div className="flex justify-center pt-2">
               <button
                 onClick={handleLoadMore}
-                className="px-6 py-2.5 bg-charcoal-700 text-slate-300 hover:text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg border border-charcoal-600 transition-all cursor-pointer hover-glow-electric focus:outline-none focus:ring-1 focus:ring-electric-500"
+                className="btn-secondary py-2.5 px-6 font-mono font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer min-h-[44px] active:scale-[0.97]"
               >
                 Load More Standings 📊
               </button>
@@ -439,7 +446,7 @@ function LeaderboardContent() {
           {/* Capped Standings Note */}
           {scores.length > 0 && !hasMore && (
             <div className="text-center font-mono">
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest">
+              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
                 {scores.length >= 50 ? "🏆 Showing top 50 standings limit reached" : `🏁 Showing all ${scores.length} standings`}
               </span>
             </div>

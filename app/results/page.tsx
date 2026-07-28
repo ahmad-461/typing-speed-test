@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
-import { saveResult, getPlayerName, setPlayerName as statsSetPlayerName, getNamespacedKey } from "../../lib/stats";
+import { saveResult, getPlayerName, setPlayerName as statsSetPlayerName, getNamespacedKey, getHistory } from "../../lib/stats";
 
 function formatExportDate() {
   const d = new Date();
@@ -16,6 +16,39 @@ function formatExportDate() {
   const monthName = months[d.getMonth()];
   const year = d.getFullYear();
   return `${day} ${monthName} ${year}`;
+}
+
+// Lightweight GPU-accelerated count-up component over exactly 800ms
+function AnimatedNumber({ value, duration = 800 }: { value: number; duration?: number }) {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const startVal = 0;
+    const endVal = value;
+    if (startVal === endVal) {
+      setCurrent(endVal);
+      return;
+    }
+
+    const startTime = performance.now();
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out quad
+      const easeProgress = progress * (2 - progress);
+      const nextVal = Math.round(startVal + easeProgress * (endVal - startVal));
+      setCurrent(nextVal);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value, duration]);
+
+  return <>{current}</>;
 }
 
 function ResultsScreenContent() {
@@ -46,8 +79,16 @@ function ResultsScreenContent() {
   const [activeSkin, setActiveSkin] = useState("electric-blue");
   const [playerLevelInfo, setPlayerLevelInfo] = useState<{ level: number; title: string } | null>(null);
 
+  // PB celebration states
+  const [isNewPB, setIsNewPB] = useState(false);
+  const [pulseActive, setPulseActive] = useState(true);
+
+  // Mount animation trigger for smooth progress bars
+  const [isMounted, setIsMounted] = useState(false);
+
   // Load player name, skin and level info from localStorage / gamification
   useEffect(() => {
+    setIsMounted(true);
     if (typeof window !== "undefined") {
       const stored = getPlayerName();
       setDisplayName(stored);
@@ -185,6 +226,21 @@ function ResultsScreenContent() {
       hasSaved.current = true;
       const passageText = sessionStorage.getItem("last_passage") || "";
 
+      // Load standard history prior to save to check for Personal Best
+      const priorHistory = getHistory();
+      const currentWpm = parseInt(wpm, 10);
+      const isFirstTest = priorHistory.length === 0;
+      const isHigherWPM = priorHistory.every((r) => currentWpm > r.wpm);
+      const isNewBest = isFirstTest || isHigherWPM;
+
+      if (isNewBest) {
+        setIsNewPB(true);
+        // Turn off the glowing pulse animation after exactly 4000ms (tasteful brief cycle)
+        setTimeout(() => {
+          setPulseActive(false);
+        }, 4000);
+      }
+
       // Import gamification helpers asynchronously or safely inside the effect
       Promise.all([
         import("../../lib/gamification")
@@ -217,11 +273,6 @@ function ResultsScreenContent() {
           beforeState.streakDays
         );
         setXpEarned(xpInfo.total);
-
-        // Fetch queueToast safely by utilizing a window or custom event, OR by having the custom effect trigger a state update.
-        // To strictly respect rules-of-hooks, we can trigger a custom message event, or dispatch a React state update that triggers the toast in the component layout.
-        // Actually, a safer pattern is to write a custom event or store the active toasts to a small temporary state list, which we can render right here or let ToastProvider read.
-        // Since we are inside Results, let's trigger standard browser CustomEvent, and have ToastContext listen to it! This is 100% clean, decoupled, and avoids any require() and rules-of-hooks violations!
 
         if (afterState.currentLevel > beforeState.currentLevel) {
           const evt = new CustomEvent("tst-toast", {
@@ -424,7 +475,7 @@ function ResultsScreenContent() {
   };
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in relative">
+    <main className="flex-grow flex flex-col items-center justify-center px-4 py-8 sm:py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in relative">
       {/* Toast Alert Banner */}
       {toastMessage && (
         <div className="fixed top-6 right-6 z-50 bg-charcoal-800 border-2 border-electric-500 px-5 py-3 rounded-xl font-mono text-xs font-bold text-white shadow-2xl shadow-electric-500/10 flex items-center gap-2 animate-fade-in">
@@ -505,7 +556,7 @@ function ResultsScreenContent() {
             </div>
           </div>
 
-          {/* Right Detailed Stats Grid (with WPM, Accuracy, Consistency, Difficulty as the 4 hero stats) */}
+          {/* Right Detailed Stats Grid */}
           <div className="col-span-7 pl-4 space-y-6">
             <div className="grid grid-cols-2 gap-4">
               {/* Acc */}
@@ -580,15 +631,26 @@ function ResultsScreenContent() {
         </div>
       )}
 
-      {/* 1. Performance Certificate Card Container */}
-      <div className="w-full max-w-xl bg-charcoal-800 border-2 border-charcoal-700 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col mb-6">
+      {/* 1. Performance Certificate Card Container with premium pulse border celebrating a New Personal Best */}
+      <div className={`w-full max-w-xl bg-charcoal-800 border-2 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col mb-6 transition-all duration-300 ${
+        isNewPB
+          ? pulseActive
+            ? "pb-card-pulse"
+            : "border-electric-500/80 shadow-[0_0_20px_rgba(var(--color-accent-rgb),0.2)] animate-fade-in"
+          : "border-charcoal-700"
+      }`}>
 
-        {/* Subtle decorative color bar using HEX strictly */}
+        {/* Subtle decorative color bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-electric-500 via-sky-500 to-emerald-500" />
 
         {/* Certificate Card Header */}
-        <div className="p-6 sm:p-8 text-center border-b border-charcoal-700 bg-charcoal-900/20">
-          <div className="inline-flex items-center gap-3 mb-4">
+        <div className="p-4 sm:p-8 text-center border-b border-charcoal-700 bg-charcoal-900/20">
+          <div className="inline-flex items-center gap-3 mb-4 flex-wrap justify-center">
+            {isNewPB && (
+              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/15 text-[10px] font-mono text-amber-400 uppercase tracking-widest font-black animate-pulse">
+                ★ NEW PERSONAL BEST ★
+              </div>
+            )}
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-charcoal-700 bg-charcoal-900 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
               🏆 performance certificate
             </div>
@@ -598,7 +660,7 @@ function ResultsScreenContent() {
               </div>
             )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">
             Test Results
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-1">
@@ -610,62 +672,74 @@ function ResultsScreenContent() {
         </div>
 
         {/* Core Stats Section inside Card */}
-        <div className="p-6 sm:p-8 space-y-6">
+        <div className="p-4 sm:p-8 space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
             {/* WPM Container */}
-            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center col-span-2 sm:col-span-1">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-4 sm:p-5 text-center flex flex-col justify-center items-center col-span-2 sm:col-span-1">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-bold">
                 words per minute
               </span>
-              <div className="text-4xl sm:text-5xl font-extrabold text-white font-mono tracking-tight">
-                {wpm}
+              <div className="text-3xl sm:text-5xl font-extrabold text-white font-mono tracking-tight leading-none">
+                <AnimatedNumber value={parseInt(wpm, 10)} />
               </div>
-              <span className="text-xs font-mono text-slate-500 mt-1">Net speed</span>
+              <span className="text-xs font-mono text-slate-500 mt-2">Net speed</span>
             </div>
 
             {/* Accuracy Container */}
-            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-4 sm:p-5 text-center flex flex-col justify-between items-center relative overflow-hidden min-h-[120px]">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-bold">
                 accuracy rate
               </span>
-              <div className="text-4xl sm:text-5xl font-extrabold text-emerald-400 font-mono tracking-tight">
-                {accuracy}%
+              <div className="text-3xl sm:text-5xl font-extrabold text-emerald-400 font-mono tracking-tight leading-none">
+                <AnimatedNumber value={parseInt(accuracy, 10)} />%
               </div>
-              <span className="text-xs font-mono text-slate-500 mt-1">Precision score</span>
+              {/* Smooth progress bar filling in sync with 800ms duration */}
+              <div className="w-full h-1.5 bg-charcoal-900 rounded-full overflow-hidden mt-2">
+                <div
+                  style={{ width: isMounted ? `${accuracy}%` : "0%" }}
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-[800ms] ease-out shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                />
+              </div>
             </div>
 
             {/* Consistency Container */}
-            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-4 sm:p-5 text-center flex flex-col justify-between items-center relative overflow-hidden min-h-[120px]">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-bold">
                 consistency
               </span>
-              <div className="text-4xl sm:text-5xl font-extrabold text-electric-400 font-mono tracking-tight">
-                {consistency}%
+              <div className="text-3xl sm:text-5xl font-extrabold text-electric-400 font-mono tracking-tight leading-none">
+                <AnimatedNumber value={parseInt(consistency, 10)} />%
               </div>
-              <span className="text-xs font-mono text-slate-500 mt-1">Pace stability</span>
+              {/* Smooth progress bar filling in sync with 800ms duration */}
+              <div className="w-full h-1.5 bg-charcoal-900 rounded-full overflow-hidden mt-2">
+                <div
+                  style={{ width: isMounted ? `${consistency}%` : "0%" }}
+                  className="h-full bg-electric-500 rounded-full transition-all duration-[800ms] ease-out shadow-[0_0_8px_rgba(59,130,246,0.5)]"
+                />
+              </div>
             </div>
 
             {/* Time Taken Container */}
-            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-4 sm:p-5 text-center flex flex-col justify-center items-center">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-bold">
                 time elapsed
               </span>
-              <div className="text-3xl sm:text-4xl font-extrabold text-slate-200 font-mono tracking-tight">
-                {timeTaken}s
+              <div className="text-2xl sm:text-4xl font-extrabold text-slate-200 font-mono tracking-tight leading-none">
+                <AnimatedNumber value={parseInt(timeTaken, 10)} />s
               </div>
-              <span className="text-xs font-mono text-slate-500 mt-1">Duration</span>
+              <span className="text-xs font-mono text-slate-500 mt-2">Duration</span>
             </div>
 
             {/* Rank / Evaluation Tier */}
-            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-5 text-center flex flex-col justify-center items-center col-span-2 sm:col-span-2">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <div className="bg-charcoal-900/50 border border-charcoal-700/60 rounded-xl p-4 sm:p-5 text-center flex flex-col justify-center items-center col-span-2 sm:col-span-2">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-bold">
                 skill level
               </span>
-              <div className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight uppercase">
+              <div className="text-lg sm:text-2xl font-bold text-white font-mono tracking-tight uppercase leading-none mt-1">
                 {Number(wpm) >= 80 ? "PRO" : Number(wpm) >= 50 ? "INTERMEDIATE" : "TYPIST"}
               </div>
-              <span className="text-xs font-mono text-slate-500 mt-1">Evaluation Tier</span>
+              <span className="text-xs font-mono text-slate-500 mt-2">Evaluation Tier</span>
             </div>
 
           </div>
@@ -700,7 +774,7 @@ function ResultsScreenContent() {
       </div>
 
       {/* 2. Standalone Leaderboard Submission Flow Panel */}
-      <div className="w-full max-w-xl bg-charcoal-800 border-2 border-charcoal-700 rounded-2xl p-6 sm:p-8 shadow-2xl mb-6 relative overflow-hidden transition-all duration-300 hover:border-charcoal-600">
+      <div className="w-full max-w-xl bg-charcoal-800 border-2 border-charcoal-700 rounded-2xl p-4 sm:p-8 shadow-2xl mb-6 relative overflow-hidden transition-all duration-300 hover:border-charcoal-600">
         {/* Top subtle gradient highlight */}
         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-electric-500/30 to-transparent" />
 
@@ -724,7 +798,7 @@ function ResultsScreenContent() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="e.g. SpeedTyper99"
-                className="w-full bg-charcoal-900 border border-charcoal-700 rounded-xl px-4 py-3 text-sm font-mono text-white placeholder-slate-600 focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500/20 transition-all"
+                className="w-full bg-charcoal-900 border border-charcoal-700 rounded-xl px-4 py-3 text-sm font-mono text-white placeholder-slate-600 focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500/20 transition-all min-h-[44px]"
               />
               {displayName.trim() && (
                 <div className="absolute right-3 top-3 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 animate-fade-in">
@@ -739,8 +813,8 @@ function ResultsScreenContent() {
                 type="button"
                 onClick={handleSubmitScore}
                 disabled={isSubmitting}
-                className="w-full py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 shadow-md flex items-center justify-center gap-2 border cursor-pointer
-                  disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-charcoal-800
+                className="w-full py-3.5 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 shadow-md flex items-center justify-center gap-2 border cursor-pointer min-h-[44px]
+                  disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-charcoal-800 active:scale-[0.97]
                   bg-emerald-600 border-emerald-500 hover:bg-emerald-500 text-white shadow-emerald-500/10
                   disabled:bg-charcoal-700 disabled:border-charcoal-600 disabled:text-slate-400"
               >
@@ -789,7 +863,7 @@ function ResultsScreenContent() {
               <div className="w-full pt-4 border-t border-charcoal-700/50 mt-4 flex justify-center">
                 <Link
                   href="/leaderboard"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-electric-500/10 border border-electric-500/30 hover:border-electric-500/60 rounded-xl text-xs font-mono font-bold text-electric-400 uppercase tracking-wider transition-all hover-glow-electric cursor-pointer"
+                  className="btn-secondary min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-3 border border-electric-500/30 hover:border-electric-500/60 rounded-xl text-xs font-mono font-bold text-electric-400 uppercase tracking-wider transition-all hover-glow-electric cursor-pointer active:scale-[0.97]"
                 >
                   View Global Leaderboard 📊 →
                 </Link>
@@ -800,7 +874,7 @@ function ResultsScreenContent() {
       </div>
 
       {/* 3. AI Analysis & Share Container */}
-      <div className="w-full max-w-xl bg-charcoal-800 border-2 border-charcoal-700 rounded-2xl p-6 sm:p-8 shadow-2xl mb-6 relative overflow-hidden">
+      <div className="w-full max-w-xl bg-charcoal-800 border-2 border-charcoal-700 rounded-2xl p-4 sm:p-8 shadow-2xl mb-6 relative overflow-hidden">
         {/* Coach's Note Panel */}
         <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-5 font-mono text-left space-y-2 animate-fade-in mb-6">
           <div className="flex items-center justify-between border-b border-charcoal-700/60 pb-2 mb-2">
@@ -812,9 +886,15 @@ function ResultsScreenContent() {
             </span>
           </div>
           {coachLoading ? (
-            <div className="space-y-2 animate-pulse py-1">
-              <div className="h-3 bg-charcoal-700 rounded w-3/4"></div>
-              <div className="h-3 bg-charcoal-700 rounded w-1/2"></div>
+            <div className="space-y-2 py-1 font-mono text-xs">
+              <div className="text-left text-slate-400 mb-1 flex items-center gap-1.5">
+                <span className="text-electric-400 font-bold">&gt;_</span>
+                <span>query_ai_coach()</span>
+              </div>
+              <div className="text-left text-emerald-400 flex items-center gap-1 h-6">
+                <span>&gt; RETRIEVING_METRICS_FEEDBACK...</span>
+                <span className="inline-block w-2 h-4 bg-emerald-400 animate-blink" />
+              </div>
             </div>
           ) : (
             <p className="text-xs text-slate-300 leading-relaxed italic">
@@ -836,13 +916,13 @@ function ResultsScreenContent() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={handleDownloadPNG}
-              className="flex items-center justify-center gap-1.5 px-4 py-3 bg-charcoal-900 hover:bg-charcoal-800 text-xs font-mono font-bold text-electric-400 border border-electric-500/30 hover:border-electric-500/60 rounded-xl transition-all duration-150 cursor-pointer uppercase tracking-wider hover-glow-electric"
+              className="flex items-center justify-center gap-1.5 px-4 py-3 bg-charcoal-900 hover:bg-charcoal-800 text-xs font-mono font-bold text-electric-400 border border-electric-500/30 hover:border-electric-500/60 rounded-xl transition-all duration-150 cursor-pointer uppercase tracking-wider hover-glow-electric min-h-[44px] active:scale-[0.97]"
             >
               Download PNG ⬇️
             </button>
             <button
               onClick={handleCopyImage}
-              className="flex items-center justify-center gap-1.5 px-4 py-3 bg-charcoal-900 hover:bg-charcoal-800 text-xs font-mono font-bold text-slate-300 border border-charcoal-700 hover:border-charcoal-600 rounded-xl transition-all duration-150 cursor-pointer uppercase tracking-wider hover-glow-electric"
+              className="flex items-center justify-center gap-1.5 px-4 py-3 bg-charcoal-900 hover:bg-charcoal-800 text-xs font-mono font-bold text-slate-300 border border-charcoal-700 hover:border-charcoal-600 rounded-xl transition-all duration-150 cursor-pointer uppercase tracking-wider hover-glow-electric min-h-[44px] active:scale-[0.97]"
             >
               Copy Image 📋
             </button>
@@ -852,22 +932,22 @@ function ResultsScreenContent() {
 
       {/* 4. Action Navigation Footer Container */}
       <div className="w-full max-w-xl bg-charcoal-850 border-2 border-charcoal-700 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col">
-        <div className="p-6 bg-charcoal-900/40 flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div className="p-4 sm:p-6 bg-charcoal-900/40 flex flex-col sm:flex-row gap-4 justify-between items-center">
           <div className="text-[10px] font-mono text-slate-500 text-center sm:text-left">
             SECURE VERIFIED SYSTEM ID: <span className="text-slate-400">#TST-PHASE-6</span>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Link
               href="/history"
-              className="w-full sm:w-auto text-center px-6 py-2.5 bg-charcoal-800 text-slate-300 font-bold rounded-lg text-xs font-mono uppercase tracking-wider border border-charcoal-700 transition-colors duration-200 hover-glow-electric focus:outline-none focus:ring-1 focus:ring-electric-500"
+              className="btn-secondary min-h-[44px] px-6 py-2.5 hover:bg-charcoal-800 text-slate-300 font-bold rounded-lg text-xs font-mono uppercase tracking-wider border border-charcoal-700 transition-colors duration-200 hover-glow-electric text-center active:scale-[0.97]"
             >
               History ⏳
             </Link>
             <Link
               href="/"
-              className="w-full sm:w-auto text-center px-6 py-2.5 bg-electric-500 text-white font-bold rounded-lg text-xs font-mono uppercase tracking-wider transition-colors duration-200 shadow-md shadow-electric-500/10 hover-glow-electric focus:outline-none focus:ring-2 focus:ring-electric-500 focus:ring-offset-2 focus:ring-offset-charcoal-800"
+              className="btn-primary min-h-[44px] px-6 py-2.5 text-white font-bold rounded-lg text-xs font-mono uppercase tracking-wider transition-colors duration-200 shadow-md shadow-electric-500/10 text-center active:scale-[0.97]"
             >
-              Try Again 🔄
+              [ TRY AGAIN 🔄 ]
             </Link>
           </div>
         </div>

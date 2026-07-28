@@ -38,6 +38,28 @@ body {
   min-height: 100vh;
 }
 
+/* Custom WebKit Global Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #121316;
+}
+::-webkit-scrollbar-thumb {
+  background: #23272F;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Firefox scrollbar styles */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #23272F #121316;
+}
+
 /* Custom terminal blinking cursor effect */
 @keyframes blink {
   0%, 100% { opacity: 1; }
@@ -142,4 +164,59 @@ body {
   stroke-dasharray: 2000;
   stroke-dashoffset: 2000;
   animation: drawIn 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@layer components {
+  /* Button System */
+  .btn-primary {
+    @apply inline-flex items-center justify-center font-mono text-xs font-bold uppercase tracking-wider py-3.5 px-6 rounded-xl border border-electric-500 bg-electric-500 text-white transition-all duration-200 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-electric-500 focus:ring-offset-2 focus:ring-offset-charcoal-900 min-h-[44px];
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.15), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+  }
+  .btn-primary:hover {
+    background-color: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+    box-shadow: 0 0 15px rgba(var(--color-accent-rgb), 0.25);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center font-mono text-xs font-bold uppercase tracking-wider py-3.5 px-6 rounded-xl border border-charcoal-700 bg-transparent text-slate-300 transition-all duration-200 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-electric-500 focus:ring-offset-2 focus:ring-offset-charcoal-900 min-h-[44px];
+  }
+  .btn-secondary:hover {
+    @apply text-white;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 12px rgba(var(--color-accent-rgb), 0.15);
+  }
+
+  .btn-tertiary {
+    @apply inline-flex items-center justify-center font-mono text-xs font-bold uppercase tracking-wider py-2.5 px-4 rounded-lg bg-transparent text-slate-400 transition-all duration-200 active:scale-[0.97] focus:outline-none focus:ring-1 focus:ring-electric-500 min-h-[44px];
+  }
+  .btn-tertiary:hover {
+    @apply text-slate-200;
+  }
+
+  /* Option A: Subtle Lift & Glow Hover Animation for Cards */
+  .card-hover-lift {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  .card-hover-lift:hover {
+    @apply -translate-y-0.5;
+    border-color: rgba(var(--color-accent-rgb), 0.4);
+    box-shadow: 0 4px 20px rgba(var(--color-accent-rgb), 0.12);
+  }
+
+  /* Pulse animation for personal best certificate */
+  @keyframes pbPulse {
+    0%, 100% {
+      box-shadow: 0 0 12px rgba(var(--color-accent-rgb), 0.1);
+      border-color: rgba(var(--color-accent-rgb), 0.35);
+    }
+    50% {
+      box-shadow: 0 0 25px rgba(var(--color-accent-rgb), 0.35);
+      border-color: var(--color-accent);
+    }
+  }
+
+  .pb-card-pulse {
+    animation: pbPulse 2s ease-in-out infinite;
+  }
 }

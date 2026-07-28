@@ -337,7 +337,7 @@ export default function Home() {
 
               <button
                 type="submit"
-                className="w-full py-3 px-4 bg-electric-500 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-electric-500/15 hover:bg-electric-400 transition-all duration-200 cursor-pointer text-center"
+                className="w-full py-3.5 px-4 bg-electric-500 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-electric-500/15 hover:bg-electric-400 transition-all duration-200 cursor-pointer text-center min-h-[44px] active:scale-[0.97]"
               >
                 [ CONFIRM CALLSIGN ]
               </button>
@@ -354,7 +354,7 @@ export default function Home() {
     <div className="flex-grow flex flex-col w-full max-w-5xl mx-auto px-4 py-4 sm:py-8 lg:px-8 animate-fade-in space-y-6 sm:space-y-10">
 
       {/* SYSTEM DIAGNOSTICS & HUB NAVIGATION (Compact System Label) */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 pb-3 sm:pb-4 border-b border-[#1E293B]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#1E293B]">
         <div className="space-y-0.5 sm:space-y-1">
           <span className="font-mono text-[9px] sm:text-[10px] text-electric-400 uppercase tracking-widest font-black block">
             {"// TERMINAL OVERVIEW"}
@@ -367,7 +367,7 @@ export default function Home() {
         {/* Dynamic Player Status HUD Header (compact game HUD save-file style) */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
           {isNewRecruit ? (
-            <div className="inline-flex items-center h-7 sm:h-8 px-3 sm:px-4 rounded-full border border-rose-500/30 bg-rose-500/[0.04] text-[9px] sm:text-[10px] font-mono text-rose-400 font-extrabold uppercase tracking-widest animate-pulse">
+            <div className="inline-flex items-center h-8 px-4 rounded-full border border-rose-500/30 bg-rose-500/[0.04] text-[9px] sm:text-[10px] font-mono text-rose-400 font-extrabold uppercase tracking-widest animate-pulse">
               <span>⚠️ Status: New Recruit</span>
             </div>
           ) : (
@@ -376,7 +376,7 @@ export default function Home() {
                 {/* Mobile view: Stack into exactly two clean, deliberate, and compact rows */}
                 <div className="flex flex-col gap-1.5 sm:hidden w-full">
                   {/* Row 1: Level Title + Level + Streak */}
-                  <div className="inline-flex items-center h-7 rounded-full border border-[#3B82F6]/20 bg-charcoal-800 text-[9px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden">
+                  <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/20 bg-charcoal-800 text-[9px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden">
                     <span className="px-2.5 text-slate-400">{gamificationState.levelTitle}</span>
                     <span className="h-full w-[1px] bg-charcoal-700" />
                     <span className="px-2.5 text-[#3B82F6]">Lvl {gamificationState.currentLevel}</span>
@@ -387,7 +387,7 @@ export default function Home() {
                   </div>
                   {/* Row 2: Personal Best if available */}
                   {overallPbWPM > 0 && (
-                    <div className="self-start inline-flex items-center h-7 px-2.5 rounded-full border border-emerald-500/20 bg-charcoal-800 text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                    <div className="self-start inline-flex items-center h-8 px-2.5 rounded-full border border-emerald-500/20 bg-charcoal-800 text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
                       <span>PB: {overallPbWPM} WPM</span>
                     </div>
                   )}
@@ -413,29 +413,30 @@ export default function Home() {
             )
           )}
           {/* Global player identity pencil edit (reduced padding / simple inline treatment on mobile) */}
-          <div className="flex items-center gap-1.5 font-mono text-xs text-slate-400 sm:bg-charcoal-800 sm:border sm:border-charcoal-750 sm:px-3 sm:py-1.5 rounded-lg">
+          <div className="flex items-center gap-1.5 font-mono text-xs text-slate-400 sm:bg-charcoal-800 sm:border sm:border-charcoal-750 sm:px-3 sm:py-1.5 rounded-xl h-11 sm:h-auto">
             <span>Playing as:</span>
             <span className="font-extrabold text-white underline decoration-electric-500 decoration-2 underline-offset-2 normal-case">{playerName}</span>
             <button
               onClick={triggerEditModal}
-              className="text-slate-500 hover:text-white transition-colors cursor-pointer p-0.5 ml-1"
+              className="text-slate-500 hover:text-white transition-colors cursor-pointer p-1 ml-1 h-9 w-9 flex items-center justify-center active:scale-[0.9]"
               title="Edit Callsign"
             >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
             </button>
             <button
               onClick={triggerExitModal}
-              className="flex items-center justify-center border border-[#3B82F6]/30 hover:border-[#3B82F6] hover:bg-[#3B82F6]/10 text-slate-400 hover:text-white rounded px-1.5 py-0.5 transition-all cursor-pointer ml-1"
+              className="flex items-center justify-center border border-[#3B82F6]/30 hover:border-[#3B82F6] hover:bg-[#3B82F6]/10 text-slate-400 hover:text-white rounded-lg h-9 px-2 transition-all cursor-pointer ml-1 active:scale-[0.9]"
               title="Exit Session"
             >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
+              <span className="text-[10px] font-bold">EXIT</span>
             </button>
           </div>
         </div>
@@ -443,10 +444,10 @@ export default function Home() {
 
       {/* 2. THE SIX PRACTICE MODE TILES GRID */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-xs text-slate-400 uppercase tracking-widest">
-            &gt; select practice sector
-          </span>
+        <div className="flex items-center justify-between border-b border-charcoal-750 pb-2">
+          <h2 className="font-mono text-sm sm:text-base font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <span>&gt;</span> SELECT PRACTICE SECTOR
+          </h2>
           {personalGoal !== null && (
             <div className="text-[10px] font-mono text-electric-400 uppercase tracking-widest font-extrabold flex items-center gap-1.5 bg-electric-500/5 px-2.5 py-1 rounded border border-electric-500/20">
               <span>🎯 TARGET:</span>
@@ -459,10 +460,10 @@ export default function Home() {
           {/* Card 1: Code Arena */}
           <button
             onClick={() => handleSelectCategory("code_arena")}
-            className={`flex flex-col text-left p-6 rounded-2xl border-2 transition-all duration-200 cursor-pointer relative group overflow-hidden ${
+            className={`flex flex-col text-left p-4 sm:p-6 rounded-2xl border-2 card-hover-lift cursor-pointer relative group overflow-hidden ${
               selectedCategory === "code_arena"
                 ? "border-emerald-500 bg-emerald-500/[0.04] shadow-[0_0_20px_rgba(16,185,129,0.15)]"
-                : "border-[#1E293B] bg-charcoal-800/40 hover:border-emerald-500/40 text-slate-300"
+                : "border-[#1E293B] bg-charcoal-800/40 text-slate-300"
             }`}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-emerald-500/10 to-transparent rounded-bl-full pointer-events-none" />
@@ -481,10 +482,10 @@ export default function Home() {
           {/* Card 2: Knowledge Quest */}
           <button
             onClick={() => handleSelectCategory("knowledge_quest")}
-            className={`flex flex-col text-left p-6 rounded-2xl border-2 transition-all duration-200 cursor-pointer relative group overflow-hidden ${
+            className={`flex flex-col text-left p-4 sm:p-6 rounded-2xl border-2 card-hover-lift cursor-pointer relative group overflow-hidden ${
               selectedCategory === "knowledge_quest"
                 ? "border-sky-500 bg-sky-500/[0.04] shadow-[0_0_20px_rgba(56,189,248,0.15)]"
-                : "border-[#1E293B] bg-charcoal-800/40 hover:border-sky-500/40 text-slate-300"
+                : "border-[#1E293B] bg-charcoal-800/40 text-slate-300"
             }`}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-sky-500/10 to-transparent rounded-bl-full pointer-events-none" />
@@ -503,10 +504,10 @@ export default function Home() {
           {/* Card 3: AI Lab */}
           <button
             onClick={() => handleSelectCategory("ai_lab")}
-            className={`flex flex-col text-left p-6 rounded-2xl border-2 transition-all duration-200 cursor-pointer relative group overflow-hidden ${
+            className={`flex flex-col text-left p-4 sm:p-6 rounded-2xl border-2 card-hover-lift cursor-pointer relative group overflow-hidden ${
               selectedCategory === "ai_lab"
                 ? "border-teal-500 bg-teal-500/[0.04] shadow-[0_0_20px_rgba(20,184,166,0.15)]"
-                : "border-[#1E293B] bg-charcoal-800/40 hover:border-teal-500/40 text-slate-300"
+                : "border-[#1E293B] bg-charcoal-800/40 text-slate-300"
             }`}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-teal-500/10 to-transparent rounded-bl-full pointer-events-none" />
@@ -525,10 +526,10 @@ export default function Home() {
           {/* Card 4: World Explorer */}
           <button
             onClick={() => handleSelectCategory("world_explorer")}
-            className={`flex flex-col text-left p-6 rounded-2xl border-2 transition-all duration-200 cursor-pointer relative group overflow-hidden ${
+            className={`flex flex-col text-left p-4 sm:p-6 rounded-2xl border-2 card-hover-lift cursor-pointer relative group overflow-hidden ${
               selectedCategory === "world_explorer"
                 ? "border-amber-500 bg-amber-500/[0.04] shadow-[0_0_20px_rgba(245,158,11,0.15)]"
-                : "border-[#1E293B] bg-charcoal-800/40 hover:border-amber-500/40 text-slate-300"
+                : "border-[#1E293B] bg-charcoal-800/40 text-slate-300"
             }`}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-bl-full pointer-events-none" />
@@ -547,10 +548,10 @@ export default function Home() {
           {/* Card 5: Speed Sprint */}
           <button
             onClick={() => handleSelectCategory("speed_sprint")}
-            className={`flex flex-col text-left p-6 rounded-2xl border-2 transition-all duration-200 cursor-pointer relative group overflow-hidden ${
+            className={`flex flex-col text-left p-4 sm:p-6 rounded-2xl border-2 card-hover-lift cursor-pointer relative group overflow-hidden ${
               selectedCategory === "speed_sprint"
                 ? "border-orange-500 bg-orange-500/[0.04] shadow-[0_0_20px_rgba(249,115,22,0.15)]"
-                : "border-[#1E293B] bg-charcoal-800/40 hover:border-orange-500/40 text-slate-300"
+                : "border-[#1E293B] bg-charcoal-800/40 text-slate-300"
             }`}
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-orange-500/10 to-transparent rounded-bl-full pointer-events-none" />
@@ -572,12 +573,12 @@ export default function Home() {
           {/* Card 6: Weak-Key Drill */}
           <button
             onClick={() => handleSelectCategory("weak_key_drill")}
-            className={`flex flex-col text-left p-6 rounded-2xl border-2 transition-all duration-200 relative group overflow-hidden ${
+            className={`flex flex-col text-left p-4 sm:p-6 rounded-2xl border-2 relative group overflow-hidden ${
               historyLength < 3
                 ? "border-dashed border-charcoal-700 bg-charcoal-900/10 text-slate-600 cursor-not-allowed"
                 : selectedCategory === "weak_key_drill"
                 ? "border-electric-500 bg-electric-500/[0.04] shadow-[0_0_20px_rgba(59,130,246,0.15)] text-slate-300 cursor-pointer"
-                : "border-[#1E293B] bg-charcoal-800/40 hover:border-electric-500/40 text-slate-300 cursor-pointer"
+                : "border-[#1E293B] bg-charcoal-800/40 hover:border-electric-500/40 text-slate-300 cursor-pointer card-hover-lift"
             }`}
           >
             {historyLength < 3 && (
@@ -625,7 +626,7 @@ export default function Home() {
             <span>BASELINE VERIFICATION: {historyLength} / 3 RUNS COMPLETED</span>
             <button
               onClick={() => setShowLockedDrillMessage(false)}
-              className="text-slate-500 hover:text-white underline transition-colors"
+              className="text-slate-500 hover:text-white underline transition-colors cursor-pointer"
             >
               Acknowledge
             </button>
@@ -637,7 +638,7 @@ export default function Home() {
       {selectedCategory && (
         <div
           ref={configSectionRef}
-          className="bg-charcoal-800 border-2 border-[#1E293B] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 transition-all duration-300 animate-slide-in relative overflow-hidden"
+          className="bg-charcoal-800 border-2 border-[#1E293B] rounded-2xl p-4 sm:p-8 shadow-2xl space-y-6 transition-all duration-300 animate-slide-in relative overflow-hidden"
         >
           {/* subtle accent based on category */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#3B82F6]" />
@@ -647,13 +648,13 @@ export default function Home() {
               <span className="text-[10px] font-mono text-electric-400 uppercase tracking-widest font-black block">
                 [ SECTOR CONFIGURATION PROMPT ]
               </span>
-              <h2 className="text-lg font-bold text-white tracking-wide font-mono uppercase">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-wide font-mono uppercase">
                 Active Mission: {selectedCategory.replace("_", " ")}
               </h2>
             </div>
             <button
               onClick={() => setSelectedCategory(null)}
-              className="text-slate-500 hover:text-white font-mono text-xs border border-charcoal-700 px-3 py-1 rounded hover:bg-charcoal-900/60"
+              className="btn-secondary h-11 py-2 px-3 hover:bg-charcoal-900/60 font-mono text-xs cursor-pointer active:scale-[0.97]"
             >
               Deselect Mode [X]
             </button>
@@ -664,12 +665,12 @@ export default function Home() {
             <div className="space-y-6">
               {/* Mode Type Selection (Segmented Control Tabs) */}
               <div className="space-y-2">
-                <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                <span className="block font-mono text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                   &gt; MODE_
                 </span>
 
                 {/* Responsive Single column vertical stack on mobile, horizontal segment row on desktop */}
-                <div className="flex flex-col sm:flex-row bg-[#121316] border border-charcoal-750 p-1 rounded-xl">
+                <div className="flex flex-col sm:flex-row bg-[#121316] border border-charcoal-750 p-1.5 rounded-xl gap-1">
                   {([
                     { id: "time", label: "TIME MODE", desc: "fixed duration stream" },
                     { id: "words", label: "WORD COUNT MODE", desc: "fixed target speed stopwatch" },
@@ -683,14 +684,14 @@ export default function Home() {
                           setTestType(modeOption.id);
                           setShowLockedDrillMessage(false);
                         }}
-                        className={`flex-1 flex flex-col justify-center items-center py-2.5 px-4 rounded-lg font-mono transition-all text-center cursor-pointer focus:outline-none ${
+                        className={`flex-1 flex flex-col justify-center items-center py-2.5 px-4 rounded-lg font-mono transition-all text-center cursor-pointer focus:outline-none min-h-[44px] active:scale-[0.97] ${
                           isModeActive
                             ? "bg-electric-500/10 border border-electric-500/30 text-electric-400 font-extrabold shadow-[0_0_15px_rgba(59,130,246,0.1)]"
                             : "text-slate-500 hover:text-slate-300 hover:bg-charcoal-900/40 border border-transparent"
                         }`}
                       >
                         <span className="text-xs tracking-wider uppercase font-extrabold">{modeOption.label}</span>
-                        <span className="text-[9px] opacity-60 font-normal lowercase">{modeOption.desc}</span>
+                        <span className="text-[9px] opacity-65 font-normal lowercase mt-0.5">{modeOption.desc}</span>
                       </button>
                     );
                   })}
@@ -702,7 +703,7 @@ export default function Home() {
                 <div className="space-y-4">
                   {testType === "time" && (
                     <div className="space-y-2 animate-fade-in">
-                      <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                      <span className="block font-mono text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                         &gt; DURATION_
                       </span>
                       <div className="grid grid-cols-4 gap-2">
@@ -712,10 +713,10 @@ export default function Home() {
                             <button
                               key={secs}
                               onClick={() => setTestDuration(secs)}
-                              className={`py-3 px-1 border rounded-xl font-mono text-xs font-bold uppercase transition-all cursor-pointer text-center ${
+                              className={`py-3.5 px-1 border rounded-xl font-mono text-xs font-bold uppercase transition-all cursor-pointer text-center min-h-[44px] active:scale-[0.97] ${
                                 isDurSelected
-                                  ? "border-electric-500 bg-electric-500/5 text-electric-450"
-                                  : "border-charcoal-750 bg-charcoal-900/20 text-slate-450 hover:border-charcoal-600 hover:text-white"
+                                  ? "border-electric-500 bg-electric-500/5 text-electric-400 shadow-[0_0_10px_rgba(var(--color-accent-rgb),0.1)]"
+                                  : "border-charcoal-750 bg-charcoal-900/20 text-slate-400 hover:border-charcoal-600 hover:text-white"
                               }`}
                             >
                               {secs}s
@@ -731,7 +732,7 @@ export default function Home() {
 
                   {testType === "words" && (
                     <div className="space-y-2 animate-fade-in">
-                      <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                      <span className="block font-mono text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                         &gt; LENGTH_
                       </span>
                       <div className="grid grid-cols-4 gap-2">
@@ -741,13 +742,13 @@ export default function Home() {
                             <button
                               key={cnt}
                               onClick={() => setTestWordCount(cnt)}
-                              className={`py-3 px-1 border rounded-xl font-mono text-xs font-bold uppercase transition-all cursor-pointer text-center ${
+                              className={`py-3.5 px-1 border rounded-xl font-mono text-xs font-bold uppercase transition-all cursor-pointer text-center min-h-[44px] active:scale-[0.97] ${
                                 isWordSelected
-                                  ? "border-electric-500 bg-electric-500/5 text-electric-450"
-                                  : "border-charcoal-750 bg-charcoal-900/20 text-slate-450 hover:border-charcoal-600 hover:text-white"
+                                  ? "border-electric-500 bg-electric-500/5 text-electric-400 shadow-[0_0_10px_rgba(var(--color-accent-rgb),0.1)]"
+                                  : "border-charcoal-750 bg-charcoal-900/20 text-slate-400 hover:border-charcoal-600 hover:text-white"
                               }`}
                             >
-                              {cnt} words
+                              {cnt}w
                             </button>
                           );
                         })}
@@ -760,7 +761,7 @@ export default function Home() {
 
                   {testType === "passage" && (
                     <div className="space-y-2 animate-fade-in">
-                      <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                      <span className="block font-mono text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                         &gt; DIFFICULTY_
                       </span>
                       <div className="flex flex-col gap-2">
@@ -770,7 +771,7 @@ export default function Home() {
                             <button
                               key={tier}
                               onClick={() => setDifficulty(tier)}
-                              className={`w-full flex justify-between items-center px-4 py-3 border rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                              className={`w-full flex justify-between items-center px-4 py-3 border rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[44px] active:scale-[0.97] ${
                                 isTierSelected
                                   ? tier === "easy"
                                     ? "border-emerald-500 bg-emerald-500/5 text-emerald-400"
@@ -794,7 +795,7 @@ export default function Home() {
 
                 {/* Right Side: Modular Settings, Punctuation/Numbers toggles, Ghost Mode if applicable */}
                 <div className="space-y-4">
-                  <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                  <span className="block font-mono text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                     &gt; PARAMETERS_
                   </span>
 
@@ -805,7 +806,7 @@ export default function Home() {
                         <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
                           ✍️ Punctuation
                         </span>
-                        <p className="text-[10px] text-slate-450 font-sans leading-none">
+                        <p className="text-[10px] text-slate-500 font-sans leading-none">
                           Natural density (commas, periods, etc)
                         </p>
                       </div>
@@ -830,7 +831,7 @@ export default function Home() {
                         <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
                           🔢 Numbers
                         </span>
-                        <p className="text-[10px] text-slate-450 font-sans leading-none">
+                        <p className="text-[10px] text-slate-500 font-sans leading-none">
                           Numeric dates, statistics, quantities
                         </p>
                       </div>
@@ -857,7 +858,7 @@ export default function Home() {
                             <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
                               👻 Ghost Race Mode
                             </span>
-                            <p className="text-[10px] text-slate-450 font-sans leading-none">
+                            <p className="text-[10px] text-slate-500 font-sans leading-none">
                               Race your local best run on {difficulty}
                             </p>
                           </div>
@@ -871,10 +872,10 @@ export default function Home() {
                             <span
                               className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                                 ghostEnabled ? "translate-x-5" : "translate-x-0"
-                              }`}
-                            />
-                          </button>
-                        </div>
+                          }`}
+                        />
+                      </button>
+                    </div>
                       ) : (
                         <div className="bg-charcoal-900/20 border border-charcoal-750 rounded-xl p-3.5 text-left select-none text-[10px] text-slate-500 font-mono animate-fade-in leading-normal">
                           <span>👻 GHOST RACE BLOCKED</span>
@@ -910,7 +911,7 @@ export default function Home() {
 
               {/* Param Toggles still available for Sprint / Drill modes */}
               <div className="space-y-3">
-                <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                <span className="block font-mono text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                   &gt; PARAMETERS_
                 </span>
                 <div className="grid grid-cols-1 gap-3">
@@ -920,7 +921,7 @@ export default function Home() {
                       <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
                         ✍️ Punctuation
                       </span>
-                      <p className="text-[10px] text-slate-450 font-sans leading-none">
+                      <p className="text-[10px] text-slate-500 font-sans leading-none">
                         Natural density (commas, periods, etc)
                       </p>
                     </div>
@@ -945,7 +946,7 @@ export default function Home() {
                       <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
                         🔢 Numbers
                       </span>
-                      <p className="text-[10px] text-slate-450 font-sans leading-none">
+                      <p className="text-[10px] text-slate-500 font-sans leading-none">
                         Numeric dates, statistics, quantities
                       </p>
                     </div>
@@ -975,16 +976,16 @@ export default function Home() {
             </div>
             <button
               onClick={handleStartTest}
-              className="w-full sm:w-auto text-center px-10 py-3.5 bg-electric-500 text-white font-semibold rounded-xl shadow-lg shadow-electric-500/15 hover:bg-electric-400 transition-all duration-200 hover-glow-electric cursor-pointer text-xs uppercase tracking-wider font-mono"
+              className="w-full sm:w-auto text-center px-10 py-3.5 bg-electric-500 text-white font-bold rounded-xl shadow-lg shadow-electric-500/15 transition-all duration-200 hover-glow-electric cursor-pointer text-xs uppercase tracking-wider font-mono active:scale-[0.97] min-h-[44px]"
             >
-              Launch Test ⚡
+              [ LAUNCH TEST ⚡ ]
             </button>
           </div>
         </div>
       )}
 
       {/* 4. SESSION STATS STRIP PANEL */}
-      <div className="bg-charcoal-800 border border-[#1E293B] rounded-2xl p-5 shadow-inner">
+      <div className="bg-charcoal-800 border border-[#1E293B] rounded-2xl p-4 sm:p-5 shadow-inner">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
 
           {/* completed tests today */}

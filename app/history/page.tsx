@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import { getHistory, getHistorySummary, getPersonalBest, TestResult, getKeyErrors, getTrendComparison, TrendComparison, getNamespacedKey } from "../../lib/stats";
 import { getGamificationState, ACHIEVEMENTS, GamificationState, computeMilestones, MilestoneEvent } from "../../lib/gamification";
 
@@ -360,7 +361,7 @@ export default function HistoryPage() {
                 x={p.x}
                 y={height - 15}
                 textAnchor="middle"
-                className="fill-slate-500 font-mono text-[9px] uppercase tracking-wider"
+                className="fill-slate-500 font-mono text-[9px] uppercase tracking-wider font-bold"
               >
                 {formatDateShort(p.data.timestamp)}
               </text>
@@ -373,9 +374,9 @@ export default function HistoryPage() {
 
   return (
     <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
-      <main className="flex-grow flex flex-col w-full">
+      <main className="flex-grow flex flex-col w-full space-y-8">
         {/* Page Title */}
-        <div className="text-center space-y-3 mb-10">
+        <div className="text-center space-y-3 mb-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-charcoal-700 bg-charcoal-800 text-xs font-mono text-slate-400 tracking-wider uppercase">
             📊 Personal Dashboard
           </div>
@@ -394,18 +395,24 @@ export default function HistoryPage() {
               ⌨️
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white tracking-tight">No Typing History Found</h2>
+              <h2 className="text-xl font-bold text-white tracking-tight font-sans">No Typing History Found</h2>
               <p className="text-sm text-slate-400 font-sans leading-relaxed">
                 You haven&apos;t completed any speed typing tests yet on this machine. Take your first test to initialize local tracking metrics and unlock the performance charts.
               </p>
             </div>
+            <Link
+              href="/"
+              className="btn-primary min-h-[44px] px-6 py-2.5 bg-electric-500 text-white font-bold rounded-xl active:scale-[0.97] transition-all cursor-pointer"
+            >
+              [ LAUNCH FIRST TEST ⚡ ]
+            </Link>
           </div>
         ) : (
           /* Main Dashboard View */
           <div className="space-y-8">
             {/* Gamification Player profile card Summary Block */}
             {gamification && (
-              <div className="bg-charcoal-800 border-2 border-[#3B82F6]/30 rounded-2xl p-6 shadow-xl space-y-4 relative overflow-hidden animate-fade-in">
+              <div className="bg-charcoal-800 border-2 border-[#3B82F6]/30 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 relative overflow-hidden animate-fade-in">
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-electric-400 to-electric-600" />
 
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
@@ -420,17 +427,17 @@ export default function HistoryPage() {
 
                   <div className="flex gap-6 items-center text-left sm:text-right font-mono text-xs">
                     <div>
-                      <span className="text-[9px] text-slate-500 uppercase block">Total Tests</span>
+                      <span className="text-[9px] text-slate-500 uppercase block font-bold">Total Tests</span>
                       <strong className="text-white text-sm font-black">{history.length}</strong>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-500 uppercase block">Active Streak</span>
+                      <span className="text-[9px] text-slate-500 uppercase block font-bold">Active Streak</span>
                       <strong className="text-amber-500 text-sm font-black flex items-center gap-0.5">
                         <span>🔥</span> {gamification.streakDays}
                       </strong>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-500 uppercase block">XP Base</span>
+                      <span className="text-[9px] text-slate-500 uppercase block font-bold">XP Base</span>
                       <strong className="text-white text-sm font-black">{gamification.totalXp.toLocaleString()} XP</strong>
                     </div>
                   </div>
@@ -455,7 +462,7 @@ export default function HistoryPage() {
                         className="h-full bg-electric-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
                       />
                     </div>
-                    <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                       <span>{gamification.prevLevelXp} XP</span>
                       <span>
                         {Math.round(
@@ -475,12 +482,12 @@ export default function HistoryPage() {
             {/* Trends and Goal Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Progress Trends Card */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>📈</span> performance trends
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                     Rolling 7-day windows
                   </span>
                 </div>
@@ -488,7 +495,7 @@ export default function HistoryPage() {
                 <div className="grid grid-cols-2 gap-4 py-2">
                   {/* WPM Trend */}
                   <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 space-y-1">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-bold">
                       WPM Trend
                     </span>
                     {trend && trend.thisWeekWpm !== null ? (
@@ -501,7 +508,7 @@ export default function HistoryPage() {
                             {trend.wpmDiff >= 0 ? `+${trend.wpmDiff}` : trend.wpmDiff} WPM vs last week
                           </div>
                         ) : (
-                          <div className="text-[10px] font-mono text-electric-400 font-semibold bg-electric-500/10 px-2 py-0.5 rounded inline-block">
+                          <div className="text-[10px] font-mono text-electric-400 font-bold bg-electric-500/10 px-2.5 py-1 rounded-xl inline-block border border-electric-500/20">
                             First week of training!
                           </div>
                         )}
@@ -513,7 +520,7 @@ export default function HistoryPage() {
 
                   {/* Accuracy Trend */}
                   <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 space-y-1">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-bold">
                       Accuracy Trend
                     </span>
                     {trend && trend.thisWeekAcc !== null ? (
@@ -526,7 +533,7 @@ export default function HistoryPage() {
                             {trend.accDiff >= 0 ? `+${trend.accDiff}` : trend.accDiff}% vs last week
                           </div>
                         ) : (
-                          <div className="text-[10px] font-mono text-electric-400 font-semibold bg-electric-500/10 px-2 py-0.5 rounded inline-block">
+                          <div className="text-[10px] font-mono text-electric-400 font-bold bg-electric-500/10 px-2.5 py-1 rounded-xl inline-block border border-electric-500/20">
                             First week of training!
                           </div>
                         )}
@@ -539,12 +546,12 @@ export default function HistoryPage() {
               </div>
 
               {/* Personal Goal Setting Card */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4 relative overflow-hidden">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 relative overflow-hidden">
                 <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>🎯</span> personal speed target
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                     deliberate practice goal
                   </span>
                 </div>
@@ -560,7 +567,7 @@ export default function HistoryPage() {
                         type="number"
                         placeholder="e.g. 70"
                         id="goal-input-init"
-                        className="w-24 bg-[#121316] border border-[#23272F] rounded-lg px-3 py-1.5 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500/20"
+                        className="w-24 bg-[#121316] border border-[#23272F] rounded-xl px-3 py-3 text-sm font-mono text-white text-center focus:outline-none focus:border-electric-500 focus:ring-1 focus:ring-electric-500/20 min-h-[44px]"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             const val = (e.target as HTMLInputElement).value;
@@ -573,7 +580,7 @@ export default function HistoryPage() {
                           const input = document.getElementById("goal-input-init") as HTMLInputElement;
                           if (input) handleSaveGoal(input.value);
                         }}
-                        className="px-3 py-1.5 bg-electric-500 hover:bg-electric-400 text-white font-mono text-xs font-bold rounded-lg transition-all"
+                        className="btn-primary min-h-[44px] px-4 py-2 hover:bg-electric-400 text-white font-mono text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-[0.97]"
                       >
                         Set Goal
                       </button>
@@ -597,7 +604,7 @@ export default function HistoryPage() {
                           className="h-full bg-electric-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(59,130,246,0.5)]"
                         />
                       </div>
-                      <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                      <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                         <span>0 WPM</span>
                         <span>
                           {Math.min(100, Math.round(((pbOverall ? pbOverall.wpm : 0) / personalGoal) * 100))}% Completed
@@ -609,7 +616,7 @@ export default function HistoryPage() {
                     {/* Completion Celebration Message and Edit Actions */}
                     <div className="flex justify-between items-center pt-2">
                       {pbOverall && pbOverall.wpm >= personalGoal ? (
-                        <div className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded inline-flex items-center gap-1">
+                        <div className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded inline-flex items-center gap-1 font-bold">
                           <span>🎉</span> Goal Met! Level Up Target.
                         </div>
                       ) : (
@@ -624,7 +631,7 @@ export default function HistoryPage() {
                             type="number"
                             defaultValue={personalGoal}
                             id="goal-input-edit"
-                            className="w-16 bg-[#121316] border border-[#23272F] rounded px-2 py-0.5 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500"
+                            className="w-16 bg-[#121316] border border-[#23272F] rounded-lg px-2 py-2 text-xs font-mono text-white text-center focus:outline-none focus:border-electric-500 min-h-[36px]"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 const val = (e.target as HTMLInputElement).value;
@@ -638,7 +645,7 @@ export default function HistoryPage() {
                               const input = document.getElementById("goal-input-edit") as HTMLInputElement;
                               if (input) handleSaveGoal(input.value);
                             }}
-                            className="text-[10px] font-mono text-emerald-400 border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 rounded hover:bg-emerald-500/10"
+                            className="text-[10px] font-mono text-emerald-400 border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 rounded hover:bg-emerald-500/10 font-bold"
                           >
                             Save
                           </button>
@@ -646,7 +653,7 @@ export default function HistoryPage() {
                       ) : (
                         <button
                           onClick={() => setIsEditingGoal(true)}
-                          className="text-[10px] font-mono text-slate-400 hover:text-white border border-charcoal-750 px-2.5 py-1 rounded transition-colors"
+                          className="btn-secondary h-9 py-1 px-3 text-[10px] font-mono rounded-lg transition-colors cursor-pointer"
                         >
                           Modify Target
                         </button>
@@ -660,61 +667,61 @@ export default function HistoryPage() {
             {/* Summary Metrics Row */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {/* Metric 1: Total Tests */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 relative overflow-hidden group">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1 font-bold">
                   Tests Completed
                 </span>
                 <div className="text-3xl font-extrabold text-white font-mono leading-none">
                   {summary.totalTests}
                 </div>
-                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
+                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase font-bold">
                   Count
                 </div>
               </div>
 
               {/* Metric 2: Avg WPM */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 relative overflow-hidden group">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1 font-bold">
                   Average Speed
                 </span>
                 <div className="text-3xl font-extrabold text-electric-400 font-mono leading-none">
                   {summary.avgWpm} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
                 </div>
-                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
+                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase font-bold">
                   Avg
                 </div>
               </div>
 
               {/* Metric 3: Avg Accuracy */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 relative overflow-hidden group">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1 font-bold">
                   Average Accuracy
                 </span>
                 <div className="text-3xl font-extrabold text-emerald-400 font-mono leading-none">
                   {summary.avgAccuracy}%
                 </div>
-                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
+                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase font-bold">
                   Acc
                 </div>
               </div>
 
               {/* Metric 4: Avg Consistency */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 relative overflow-hidden group">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1 font-bold">
                   Avg Consistency
                 </span>
                 <div className="text-3xl font-extrabold text-sky-400 font-mono leading-none">
                   {summary.avgConsistency}%
                 </div>
-                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase">
+                <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase font-bold">
                   Pace
                 </div>
               </div>
 
               {/* Metric 5: All-time Personal Best */}
-              <div className="bg-charcoal-800 border border-electric-500/40 rounded-xl p-5 relative overflow-hidden group shadow-[0_0_12px_rgba(59,130,246,0.05)] col-span-2 sm:col-span-1">
+              <div className="bg-charcoal-800 border border-electric-500/40 rounded-xl p-4 sm:p-5 relative overflow-hidden group shadow-[0_0_12px_rgba(59,130,246,0.05)] col-span-2 sm:col-span-1">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider block font-semibold">
+                  <span className="text-[10px] font-mono text-electric-400 uppercase tracking-wider block font-bold">
                     Personal Best
                   </span>
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-electric-500 text-white leading-none">
@@ -725,7 +732,7 @@ export default function HistoryPage() {
                   {pbOverall ? pbOverall.wpm : 0} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
                 </div>
                 {pbOverall && (
-                  <div className="text-[9px] font-mono text-slate-500 mt-1 uppercase">
+                  <div className="text-[9px] font-mono text-slate-500 mt-1 uppercase font-bold">
                     On {pbOverall.difficulty}
                   </div>
                 )}
@@ -733,12 +740,12 @@ export default function HistoryPage() {
             </div>
 
             {/* Skins Customization Section */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                   <span>🎨</span> Custom Operator Skins
                 </h2>
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                   Unlock theme variations via achievements
                 </span>
               </div>
@@ -752,7 +759,7 @@ export default function HistoryPage() {
                       onClick={() => skin.isUnlocked && handleSelectSkin(skin.id)}
                       className={`relative rounded-xl border p-4 font-mono text-xs flex flex-col justify-between min-h-[140px] select-none transition-all duration-300 ${
                         skin.isUnlocked
-                          ? "cursor-pointer hover:border-electric-500/50 hover:bg-charcoal-900/20"
+                          ? "cursor-pointer hover:border-electric-500/50 hover:bg-charcoal-900/20 card-hover-lift"
                           : "opacity-45 bg-charcoal-900/10 cursor-not-allowed"
                       } ${
                         isActive
@@ -771,7 +778,7 @@ export default function HistoryPage() {
                             <span className="font-extrabold text-white text-xs">{skin.name}</span>
                           </div>
                           {isActive && (
-                            <span className="text-[9px] bg-electric-500 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                            <span className="text-[9px] bg-electric-500 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider font-mono">
                               ACTIVE
                             </span>
                           )}
@@ -784,13 +791,13 @@ export default function HistoryPage() {
                       </div>
 
                       {/* Unlock status at the bottom */}
-                      <div className="pt-2 border-t border-charcoal-700/50 flex items-center justify-between text-[9px]">
+                      <div className="pt-2 border-t border-charcoal-700/50 flex items-center justify-between text-[9px] font-mono">
                         {skin.isUnlocked ? (
                           <span className="text-emerald-400 font-bold uppercase tracking-wider">
                             ✓ UNLOCKED
                           </span>
                         ) : (
-                          <div className="text-rose-400/90 font-semibold leading-tight pr-2" title={skin.unlockLabel}>
+                          <div className="text-rose-400/90 font-bold leading-tight pr-2 uppercase" title={skin.unlockLabel}>
                             🔒 LOCKED
                           </div>
                         )}
@@ -804,12 +811,12 @@ export default function HistoryPage() {
             {/* Skill Profile & Mode Breakdown Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Active Skill Profile */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>👤</span> Active Skill Profile
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                     Recent 10 completed tests
                   </span>
                 </div>
@@ -821,7 +828,7 @@ export default function HistoryPage() {
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-white font-bold uppercase">SPEED RATING</span>
                         <span className="text-electric-400 font-bold">
-                          {skillProfile.speed}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgWpm} WPM)</span>
+                          {skillProfile.speed}/100 <span className="text-[10px] text-slate-500 font-normal font-mono">({skillProfile.avgWpm} WPM)</span>
                         </span>
                       </div>
                       <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
@@ -837,7 +844,7 @@ export default function HistoryPage() {
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-white font-bold uppercase">ACCURACY RATING</span>
                         <span className="text-emerald-400 font-bold">
-                          {skillProfile.accuracy}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgAccuracy}%)</span>
+                          {skillProfile.accuracy}/100 <span className="text-[10px] text-slate-500 font-normal font-mono">({skillProfile.avgAccuracy}%)</span>
                         </span>
                       </div>
                       <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
@@ -853,7 +860,7 @@ export default function HistoryPage() {
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-white font-bold uppercase">CONSISTENCY RATING</span>
                         <span className="text-sky-400 font-bold">
-                          {skillProfile.consistency}/100 <span className="text-[10px] text-slate-500 font-normal">({skillProfile.avgConsistency}%)</span>
+                          {skillProfile.consistency}/100 <span className="text-[10px] text-slate-500 font-normal font-mono">({skillProfile.avgConsistency}%)</span>
                         </span>
                       </div>
                       <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
@@ -872,12 +879,12 @@ export default function HistoryPage() {
               </div>
 
               {/* Mode Breakdown */}
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
-                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>🎮</span> Practice Mode Breakdown
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                     Lifetime category performance
                   </span>
                 </div>
@@ -899,8 +906,8 @@ export default function HistoryPage() {
                       <div className="flex justify-between text-[9px] text-slate-400 pt-1 border-t border-charcoal-700/30">
                         <span>{mode.count} {mode.count === 1 ? "run" : "runs"}</span>
                         {mode.count > 0 && (
-                          <span className="text-[#3B82F6] font-bold">
-                            {mode.avgWpm} WPM / {mode.avgAccuracy}%
+                          <span className="text-[#3B82F6] font-bold font-mono">
+                            {mode.avgWpm}W / {mode.avgAccuracy}%
                           </span>
                         )}
                       </div>
@@ -911,12 +918,12 @@ export default function HistoryPage() {
             </div>
 
             {/* Weak-Key Heatmap Keyboard Visualization */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                   <span>⌨️</span> Weak-Key Error Map
                 </h2>
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                   Target expected keys causing mistakes
                 </span>
               </div>
@@ -927,47 +934,49 @@ export default function HistoryPage() {
                 </div>
               ) : (
                 <div className="py-4 space-y-4">
-                  <div className="flex flex-col items-center gap-2 font-mono">
-                    {qwertyRows.map((row, rowIdx) => (
-                      <div key={rowIdx} className="flex gap-1.5 justify-center w-full">
-                        {row.map((key) => {
-                          const isSpace = key === "SPACE";
-                          const count = keyErrors[key] || 0;
-                          const intensity = count / maxErrorCount;
+                  <div className="flex flex-col items-center gap-2 font-mono overflow-x-auto pb-2 scrollbar-thin">
+                    <div className="min-w-[600px] space-y-2 flex flex-col items-center">
+                      {qwertyRows.map((row, rowIdx) => (
+                        <div key={rowIdx} className="flex gap-1.5 justify-center w-full">
+                          {row.map((key) => {
+                            const isSpace = key === "SPACE";
+                            const count = keyErrors[key] || 0;
+                            const intensity = count / maxErrorCount;
 
-                          const bgStyle = count > 0
-                            ? {
-                                backgroundColor: `rgba(59, 130, 246, ${0.1 + intensity * 0.9})`,
-                                borderColor: `rgba(59, 130, 246, ${0.3 + intensity * 0.7})`,
-                                color: `#FFFFFF`,
-                                boxShadow: intensity > 0.5 ? `0 0 10px rgba(59, 130, 246, ${intensity * 0.25})` : "none",
-                              }
-                            : {
-                                backgroundColor: "rgba(15, 23, 42, 0.4)",
-                                borderColor: "rgba(51, 65, 85, 0.3)",
-                                color: "rgba(148, 163, 184, 0.5)",
-                              };
+                            const bgStyle = count > 0
+                              ? {
+                                  backgroundColor: `rgba(59, 130, 246, ${0.1 + intensity * 0.9})`,
+                                  borderColor: `rgba(59, 130, 246, ${0.3 + intensity * 0.7})`,
+                                  color: `#FFFFFF`,
+                                  boxShadow: intensity > 0.5 ? `0 0 10px rgba(59, 130, 246, ${intensity * 0.25})` : "none",
+                                }
+                              : {
+                                  backgroundColor: "rgba(15, 23, 42, 0.4)",
+                                  borderColor: "rgba(51, 65, 85, 0.3)",
+                                  color: "rgba(148, 163, 184, 0.5)",
+                                };
 
-                          return (
-                            <div
-                              key={key}
-                              style={bgStyle}
-                              className={`flex flex-col items-center justify-center rounded-lg border font-bold text-[10px] sm:text-xs transition-all duration-200 uppercase relative ${
-                                isSpace ? "w-36 sm:w-56 h-9" : "w-8 h-8 sm:w-10 sm:h-10"
-                              }`}
-                              title={`${key}: ${count} mistakes`}
-                            >
-                              <span>{isSpace ? "Spacebar" : key}</span>
-                              {count > 0 && (
-                                <span className="absolute bottom-0.5 right-1 text-[8px] font-normal opacity-70">
-                                  {count}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                            return (
+                              <div
+                                key={key}
+                                style={bgStyle}
+                                className={`flex flex-col items-center justify-center rounded-lg border font-bold text-[10px] sm:text-xs transition-all duration-200 uppercase relative ${
+                                  isSpace ? "w-36 sm:w-56 h-9" : "w-8 h-8 sm:w-10 sm:h-10"
+                                }`}
+                                title={`${key}: ${count} mistakes`}
+                              >
+                                <span>{isSpace ? "Spacebar" : key}</span>
+                                {count > 0 && (
+                                  <span className="absolute bottom-0.5 right-1 text-[8px] font-normal opacity-70">
+                                    {count}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between mt-4 text-[10px] font-mono text-slate-500 w-full max-w-sm mx-auto">
@@ -985,8 +994,8 @@ export default function HistoryPage() {
             </div>
 
             {/* Difficulty Personal Records (PBs) Segment */}
-            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
-              <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 border-b border-charcoal-700 pb-3">
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+              <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 border-b border-charcoal-700 pb-3 font-bold">
                 <span>🏆</span> difficulty personal bests
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
@@ -1039,12 +1048,12 @@ export default function HistoryPage() {
 
             {/* Performance Over Time Chart Section */}
             {chartData.length >= 2 && (
-              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>📈</span> typing speed progression (WPM)
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                     showing last {chartData.length} tests
                   </span>
                 </div>
@@ -1058,12 +1067,12 @@ export default function HistoryPage() {
             {gamification && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Left Column: Achievements (8/12 span) */}
-                <div className="lg:col-span-8 bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="lg:col-span-8 bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
                   <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                    <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                       <span>🏆</span> Unlockable Achievements
                     </h2>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                       {gamification.unlockedAchievements.length} / {ACHIEVEMENTS.length} Unlocked
                     </span>
                   </div>
@@ -1078,7 +1087,7 @@ export default function HistoryPage() {
                           key={badge.id}
                           className={`p-4 rounded-xl border flex gap-3.5 transition-all duration-300 relative group select-none ${
                             isUnlocked
-                              ? "border-[#3B82F6]/30 bg-electric-500/[0.03] text-white shadow-[0_0_12px_rgba(59,130,246,0.03)]"
+                              ? "border-[#3B82F6]/30 bg-electric-500/[0.03] text-white shadow-[0_0_12px_rgba(59,130,246,0.03)] card-hover-lift"
                               : "border-charcoal-700/50 bg-charcoal-900/10 text-slate-500"
                           }`}
                         >
@@ -1161,12 +1170,12 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Right Column: Milestone Timeline (4/12 span) */}
-                <div className="lg:col-span-4 bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4 flex flex-col justify-between">
+                <div className="lg:col-span-4 bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 flex flex-col justify-between">
                   <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
-                    <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                       <span>🗺️</span> Journey Timeline
                     </h2>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                       Key milestones
                     </span>
                   </div>
@@ -1207,10 +1216,10 @@ export default function HistoryPage() {
             {/* History Table Log */}
             <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl overflow-hidden shadow-xl">
               <div className="p-5 border-b border-charcoal-700 flex justify-between items-center bg-charcoal-900/10">
-                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                   <span>⏱️</span> chronological test log
                 </h2>
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
                   Total logged: {history.length}
                 </span>
               </div>
@@ -1261,16 +1270,16 @@ export default function HistoryPage() {
                           {/* Difficulty */}
                           <td className="py-3 px-6 text-center">
                             {item.modeType === "time" ? (
-                              <span className="inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border text-cyan-400 bg-cyan-500/5 border-cyan-500/20">
+                              <span className="inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border text-cyan-400 bg-cyan-500/5 border-cyan-500/20 font-mono">
                                 ⏱️ Time: {item.modeDuration || item.timeTaken}s
                               </span>
                             ) : item.modeType === "words" ? (
-                              <span className="inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border text-purple-400 bg-purple-500/5 border-purple-500/20">
+                              <span className="inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border text-purple-400 bg-purple-500/5 border-purple-500/20 font-mono">
                                 ✍️ Words: {item.modeWordCount || 25}
                               </span>
                             ) : (
                               <span
-                                className={`inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                                className={`inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border font-mono ${
                                   item.difficulty === "easy"
                                     ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
                                     : item.difficulty === "medium"

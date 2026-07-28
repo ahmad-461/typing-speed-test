@@ -96,24 +96,24 @@ export default function ChangelogPage() {
         <div className="flex items-center justify-between border-b border-[#3B82F6]/10 pb-4">
           <Link
             href="/"
-            className="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1 group font-bold"
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1 group font-bold font-mono uppercase tracking-wider"
           >
             <span className="text-[#3B82F6] group-hover:-translate-x-0.5 transition-transform inline-block">&lt;</span> BACK TO MISSION CONTROL
           </Link>
-          <div className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+          <div className="text-[10px] text-slate-600 uppercase tracking-widest font-bold font-mono">
             ARCHIVE: PATCH_LOGS
           </div>
         </div>
 
         {/* HEADER */}
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs text-[#3B82F6] font-bold">
+          <div className="flex items-center gap-2 text-xs text-[#3B82F6] font-bold font-mono uppercase tracking-wider">
             <span className="animate-pulse">●</span> VERSION_HISTORY_ARCHIVE
           </div>
-          <h1 className="text-3xl font-sans font-black tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-3xl sm:text-4xl font-sans font-black tracking-tight text-white flex items-center gap-2">
             PATCH_NOTES<span className="text-[#3B82F6]/70">.log</span>
           </h1>
-          <p className="text-xs text-slate-400 font-sans leading-relaxed max-w-xl">
+          <p className="text-xs text-slate-450 font-sans leading-relaxed max-w-xl">
             A chronological timeline documenting the technical engineering and aesthetic evolution of the NOKY typing ecosystem.
           </p>
         </div>
@@ -128,10 +128,10 @@ export default function ChangelogPage() {
 
               {/* Version & Date row */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                <span className="text-xs font-bold text-[#3B82F6] tracking-wider">
+                <span className="text-xs font-bold text-[#3B82F6] tracking-wider font-mono">
                   [{entry.version}]
                 </span>
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-mono">
                   {entry.date}
                 </span>
               </div>
@@ -165,7 +165,7 @@ export default function ChangelogPage() {
         <div className="pt-6 flex justify-center">
           <Link
             href="/"
-            className="group py-3 px-6 rounded-xl text-xs font-mono font-black uppercase tracking-wider transition-all duration-150 border border-[#3B82F6]/20 bg-[#0e1013] text-slate-400 hover:text-white hover:border-[#3B82F6]/50 shadow-[0_4px_12px_rgba(59,130,246,0.03)] cursor-pointer"
+            className="group py-3 px-6 rounded-xl text-xs font-mono font-black uppercase tracking-wider transition-all duration-150 border border-[#3B82F6]/20 bg-[#0e1013] text-slate-400 hover:text-white hover:border-[#3B82F6]/50 shadow-[0_4px_12px_rgba(59,130,246,0.03)] cursor-pointer active:scale-[0.97] min-h-[44px] flex items-center justify-center"
           >
             &gt; [CMD] return_to_hub.sh
           </Link>
