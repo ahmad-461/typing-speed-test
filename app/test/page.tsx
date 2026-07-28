@@ -532,10 +532,17 @@ function TestScreenContent() {
     }
   }, [isActive]);
 
+  // Dynamic Typewriter Task Loader text
+  const loadingText = useMemo(() => {
+    if (category === "weak_key_drill") return "COMPILING_WEAK_KEYS_DRILL";
+    if (category === "speed_sprint") return "INIT_SPEED_SPRINT_PROTOCOL";
+    return "GENERATING_CHALLENGE_PASSAGE";
+  }, [category]);
+
   // Styled, terminal-themed loading state
   if (loading) {
     return (
-      <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+      <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center gap-2">
             <span className="w-3 h-3 rounded-full bg-electric-500 animate-pulse"></span>
@@ -543,13 +550,15 @@ function TestScreenContent() {
               Establishing Prompts
             </span>
           </div>
-          <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl px-8 py-6 font-mono text-sm max-w-md mx-auto">
-            <div className="text-left text-slate-400 mb-2">
-              <span className="text-electric-400 font-bold">&gt;_</span> fetch_passages_manifest()
+          <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 sm:p-8 font-mono text-sm max-w-md mx-auto shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-500 to-sky-500" />
+            <div className="text-left text-slate-400 mb-2 flex items-center gap-1.5">
+              <span className="text-electric-400 font-bold">&gt;_</span>
+              <span>system_gateway.sh</span>
             </div>
-            <div className="text-left text-emerald-400 flex items-center gap-1">
-              <span>Establishing secure connection</span>
-              <span className="animate-pulse">...</span>
+            <div className="text-left text-emerald-400 font-mono flex items-center gap-1 h-8">
+              <span>&gt; {loadingText}...</span>
+              <span className="inline-block w-2 h-4 bg-emerald-400 animate-blink" />
             </div>
           </div>
         </div>
@@ -565,36 +574,36 @@ function TestScreenContent() {
   ];
 
   return (
-    <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
+    <main className="flex-grow flex flex-col items-center justify-center px-4 py-6 sm:py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
       {/* Top Meta info */}
-      <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60 font-mono">
+      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 pb-4 border-b border-charcoal-700/60 font-mono">
         <div className="flex flex-wrap items-center gap-3">
           <LinkIcon
             href="/"
-            className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
+            className="btn-secondary min-h-[44px] px-4 py-2 hover:bg-charcoal-800 hover-glow-electric text-xs text-slate-400 hover:text-white flex items-center gap-1.5 rounded-xl border border-charcoal-700 transition-all duration-200 active:scale-[0.97]"
           >
             ← Back
           </LinkIcon>
-          <div className="text-xs text-slate-400 uppercase tracking-wider flex items-center gap-2 flex-wrap">
+          <div className="text-xs text-slate-450 uppercase tracking-wider flex items-center gap-2 flex-wrap font-bold">
             <span>MODE:</span>
-            <span className="font-bold text-electric-400 uppercase">
+            <span className="font-extrabold text-electric-500 uppercase">
               {mode}
             </span>
-            <span className="text-slate-600">•</span>
+            <span className="text-slate-700">•</span>
             <span>CATEGORY:</span>
-            <span className="font-bold text-sky-400 uppercase">
+            <span className="font-extrabold text-sky-400 uppercase">
               {category.replace("_", " ")}
             </span>
           </div>
           {isGhostEnabled && ghostPB && (
-            <div className="text-[10px] bg-electric-500/10 border border-electric-500/30 text-electric-400 font-mono font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1 animate-fade-in">
+            <div className="text-[10px] bg-electric-500/10 border border-electric-500/30 text-electric-400 font-mono font-bold px-2.5 py-1 rounded-xl uppercase tracking-wider flex items-center gap-1 animate-fade-in">
               <span>👻</span> Racin&apos; Ghost: {ghostPB.wpm} WPM
             </div>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span className="text-xs text-slate-400">Live Session Ready</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-xs text-slate-450 font-bold uppercase tracking-wider font-mono">Live Session Ready</span>
         </div>
       </div>
 
@@ -603,15 +612,15 @@ function TestScreenContent() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 text-center flex flex-col justify-center items-center relative overflow-hidden group"
+            className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-4 sm:p-6 text-center flex flex-col justify-center items-center relative overflow-hidden group card-hover-lift"
           >
-            <div className="absolute top-2 right-2 text-xs opacity-20 group-hover:opacity-40 transition-opacity">
+            <div className="absolute top-3 right-3 text-xs opacity-20 group-hover:opacity-40 transition-opacity">
               {stat.icon}
             </div>
-            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <span className="text-[10px] sm:text-xs font-mono text-slate-400 uppercase tracking-wider mb-1 font-bold">
               {stat.label}
             </span>
-            <div className="text-2xl sm:text-3xl font-bold text-white font-mono leading-none">
+            <div className="text-xl sm:text-3xl font-extrabold text-white font-mono leading-none">
               {stat.value}
               {stat.unit && (
                 <span className="text-xs font-normal text-slate-500 ml-0.5">{stat.unit}</span>
@@ -623,11 +632,11 @@ function TestScreenContent() {
 
       {/* Terminal Typing Block */}
       <div className="w-full mb-8">
-        <div className="text-xs text-slate-400 font-mono mb-2 flex justify-between items-center px-1">
+        <div className="text-[10px] text-slate-450 font-mono mb-2 flex justify-between items-center px-1 uppercase tracking-wider font-bold">
           <span>{"⌨️ PROMPT TERMINAL"}</span>
           <div className="flex items-center gap-3">
             {isGhostEnabled && (
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
+              <span className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold">
                 👻 slate badge: ghost cursor position
               </span>
             )}
@@ -641,7 +650,7 @@ function TestScreenContent() {
               inputRef.current.focus();
             }
           }}
-          className={`w-full text-left bg-charcoal-800 border-2 rounded-2xl p-6 sm:p-8 font-mono text-lg sm:text-xl leading-relaxed transition-all duration-300 outline-none select-none relative overflow-hidden cursor-pointer ${
+          className={`w-full text-left bg-charcoal-800 border-2 rounded-2xl p-4 sm:p-8 font-mono text-base sm:text-xl leading-relaxed transition-all duration-300 outline-none select-none relative overflow-hidden cursor-pointer ${
             isActive
               ? "border-electric-500 shadow-lg shadow-electric-500/10 ring-2 ring-electric-500/10"
               : "border-charcoal-700 hover:border-charcoal-600 hover:bg-charcoal-800/80"
@@ -718,7 +727,7 @@ function TestScreenContent() {
 
           {!isActive && (
             <div className="absolute inset-0 flex items-center justify-center bg-charcoal-900/60 backdrop-blur-[1px] transition-all duration-200">
-              <span className="bg-charcoal-800 border border-charcoal-700 text-electric-400 font-mono text-sm px-4 py-2.5 rounded-lg shadow-xl font-bold animate-pulse">
+              <span className="bg-charcoal-800 border border-charcoal-700 text-electric-400 font-mono text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xl font-bold animate-pulse">
                 Click here to start typing
               </span>
             </div>
@@ -727,13 +736,13 @@ function TestScreenContent() {
       </div>
 
       {/* Control Actions */}
-      <div className="w-full flex flex-col sm:flex-row justify-between items-center gap-4 bg-charcoal-800/40 border border-charcoal-700/60 rounded-xl p-4 font-mono text-xs">
-        <div className="text-slate-400 text-center sm:text-left leading-normal">
-          💡 <span className="text-slate-300 font-semibold">Tip:</span> Tap the terminal box to focus, then type on your physical or virtual keyboard. Revert errors with Backspace.
+      <div className="w-full flex flex-col sm:flex-row justify-between items-center gap-4 bg-charcoal-800/40 border border-charcoal-700/60 rounded-2xl p-4 font-mono text-xs">
+        <div className="text-slate-400 text-center sm:text-left leading-normal font-sans text-xs">
+          💡 <span className="text-slate-300 font-bold font-mono uppercase tracking-wider">Tip:</span> Tap the terminal box to focus, then type on your physical or virtual keyboard. Revert errors with Backspace.
         </div>
         <button
           onClick={fetchPassage}
-          className="w-full sm:w-auto text-center px-6 py-3 bg-charcoal-700 hover:bg-charcoal-600 hover:text-white text-slate-300 font-bold rounded-lg border border-charcoal-600 transition-all duration-200 uppercase tracking-wider text-[11px] hover-glow-electric cursor-pointer focus:outline-none focus:ring-1 focus:ring-electric-500"
+          className="btn-secondary py-2.5 px-5 text-[11px] rounded-lg border border-charcoal-700 min-h-[44px] cursor-pointer w-full sm:w-auto"
         >
           Reset Test 🔄
         </button>

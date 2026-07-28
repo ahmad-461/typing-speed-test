@@ -331,31 +331,31 @@ export default function Footer() {
             </div>
 
             <div className="space-y-2.5 text-xs">
-              <div className="flex justify-between items-center border-b border-[#1e293b]/60 pb-2">
+              <div className="flex justify-between items-center border-b border-[#1e293b]/60 pb-2.5">
                 <span className="text-slate-500 font-medium">CORE VERSION</span>
                 <span
                   onClick={handleVersionClick}
-                  className="text-white font-extrabold cursor-pointer hover:text-[#3B82F6] transition-colors"
+                  className="text-white font-extrabold cursor-pointer hover:text-[#3B82F6] transition-colors min-h-[30px] flex items-center"
                 >
                   v1.6
                 </span>
               </div>
 
-              <div className="flex justify-between items-center border-b border-[#1e293b]/60 pb-2">
+              <div className="flex justify-between items-center border-b border-[#1e293b]/60 pb-2.5">
                 <span className="text-slate-500 font-medium">SESSION UPTIME</span>
                 <span className="text-[#3B82F6] font-bold font-mono">{formatUptime(uptime)}</span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">SECURITY</span>
-                <span className="text-emerald-400 font-black text-[9px] tracking-wider px-2 py-0.5 rounded bg-emerald-500/[0.04] border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.05)]">
+                <span className="text-emerald-400 font-black text-[9px] tracking-wider px-2 py-1 rounded bg-emerald-500/[0.04] border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.05)]">
                   [SECURE_LINK: ACTIVE]
                 </span>
               </div>
             </div>
           </div>
 
-          {/* SECTION 2: QUICK COMMANDS */}
+          {/* SECTION 2: QUICK COMMANDS (Ensured touch targets >= 44px on mobile via vertical padding) */}
           <div className="space-y-4">
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase tracking-widest font-black">
               <span className="text-[#3B82F6] font-extrabold">&gt;</span> QUICK COMMANDS
@@ -365,7 +365,7 @@ export default function Footer() {
               <Link
                 href="/"
                 onClick={handleCommandHomepageScroll}
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; start_test.sh</span>
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[EXEC]</span>
@@ -373,7 +373,7 @@ export default function Footer() {
 
               <Link
                 href="/leaderboard"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; standings.cfg</span>
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LOAD]</span>
@@ -381,7 +381,7 @@ export default function Footer() {
 
               <Link
                 href="/history"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; player_logs.log</span>
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[OPEN]</span>
@@ -390,7 +390,7 @@ export default function Footer() {
               <Link
                 href="/"
                 onClick={handleCommandHomepageScroll}
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; sectors.cfg</span>
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[EXEC]</span>
@@ -398,7 +398,7 @@ export default function Footer() {
 
               <Link
                 href="/data-protocol"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] data_protocol.log</span>
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[OPEN]</span>
@@ -406,7 +406,7 @@ export default function Footer() {
 
               <Link
                 href="/rules-of-engagement"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] rules.txt</span>
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[READ]</span>
@@ -414,7 +414,7 @@ export default function Footer() {
 
               <Link
                 href="/changelog"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] changelog.log</span>
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LOG]</span>
@@ -424,7 +424,7 @@ export default function Footer() {
                 href="https://github.com/ahmad-461/typing-speed-test"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white transition-colors py-2"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white transition-colors py-3 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; github.git</span>
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LINK]</span>

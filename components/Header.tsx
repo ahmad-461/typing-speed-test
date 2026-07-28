@@ -132,7 +132,7 @@ export default function Header() {
           {/* Brand/Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 font-mono text-sm sm:text-base font-bold tracking-wide text-[#F1F5F9] hover:opacity-90 transition-opacity select-none"
+            className="flex items-center gap-2 font-mono text-sm sm:text-base font-bold tracking-wide text-[#F1F5F9] hover:opacity-90 transition-opacity select-none min-h-[44px] py-1"
           >
             <Image
               src="/logo.svg"
@@ -154,13 +154,11 @@ export default function Header() {
                   <Link
                     key={item.label}
                     href={item.href}
-                    className={`group relative flex items-center py-1 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-200 ${
-                      isActive ? "text-electric-500" : "text-slate-400 hover:text-electric-500"
-                    }`}
+                    className={`group relative flex items-center py-2.5 px-1 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-200 min-h-[44px]`}
                   >
                     {/* Subtle glowing dot indicator to the left of active/hovered link on desktop */}
                     <span
-                      className={`hidden sm:inline-block w-1 h-1 rounded-full bg-electric-500 shadow-[0_0_8px_var(--color-accent)] transition-all duration-200 mr-1.5 ${
+                      className={`hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-electric-500 shadow-[0_0_8px_var(--color-accent)] transition-all duration-200 mr-1.5 ${
                         isActive
                           ? "opacity-100 scale-100"
                           : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
@@ -172,7 +170,7 @@ export default function Header() {
 
                     {/* Underline for active link only (animates in from center) */}
                     <span
-                      className={`absolute bottom-[-4px] left-0 right-0 h-[1.5px] bg-electric-500 transition-transform duration-300 origin-center ${
+                      className={`absolute bottom-[4px] left-0 right-0 h-[1.5px] bg-electric-500 transition-transform duration-300 origin-center ${
                         isActive ? "scale-x-100" : "scale-x-0"
                       }`}
                     />
@@ -185,58 +183,59 @@ export default function Header() {
 
         {/* Right Side: Cohesive Player Status Pill & Callsign display */}
         <div className="flex items-center gap-3 justify-end select-none">
-          {/* Sound Toggle Icon Button */}
+          {/* Sound Toggle Icon Button (min 44x44px for perfect mobile usability) */}
           <button
             onClick={toggleSound}
-            className="flex items-center justify-center border border-charcoal-700 bg-charcoal-800 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-lg p-2 transition-all cursor-pointer h-7 sm:h-8"
+            className="flex items-center justify-center border border-charcoal-700 bg-charcoal-800 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-xl transition-all cursor-pointer h-11 w-11 active:scale-[0.95]"
             title={soundEnabled ? "Mute Keyboard Sounds" : "Unmute Keyboard Sounds"}
           >
             {soundEnabled ? (
-              <svg className="w-3.5 h-3.5 text-electric-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+              <svg className="w-4 h-4 text-electric-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
               </svg>
             ) : (
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6L4.75 9H3a1 1 0 00-1 1v4a1 1 0 001 1h1.75l3.5 3V6z" />
               </svg>
             )}
           </button>
 
           {!isTestPage && playerName && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 font-mono text-[11px] text-slate-300">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-charcoal-700 bg-charcoal-800 font-mono text-[11px] text-slate-300">
               <span className="text-slate-500 font-bold">&gt;</span>
               <span className="font-extrabold text-white truncate max-w-[100px] normal-case" title={playerName}>
                 {playerName}
               </span>
               <button
                 onClick={triggerEditModal}
-                className="text-slate-500 hover:text-white transition-colors cursor-pointer ml-1 p-0.5"
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer ml-1 h-9 w-9 flex items-center justify-center active:scale-[0.9]"
                 title="Edit Callsign"
               >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
               </button>
               <button
                 onClick={triggerExitModal}
-                className="flex items-center justify-center border border-electric-500/30 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded px-1.5 py-0.5 transition-all cursor-pointer ml-1"
+                className="flex items-center justify-center border border-electric-500/30 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-lg h-9 px-2.5 transition-all cursor-pointer ml-1 active:scale-[0.9]"
                 title="Exit Session"
               >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
+                <span className="text-[10px] font-bold">EXIT</span>
               </button>
             </div>
           )}
 
           {!isTestPage && gamification && (
             <div className="flex flex-col items-end">
-              <div className="inline-flex items-center h-7 sm:h-8 rounded-full border border-electric-500/30 bg-electric-500/[0.06] text-[9px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
+              <div className="inline-flex items-center h-11 rounded-xl border border-electric-500/30 bg-electric-500/[0.06] text-[9px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
                 {/* Level portion */}
-                <span className="px-2 sm:px-3 text-electric-500">
+                <span className="px-2.5 sm:px-3 text-electric-500">
                   Lvl {gamification.level}
                 </span>
 
@@ -244,7 +243,7 @@ export default function Header() {
                 <span className="h-full w-[1px] bg-electric-500/30" />
 
                 {/* Streak portion */}
-                <span className="px-2 sm:px-3 text-amber-500 flex items-center gap-1">
+                <span className="px-2.5 sm:px-3 text-amber-500 flex items-center gap-1">
                   <span>🔥</span>
                   <span>{gamification.streak}</span>
                   <span className="hidden sm:inline">Streak</span>
