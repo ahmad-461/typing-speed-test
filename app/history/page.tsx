@@ -1134,19 +1134,29 @@ export default function HistoryPage() {
 
                           {/* Difficulty */}
                           <td className="py-3 px-6 text-center">
-                            <span
-                              className={`inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
-                                item.difficulty === "easy"
-                                  ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
-                                  : item.difficulty === "medium"
-                                  ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
-                                  : item.difficulty === "hard"
-                                  ? "text-rose-400 bg-rose-500/5 border-rose-500/20"
-                                  : "text-sky-400 bg-sky-500/5 border-sky-500/20"
-                              }`}
-                            >
-                              {item.difficulty}
-                            </span>
+                            {item.modeType === "time" ? (
+                              <span className="inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border text-cyan-400 bg-cyan-500/5 border-cyan-500/20">
+                                ⏱️ Time: {item.modeDuration || item.timeTaken}s
+                              </span>
+                            ) : item.modeType === "words" ? (
+                              <span className="inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border text-purple-400 bg-purple-500/5 border-purple-500/20">
+                                ✍️ Words: {item.modeWordCount || 25}
+                              </span>
+                            ) : (
+                              <span
+                                className={`inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                                  item.difficulty === "easy"
+                                    ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/20"
+                                    : item.difficulty === "medium"
+                                    ? "text-electric-400 bg-electric-500/5 border-electric-500/20"
+                                    : item.difficulty === "hard"
+                                    ? "text-rose-400 bg-rose-500/5 border-rose-500/20"
+                                    : "text-sky-400 bg-sky-500/5 border-sky-500/20"
+                                }`}
+                              >
+                                {item.difficulty}
+                              </span>
+                            )}
                           </td>
 
                           {/* Duration */}

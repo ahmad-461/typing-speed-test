@@ -20,6 +20,13 @@ export default function Home() {
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [ghostEnabled, setGhostEnabled] = useState(false);
 
+  // New Time, Word Count and Toggle States
+  const [testType, setTestType] = useState<"time" | "words" | "passage" | null>("passage");
+  const [testDuration, setTestDuration] = useState<number>(60);
+  const [testWordCount, setTestWordCount] = useState<number>(25);
+  const [punctuationEnabled, setPunctuationEnabled] = useState(true);
+  const [numbersEnabled, setNumbersEnabled] = useState(true);
+
   // Identity Gate (First-Visit Flow)
   const [playerName, setPlayerName] = useState<string>("");
   const [hasNameLoaded, setHasNameLoaded] = useState(false);
@@ -156,7 +163,27 @@ export default function Home() {
   const handleStartTest = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!selectedCategory) return;
-    router.push(`/test?difficulty=${difficulty}&category=${selectedCategory}${ghostEnabled ? "&ghost=true" : ""}`);
+
+    let url = `/test?category=${selectedCategory}`;
+    url += `&punctuation=${punctuationEnabled ? "on" : "off"}`;
+    url += `&numbers=${numbersEnabled ? "on" : "off"}`;
+
+    if (selectedCategory === "speed_sprint" || selectedCategory === "weak_key_drill") {
+      url += `&difficulty=${difficulty}`;
+    } else {
+      url += `&mode=${testType}`;
+      if (testType === "time") {
+        url += `&duration=${testDuration}`;
+      } else if (testType === "words") {
+        url += `&word_count=${testWordCount}`;
+      } else {
+        url += `&difficulty=${difficulty}`;
+        if (ghostEnabled) {
+          url += "&ghost=true";
+        }
+      }
+    }
+    router.push(url);
   };
 
   // Handle category selection and drill locked gates
@@ -632,42 +659,246 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            {/* Difficulty selector column */}
-            {selectedCategory !== "speed_sprint" && selectedCategory !== "weak_key_drill" ? (
-              <div className="space-y-3">
-                <label className="block font-mono text-xs text-slate-400 uppercase tracking-wider">
-                  &gt;_ select difficulty tier
-                </label>
-                <div className="flex flex-col gap-2.5">
-                  {(["easy", "medium", "hard"] as const).map((tier) => {
-                    const isTierSelected = difficulty === tier;
+          {/* Main Parameter & Mode Select controls */}
+          {selectedCategory !== "speed_sprint" && selectedCategory !== "weak_key_drill" ? (
+            <div className="space-y-6">
+              {/* Mode Type Selection (Segmented Control Tabs) */}
+              <div className="space-y-2">
+                <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                  &gt; MODE_
+                </span>
+
+                {/* Responsive Single column vertical stack on mobile, horizontal segment row on desktop */}
+                <div className="flex flex-col sm:flex-row bg-[#121316] border border-charcoal-750 p-1 rounded-xl">
+                  {([
+                    { id: "time", label: "TIME MODE", desc: "fixed duration stream" },
+                    { id: "words", label: "WORD COUNT MODE", desc: "fixed target speed stopwatch" },
+                    { id: "passage", label: "PASSAGE MODE", desc: "classic difficulty tier" }
+                  ] as const).map((modeOption) => {
+                    const isModeActive = testType === modeOption.id;
                     return (
                       <button
-                        key={tier}
-                        onClick={() => setDifficulty(tier)}
-                        className={`w-full flex justify-between items-center px-4 py-3 border rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                          isTierSelected
-                            ? tier === "easy"
-                              ? "border-emerald-500 bg-emerald-500/5 text-emerald-400"
-                              : tier === "medium"
-                              ? "border-electric-500 bg-electric-500/5 text-electric-400"
-                              : "border-rose-500 bg-rose-500/5 text-rose-400"
-                            : "border-charcoal-750 bg-charcoal-900/20 text-slate-400 hover:border-charcoal-600 hover:text-white"
+                        key={modeOption.id}
+                        onClick={() => {
+                          setTestType(modeOption.id);
+                          setShowLockedDrillMessage(false);
+                        }}
+                        className={`flex-1 flex flex-col justify-center items-center py-2.5 px-4 rounded-lg font-mono transition-all text-center cursor-pointer focus:outline-none ${
+                          isModeActive
+                            ? "bg-electric-500/10 border border-electric-500/30 text-electric-400 font-extrabold shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                            : "text-slate-500 hover:text-slate-300 hover:bg-charcoal-900/40 border border-transparent"
                         }`}
                       >
-                        <span>{tier} Tier</span>
-                        <span className="text-[10px] font-normal lowercase italic text-slate-500">
-                          {tier === "easy" ? "~30 words" : tier === "medium" ? "~60 words" : "~100 words"}
-                        </span>
+                        <span className="text-xs tracking-wider uppercase font-extrabold">{modeOption.label}</span>
+                        <span className="text-[9px] opacity-60 font-normal lowercase">{modeOption.desc}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
-            ) : (
-              <div className="space-y-2 bg-[#121316] border border-charcoal-750 rounded-xl p-5">
-                <span className="font-mono text-[10px] text-electric-400 font-extrabold uppercase tracking-widest block">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                {/* Left Side: Specific parameters based on selected mode */}
+                <div className="space-y-4">
+                  {testType === "time" && (
+                    <div className="space-y-2 animate-fade-in">
+                      <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                        &gt; DURATION_
+                      </span>
+                      <div className="grid grid-cols-4 gap-2">
+                        {([15, 30, 60, 120] as const).map((secs) => {
+                          const isDurSelected = testDuration === secs;
+                          return (
+                            <button
+                              key={secs}
+                              onClick={() => setTestDuration(secs)}
+                              className={`py-3 px-1 border rounded-xl font-mono text-xs font-bold uppercase transition-all cursor-pointer text-center ${
+                                isDurSelected
+                                  ? "border-electric-500 bg-electric-500/5 text-electric-450"
+                                  : "border-charcoal-750 bg-charcoal-900/20 text-slate-450 hover:border-charcoal-600 hover:text-white"
+                              }`}
+                            >
+                              {secs}s
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <span className="block font-sans text-[10px] text-slate-500 leading-normal">
+                        Test completes immediately upon reaching 0. Continually appends category-themed phrases.
+                      </span>
+                    </div>
+                  )}
+
+                  {testType === "words" && (
+                    <div className="space-y-2 animate-fade-in">
+                      <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                        &gt; LENGTH_
+                      </span>
+                      <div className="grid grid-cols-4 gap-2">
+                        {([10, 25, 50, 100] as const).map((cnt) => {
+                          const isWordSelected = testWordCount === cnt;
+                          return (
+                            <button
+                              key={cnt}
+                              onClick={() => setTestWordCount(cnt)}
+                              className={`py-3 px-1 border rounded-xl font-mono text-xs font-bold uppercase transition-all cursor-pointer text-center ${
+                                isWordSelected
+                                  ? "border-electric-500 bg-electric-500/5 text-electric-450"
+                                  : "border-charcoal-750 bg-charcoal-900/20 text-slate-450 hover:border-charcoal-600 hover:text-white"
+                              }`}
+                            >
+                              {cnt} words
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <span className="block font-sans text-[10px] text-slate-500 leading-normal">
+                        Timer counts up. Test terminates dynamically once exactly this word target is completed correctly.
+                      </span>
+                    </div>
+                  )}
+
+                  {testType === "passage" && (
+                    <div className="space-y-2 animate-fade-in">
+                      <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                        &gt; DIFFICULTY_
+                      </span>
+                      <div className="flex flex-col gap-2">
+                        {(["easy", "medium", "hard"] as const).map((tier) => {
+                          const isTierSelected = difficulty === tier;
+                          return (
+                            <button
+                              key={tier}
+                              onClick={() => setDifficulty(tier)}
+                              className={`w-full flex justify-between items-center px-4 py-3 border rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                isTierSelected
+                                  ? tier === "easy"
+                                    ? "border-emerald-500 bg-emerald-500/5 text-emerald-400"
+                                    : tier === "medium"
+                                    ? "border-electric-500 bg-electric-500/5 text-electric-400"
+                                    : "border-rose-500 bg-rose-500/5 text-rose-400"
+                                  : "border-charcoal-750 bg-charcoal-900/20 text-slate-400 hover:border-charcoal-600 hover:text-white"
+                              }`}
+                            >
+                              <span>{tier} Tier</span>
+                              <span className="text-[10px] font-normal lowercase italic text-slate-500 font-sans">
+                                {tier === "easy" ? "~30 words" : tier === "medium" ? "~60 words" : "~100 words"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Side: Modular Settings, Punctuation/Numbers toggles, Ghost Mode if applicable */}
+                <div className="space-y-4">
+                  <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                    &gt; PARAMETERS_
+                  </span>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {/* Punctuation Toggle Switch */}
+                    <div className="bg-[#121316] border border-charcoal-750 rounded-xl p-3.5 flex items-center justify-between transition-all">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
+                          ✍️ Punctuation
+                        </span>
+                        <p className="text-[10px] text-slate-450 font-sans leading-none">
+                          Natural density (commas, periods, etc)
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPunctuationEnabled(!punctuationEnabled)}
+                        className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          punctuationEnabled ? "bg-electric-500" : "bg-charcoal-700"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            punctuationEnabled ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Numbers Toggle Switch */}
+                    <div className="bg-[#121316] border border-charcoal-750 rounded-xl p-3.5 flex items-center justify-between transition-all">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
+                          🔢 Numbers
+                        </span>
+                        <p className="text-[10px] text-slate-450 font-sans leading-none">
+                          Numeric dates, statistics, quantities
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setNumbersEnabled(!numbersEnabled)}
+                        className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          numbersEnabled ? "bg-electric-500" : "bg-charcoal-700"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            numbersEnabled ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Ghost Race (conditionally rendered only for Passage Mode) */}
+                    {testType === "passage" ? (
+                      hasPBOnSelectedDifficulty ? (
+                        <div className="bg-[#121316] border border-charcoal-750 rounded-xl p-3.5 flex items-center justify-between transition-all animate-fade-in">
+                          <div className="space-y-0.5">
+                            <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
+                              👻 Ghost Race Mode
+                            </span>
+                            <p className="text-[10px] text-slate-450 font-sans leading-none">
+                              Race your local best run on {difficulty}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setGhostEnabled(!ghostEnabled)}
+                            className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                              ghostEnabled ? "bg-electric-500" : "bg-charcoal-700"
+                            }`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                ghostEnabled ? "translate-x-5" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="bg-charcoal-900/20 border border-charcoal-750 rounded-xl p-3.5 text-left select-none text-[10px] text-slate-500 font-mono animate-fade-in leading-normal">
+                          <span>👻 GHOST RACE BLOCKED</span>
+                          <p className="font-sans text-[9px] text-slate-500 mt-0.5">
+                            Requires a saved Personal Best on {difficulty} difficulty parameter first.
+                          </p>
+                        </div>
+                      )
+                    ) : (
+                      <div className="bg-charcoal-900/20 border border-charcoal-750 rounded-xl p-3.5 text-left select-none text-[10px] text-slate-500 font-mono animate-fade-in leading-normal">
+                        <span>👻 GHOST RACE UNAVAILABLE</span>
+                        <p className="font-sans text-[9px] text-slate-500 mt-0.5">
+                          Ghost racing is exclusive to classic Passage difficulty tier runs.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              <div className="space-y-2 bg-[#121316] border border-charcoal-750 rounded-xl p-5 font-mono">
+                <span className="text-[10px] text-electric-400 font-extrabold uppercase tracking-widest block">
                   SYSTEM DIAGNOSTIC INFO
                 </span>
                 <p className="text-xs text-slate-400 leading-relaxed font-sans">
@@ -676,57 +907,66 @@ export default function Home() {
                     : "Weak-Key Drill generates customized, target-letter dense passages based on your aggregated historical keyboard errors. Difficulty levels are automated."}
                 </p>
               </div>
-            )}
 
-            {/* Ghost Mode settings segment */}
-            <div className="space-y-4">
-              <label className="block font-mono text-xs text-slate-400 uppercase tracking-wider">
-                &gt;_ modular settings
-              </label>
-
-              {hasPBOnSelectedDifficulty ? (
-                <div className="bg-[#121316] border border-charcoal-750 rounded-xl p-4 flex items-center justify-between transition-all">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+              {/* Param Toggles still available for Sprint / Drill modes */}
+              <div className="space-y-3">
+                <span className="block font-mono text-[10px] text-slate-450 uppercase tracking-widest font-bold">
+                  &gt; PARAMETERS_
+                </span>
+                <div className="grid grid-cols-1 gap-3">
+                  {/* Punctuation Toggle Switch */}
+                  <div className="bg-[#121316] border border-charcoal-750 rounded-xl p-3.5 flex items-center justify-between transition-all">
+                    <div className="space-y-0.5">
                       <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
-                        <span>👻</span> Ghost Race Mode
+                        ✍️ Punctuation
                       </span>
-                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase ${
-                        ghostEnabled
-                          ? "bg-electric-500/20 text-electric-400 border border-electric-500/30 animate-pulse"
-                          : "bg-charcoal-700 text-slate-400 border border-charcoal-600"
-                      }`}>
-                        {ghostEnabled ? "Active" : "Disabled"}
-                      </span>
+                      <p className="text-[10px] text-slate-450 font-sans leading-none">
+                        Natural density (commas, periods, etc)
+                      </p>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-normal font-sans">
-                      Race against your local best run on the {difficulty} tier.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setGhostEnabled(!ghostEnabled)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-electric-500 ${
-                      ghostEnabled ? "bg-electric-500" : "bg-charcoal-700"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        ghostEnabled ? "translate-x-5" : "translate-x-0"
+                    <button
+                      type="button"
+                      onClick={() => setPunctuationEnabled(!punctuationEnabled)}
+                      className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        punctuationEnabled ? "bg-electric-500" : "bg-charcoal-700"
                       }`}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          punctuationEnabled ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Numbers Toggle Switch */}
+                  <div className="bg-[#121316] border border-charcoal-750 rounded-xl p-3.5 flex items-center justify-between transition-all">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
+                        🔢 Numbers
+                      </span>
+                      <p className="text-[10px] text-slate-450 font-sans leading-none">
+                        Numeric dates, statistics, quantities
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNumbersEnabled(!numbersEnabled)}
+                      className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        numbersEnabled ? "bg-electric-500" : "bg-charcoal-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          numbersEnabled ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <div className="bg-charcoal-900/20 border border-charcoal-750 rounded-xl p-4 text-left select-none text-[11px] text-slate-500 font-mono">
-                  <span>👻 GHOST RACE BLOCKED</span>
-                  <p className="font-sans text-[10px] text-slate-500 mt-1 leading-normal">
-                    Requires a stored Personal Best run on the currently active parameter settings to enable race tracking.
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Start CTA */}
           <div className="pt-4 border-t border-[#1E293B] flex flex-col sm:flex-row items-center justify-between gap-4">

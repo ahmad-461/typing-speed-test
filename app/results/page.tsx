@@ -24,12 +24,17 @@ function ResultsScreenContent() {
   // Extract results stats from query parameters or provide polished mock fallback values
   const difficulty = searchParams.get("difficulty") || "medium";
   const category = searchParams.get("category") || "code_arena";
-  const categoryParsed = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer"].includes(category) ? category : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer";
+  // Allow speed_sprint and weak_key_drill categories as well as standard ones
+  const categoryParsed = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "speed_sprint", "weak_key_drill"].includes(category) ? category : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "speed_sprint" | "weak_key_drill";
 
   const wpm = searchParams.get("wpm") || "72";
   const accuracy = searchParams.get("accuracy") || "98";
   const timeTaken = searchParams.get("time") || "60";
   const consistency = searchParams.get("consistency") || "100";
+
+  const modeType = (searchParams.get("modeType") || "passage") as "time" | "words" | "passage";
+  const modeDuration = searchParams.get("modeDuration") ? parseInt(searchParams.get("modeDuration")!, 10) : undefined;
+  const modeWordCount = searchParams.get("modeWordCount") ? parseInt(searchParams.get("modeWordCount")!, 10) : undefined;
 
   // Optional ghost mode comparison message passed from /test
   const ghostComparison = searchParams.get("ghostMsg") || null;
@@ -170,6 +175,9 @@ function ResultsScreenContent() {
           consistency: parseInt(consistency, 10),
           timeTaken: parseInt(timeTaken, 10),
           passageText,
+          modeType,
+          modeDuration,
+          modeWordCount,
         });
 
         const afterState = getGamificationState();
@@ -245,12 +253,16 @@ function ResultsScreenContent() {
       statsSetPlayerName(sanitizedName);
     }
 
+    // For custom category options not native to remote SQL tables,
+    // score submission mapping safely falls back to 'custom' inside the Supabase payload to comply with constraints.
+    const supabaseCategory = "custom";
+
     const insertPayload = {
       name: sanitizedName,
       wpm: parseInt(wpm, 10),
       accuracy: parseFloat(accuracy),
       difficulty: difficulty,
-      category: categoryParsed,
+      category: supabaseCategory,
     };
 
     // Helper to store locally as a robust mock fallback
@@ -282,7 +294,7 @@ function ResultsScreenContent() {
 
         if (error) {
           console.warn("Primary category insert failed, trying backup insertion:", error);
-          // Fallback without category column in case of legacy db tables
+          // Fallback without category column in case of legacy db tables or constraint mismatch
           const fallbackPayload = {
             name: sanitizedName,
             wpm: parseInt(wpm, 10),

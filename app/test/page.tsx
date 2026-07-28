@@ -35,6 +35,45 @@ function sanitizePassageText(text: string): string {
   return sanitized;
 }
 
+// Programmatic filter for Punctuation & Numbers
+function applyFiltering(text: string, punctuationOn: boolean, numbersOn: boolean): string {
+  let cleaned = text;
+
+  if (!numbersOn) {
+    const words = cleaned.split(/\s+/);
+    // remove the whole word token if it contains a digit (e.g. "In 2019," -> removed)
+    const filteredWords = words.filter(word => !/\d/.test(word));
+    cleaned = filteredWords.join(" ");
+  }
+
+  if (!punctuationOn) {
+    // strip all standard punctuation/symbols, keep only letters, numbers, and single spaces
+    cleaned = cleaned.replace(/[^a-zA-Z0-9\s]/g, "");
+    cleaned = cleaned.replace(/\s+/g, " ").trim();
+  }
+
+  return cleaned;
+}
+
+// Helper to get a random static passage for a category with applied filters
+function getRandomCategoryPassage(category: string, punctuationOn: boolean, numbersOn: boolean): string {
+  const allPassages: string[] = [];
+  for (const diff of ["easy", "medium", "hard"] as const) {
+    const list = passageBank[diff].filter((p) => p.category === category);
+    list.forEach(p => allPassages.push(p.text));
+  }
+
+  if (allPassages.length === 0) {
+    for (const diff of ["easy", "medium", "hard"] as const) {
+      passageBank[diff].forEach(p => allPassages.push(p.text));
+    }
+  }
+
+  const rawText = allPassages[Math.floor(Math.random() * allPassages.length)] || "Practice typing daily to enhance your speed and accuracy.";
+  const sanitized = sanitizePassageText(rawText);
+  return applyFiltering(sanitized, punctuationOn, numbersOn);
+}
+
 function getTrackedKey(char: string): string | null {
   if (char === " ") return "SPACE";
   if (/^[a-zA-Z]$/.test(char)) return char.toUpperCase();
@@ -65,6 +104,10 @@ function TestScreenContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // Mode Type Parsing: "time" | "words" | "passage" (default "passage")
+  const rawMode = searchParams.get("mode") || "passage";
+  const mode = (["time", "words", "passage"].includes(rawMode) ? rawMode : "passage") as "time" | "words" | "passage";
+
   const rawDifficulty = searchParams.get("difficulty") || "medium";
   const difficulty = (["easy", "medium", "hard"].includes(rawDifficulty) ? rawDifficulty : "medium") as "easy" | "medium" | "hard";
 
@@ -72,8 +115,16 @@ function TestScreenContent() {
   const category = (["code_arena", "knowledge_quest", "ai_lab", "world_explorer", "weak_key_drill", "speed_sprint"].includes(rawCategory) ? rawCategory : "code_arena") as "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "weak_key_drill" | "speed_sprint";
 
   const isSpeedSprint = category === "speed_sprint";
-  // Speed Sprint has no Ghost Mode or difficulty tiers
-  const isGhostEnabled = !isSpeedSprint && searchParams.get("ghost") === "true";
+  // Ghost Mode is exclusive to Passage mode easy, medium, and hard
+  const isGhostEnabled = !isSpeedSprint && mode === "passage" && searchParams.get("ghost") === "true";
+
+  // Time & Word Count mode params
+  const duration = parseInt(searchParams.get("duration") || "60", 10);
+  const wordCount = parseInt(searchParams.get("word_count") || "25", 10);
+
+  // Punctuation & Numbers Toggles (default true/on)
+  const punctuationOn = searchParams.get("punctuation") !== "off";
+  const numbersOn = searchParams.get("numbers") !== "off";
 
   const [selectedPassage, setSelectedPassage] = useState<string>("");
   const [isActive, setIsActive] = useState(false);
@@ -142,14 +193,31 @@ function TestScreenContent() {
     }
 
     try {
-      const response = await fetch(`/api/generate-passage?difficulty=${difficulty}&category=${category}${weakestKeysQuery}`);
+      // Determine what to pass to Gemini API
+      let apiWordCount = "";
+      if (mode === "words") {
+        // Pass the explicit word target to Gemini
+        apiWordCount = `&word_count=${wordCount}`;
+      } else if (mode === "time") {
+        // Fetch a long passage segment (e.g. ~100 words baseline) to start the flowing stream
+        apiWordCount = `&difficulty=hard`;
+      }
+
+      const response = await fetch(`/api/generate-passage?difficulty=${difficulty}&category=${category}${weakestKeysQuery}${apiWordCount}`);
       if (response.ok) {
         const data = await response.json();
         const rawPassages = data?.passages;
         if (Array.isArray(rawPassages) && rawPassages.length >= 1) {
           const sanitized = sanitizePassageText(rawPassages[0]);
           if (sanitized) {
-            setSelectedPassage(sanitized);
+            // Apply filtering first
+            let filtered = applyFiltering(sanitized, punctuationOn, numbersOn);
+            // If words mode, slice to exact word count target
+            if (mode === "words") {
+              const words = filtered.split(/\s+/).filter(Boolean);
+              filtered = words.slice(0, wordCount).join(" ");
+            }
+            setSelectedPassage(filtered);
             setLoading(false);
             return;
           }
@@ -158,16 +226,22 @@ function TestScreenContent() {
       throw new Error("Failed to load valid passage from API");
     } catch (err) {
       console.warn("Client fetch error, using local fallback:", err);
-      // Fallback: for speed sprint find speed sprint fallback passage
+      // Fallback: search fallback list
       const list = passageBank[difficulty].filter((p) => p.category === category);
       const fallbackList = list.length > 0 ? list : passageBank[difficulty];
       const randomItem = fallbackList[Math.floor(Math.random() * fallbackList.length)];
-      const sanitized = sanitizePassageText(randomItem?.text || "Practice typing to improve your speed.");
-      setSelectedPassage(sanitized);
+      const sanitized = sanitizePassageText(randomItem?.text || "Practice typing daily to improve your speed.");
+
+      let filtered = applyFiltering(sanitized, punctuationOn, numbersOn);
+      if (mode === "words") {
+        const words = filtered.split(/\s+/).filter(Boolean);
+        filtered = words.slice(0, wordCount).join(" ");
+      }
+      setSelectedPassage(filtered);
     } finally {
       setLoading(false);
     }
-  }, [difficulty, category]);
+  }, [difficulty, category, mode, wordCount, punctuationOn, numbersOn]);
 
   // Initial load
   useEffect(() => {
@@ -218,13 +292,14 @@ function TestScreenContent() {
       }
     }
 
-    const testDifficulty = isSpeedSprint ? "custom" : difficulty;
+    // Ahmad instruction: Store difficulty as 'custom' for Time and Word Count modes
+    const testDifficulty = (mode === "time" || mode === "words" || isSpeedSprint) ? "custom" : difficulty;
 
-    // Immediate redirection on correct completion
+    // Direct result navigation with new metadata parameters
     router.push(
-      `/results?difficulty=${testDifficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${duration}&consistency=${consistencyScore}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}`
+      `/results?difficulty=${testDifficulty}&category=${category}&wpm=${finalWPM}&accuracy=${finalAccuracy}&time=${duration}&consistency=${consistencyScore}${ghostMsg ? `&ghostMsg=${encodeURIComponent(ghostMsg)}` : ""}&modeType=${mode}&modeDuration=${duration}&modeWordCount=${wordCount}`
     );
-  }, [difficulty, category, isGhostEnabled, ghostPB, keyErrors, keyTypedCounts, totalTypedCount, isSpeedSprint, router]);
+  }, [difficulty, category, isGhostEnabled, ghostPB, keyErrors, keyTypedCounts, totalTypedCount, isSpeedSprint, mode, wordCount, router]);
 
   // Handle live stopwatch update & WPM sampling
   useEffect(() => {
@@ -240,6 +315,13 @@ function TestScreenContent() {
       if (isSpeedSprint && secs >= 20) {
         clearInterval(interval);
         finalizeTestAndRedirect(20);
+        return;
+      }
+
+      // Time Mode Countdown check: terminates immediately at selected duration
+      if (mode === "time" && secs >= duration) {
+        clearInterval(interval);
+        finalizeTestAndRedirect(duration);
         return;
       }
 
@@ -261,7 +343,7 @@ function TestScreenContent() {
     }, 200);
 
     return () => clearInterval(interval);
-  }, [startTime, isSpeedSprint, finalizeTestAndRedirect]);
+  }, [startTime, isSpeedSprint, mode, duration, finalizeTestAndRedirect]);
 
   // Handle continuous ghost cursor movement independent of user input
   useEffect(() => {
@@ -296,7 +378,7 @@ function TestScreenContent() {
 
     const newValue = e.target.value;
 
-    // Do not allow typing past the end of the passage
+    // Do not allow typing past the end of the passage unless streaming is extending it
     if (newValue.length > selectedPassage.length) {
       return;
     }
@@ -335,10 +417,18 @@ function TestScreenContent() {
         setKeyTypedCounts(updatedTypedCounts);
       }
 
+      // Time Mode Continuous Text Streaming mechanism
+      if (mode === "time") {
+        if (selectedPassage.length - newValue.length < 100) {
+          const nextSegment = getRandomCategoryPassage(category, punctuationOn, numbersOn);
+          setSelectedPassage((prev) => prev + " " + nextSegment);
+        }
+      }
+
       setTypedInput(newValue);
 
-      // Check completion
-      if (newValue === selectedPassage) {
+      // Check completion (for non-time modes)
+      if (mode !== "time" && newValue === selectedPassage) {
         const endTime = Date.now();
         const durationMs = actualStartTime ? endTime - actualStartTime : 0;
         const durationSecs = Math.max(1, Math.round(durationMs / 1000));
@@ -390,6 +480,14 @@ function TestScreenContent() {
       const remaining = Math.max(0, 20 - seconds);
       return `${remaining}s`;
     }
+    if (mode === "time") {
+      // Display countdown style for Time Mode
+      const remaining = Math.max(0, duration - seconds);
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+    // Count UP for other modes
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -398,7 +496,6 @@ function TestScreenContent() {
   // Setup click-to-focus on first load once page renders
   useEffect(() => {
     if (!loading && selectedPassage) {
-      // Register typing-active session key for footer CTA hide detection
       if (typeof window !== "undefined") {
         sessionStorage.setItem("typing_active", "true");
       }
@@ -423,7 +520,6 @@ function TestScreenContent() {
       } else {
         sessionStorage.removeItem("typing_active");
       }
-      // Trigger simple custom event to let the footer dynamically detect focus status
       window.dispatchEvent(new Event("typing_focus_change"));
     }
   }, [isActive]);
@@ -453,7 +549,7 @@ function TestScreenContent() {
     );
   }
 
-  const timerLabel = isSpeedSprint ? "COUNTDOWN" : "TIMER";
+  const timerLabel = (isSpeedSprint || mode === "time") ? "COUNTDOWN" : "TIMER";
   const stats = [
     { label: timerLabel, value: formatTime(elapsedSeconds), unit: "", icon: "⏱️" },
     { label: "WPM", value: liveWPM.toString(), unit: "wpm", icon: "⚡" },
@@ -463,32 +559,20 @@ function TestScreenContent() {
   return (
     <main className="flex-grow flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full animate-fade-in">
       {/* Top Meta info */}
-      <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60">
-        <div className="flex items-center gap-3">
+      <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-charcoal-700/60 font-mono">
+        <div className="flex flex-wrap items-center gap-3">
           <LinkIcon
             href="/"
-            className="text-xs font-mono text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
+            className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 border border-charcoal-700 hover-glow-electric"
           >
             ← Back
           </LinkIcon>
-          <div className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            {!isSpeedSprint && (
-              <>
-                <span>DIFFICULTY:</span>
-                <span
-                  className={`font-bold ${
-                    difficulty === "easy"
-                      ? "text-emerald-400"
-                      : difficulty === "medium"
-                      ? "text-electric-400"
-                      : "text-rose-400"
-                  }`}
-                >
-                  {difficulty}
-                </span>
-                <span className="text-slate-600">•</span>
-              </>
-            )}
+          <div className="text-xs text-slate-400 uppercase tracking-wider flex items-center gap-2 flex-wrap">
+            <span>MODE:</span>
+            <span className="font-bold text-electric-400 uppercase">
+              {mode}
+            </span>
+            <span className="text-slate-600">•</span>
             <span>CATEGORY:</span>
             <span className="font-bold text-sky-400 uppercase">
               {category.replace("_", " ")}
@@ -502,7 +586,7 @@ function TestScreenContent() {
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <span className="text-xs font-mono text-slate-400">Live Session Ready</span>
+          <span className="text-xs text-slate-400">Live Session Ready</span>
         </div>
       </div>
 
