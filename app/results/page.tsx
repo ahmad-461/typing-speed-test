@@ -43,14 +43,38 @@ function ResultsScreenContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [activeSkin, setActiveSkin] = useState("electric-blue");
+  const [playerLevelInfo, setPlayerLevelInfo] = useState<{ level: number; title: string } | null>(null);
 
-  // Load player name from localStorage
+  // Load player name, skin and level info from localStorage / gamification
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = getPlayerName();
       setDisplayName(stored);
+      setActiveSkin(localStorage.getItem("tst_active_skin") || "electric-blue");
+
+      import("../../lib/gamification").then(({ getGamificationState }) => {
+        const state = getGamificationState();
+        setPlayerLevelInfo({
+          level: state.currentLevel,
+          title: state.levelTitle,
+        });
+      });
     }
   }, []);
+
+  const skinColors = (() => {
+    if (activeSkin === "emerald-terminal") {
+      return { accent: "#10B981", rgb: "16, 185, 129" };
+    }
+    if (activeSkin === "amber-crt") {
+      return { accent: "#F59E0B", rgb: "245, 158, 11" };
+    }
+    if (activeSkin === "crimson-protocol") {
+      return { accent: "#EF4444", rgb: "239, 68, 68" };
+    }
+    return { accent: "#3B82F6", rgb: "59, 130, 246" }; // electric-blue
+  })();
 
   // Toast notifications for clipboard actions
   const [toastMessage, setToastMessage] = useState("");
@@ -229,7 +253,7 @@ function ResultsScreenContent() {
         });
       });
     }
-  }, [difficulty, categoryParsed, wpm, accuracy, timeTaken, consistency, searchParams]);
+  }, [difficulty, categoryParsed, wpm, accuracy, timeTaken, consistency, searchParams, modeDuration, modeType, modeWordCount]);
 
   const handleSubmitScore = async () => {
     setIsSubmitting(true);
@@ -428,7 +452,7 @@ function ResultsScreenContent() {
       >
         {/* Subtle grid background accent manually styled */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
-          backgroundImage: "linear-gradient(#3B82F6 1px, transparent 1px), linear-gradient(90deg, #3B82F6 1px, transparent 1px)",
+          backgroundImage: `linear-gradient(${skinColors.accent} 1px, transparent 1px), linear-gradient(90deg, ${skinColors.accent} 1px, transparent 1px)`,
           backgroundSize: "20px 20px"
         }} />
 
@@ -436,7 +460,7 @@ function ResultsScreenContent() {
         <div className="flex justify-between items-start border-b pb-4" style={{ borderColor: "#23272F" }}>
           <div>
             <div className="flex items-center gap-2">
-              <span style={{ color: "#3B82F6" }} className="font-extrabold text-lg">
+              <span style={{ color: skinColors.accent }} className="font-extrabold text-lg">
                 [ TST ]
               </span>
               <span className="text-xs text-slate-400 font-bold tracking-widest uppercase">
@@ -451,7 +475,12 @@ function ResultsScreenContent() {
             <div className="text-[11px] text-slate-300 font-bold tracking-wider">
               {formatExportDate()}
             </div>
-            <div className="text-[9px] text-slate-500 uppercase tracking-widest mt-1">
+            {playerLevelInfo && (
+              <div style={{ color: skinColors.accent }} className="text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                OPERATOR: {displayName || "ANONYMOUS"} (LVL {playerLevelInfo.level} {playerLevelInfo.title})
+              </div>
+            )}
+            <div className="text-[9px] text-slate-500 uppercase tracking-widest mt-0.5">
               SYSTEM ID: #TST-PHASE-6
             </div>
           </div>
@@ -465,7 +494,7 @@ function ResultsScreenContent() {
               NET WORDS PER MINUTE
             </div>
             <div className="text-7xl font-extrabold text-white leading-none tracking-tight flex items-baseline">
-              <span style={{ color: "#3B82F6" }}>{wpm}</span>
+              <span style={{ color: skinColors.accent }}>{wpm}</span>
               <span className="text-base text-slate-500 font-normal ml-2 tracking-wide font-mono">WPM</span>
             </div>
             <div className="mt-4 flex items-center gap-1.5">
@@ -493,17 +522,17 @@ function ResultsScreenContent() {
                 <span className="text-[9px] text-slate-400 uppercase tracking-widest block mb-1">
                   CONSISTENCY SCORE
                 </span>
-                <span className="text-2xl font-extrabold font-mono" style={{ color: "#3B82F6" }}>
+                <span className="text-2xl font-extrabold font-mono" style={{ color: skinColors.accent }}>
                   {consistency}%
                 </span>
               </div>
-              {/* Diff */}
+              {/* Diff & Category */}
               <div>
                 <span className="text-[9px] text-slate-400 uppercase tracking-widest block mb-1">
-                  DIFFICULTY TIER
+                  DIFFICULTY & CATEGORY
                 </span>
-                <span className="text-2xl font-extrabold font-mono text-white uppercase">
-                  {difficulty}
+                <span className="text-sm font-extrabold font-mono text-white uppercase block leading-tight truncate">
+                  {`${difficulty} // ${categoryParsed.replace("_", " ")}`}
                 </span>
               </div>
               {/* Duration / Time Elapsed */}
@@ -522,10 +551,10 @@ function ResultsScreenContent() {
         {/* Bottom Section */}
         <div className="border-t pt-4 flex justify-between items-center" style={{ borderColor: "#23272F" }}>
           <div className="flex items-center gap-2">
-            <span style={{ color: "#3B82F6" }} className="text-xs">⌨️</span>
+            <span style={{ color: skinColors.accent }} className="text-xs">⌨️</span>
             <span className="text-[9px] text-slate-500 font-mono uppercase tracking-wider">
               {`[ `}
-              <span style={{ color: "#3B82F6" }}>
+              <span style={{ color: skinColors.accent }}>
                 {"█".repeat(Math.min(10, Math.floor(Number(wpm) / 10)))}
                 {"░".repeat(10 - Math.min(10, Math.floor(Number(wpm) / 10)))}
               </span>
@@ -533,7 +562,7 @@ function ResultsScreenContent() {
             </span>
           </div>
           <div className="text-[9px] text-slate-500 uppercase tracking-widest text-right">
-            SECURE VERIFIED SCORE // CLIENT-SIDE BLOCKCHAIN-STYLE VERIFICATION MATCH
+            {"SECURE VERIFIED SCORE // CLIENT-SIDE BLOCKCHAIN-STYLE VERIFICATION MATCH"}
           </div>
         </div>
       </div>

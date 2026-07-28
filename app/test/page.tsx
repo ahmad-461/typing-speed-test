@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from "rea
 import LinkIcon from "next/link";
 import { passageBank } from "../../lib/passages";
 import { getPersonalBest, saveKeyErrors, saveKeyTypedCounts, getWeakestKeys } from "../../lib/stats";
+import { playCorrectClick, playIncorrectClick, playCompleteChime } from "../../lib/sounds";
 
 // Helper client-side sanitization function
 function sanitizePassageText(text: string): string {
@@ -250,6 +251,7 @@ function TestScreenContent() {
 
   // Function to finalize and redirect cleanly
   const finalizeTestAndRedirect = useCallback((durationSecs: number) => {
+    playCompleteChime();
     const activePassage = selectedPassageRef.current;
     const activeInput = typedInputRef.current;
 
@@ -400,6 +402,12 @@ function TestScreenContent() {
       let hadNewType = false;
       for (let i = typedInput.length; i < newValue.length; i++) {
         const expectedChar = selectedPassage[i];
+        const isCorrect = newValue[i] === expectedChar;
+        if (isCorrect) {
+          playCorrectClick();
+        } else {
+          playIncorrectClick();
+        }
         const tracked = getTrackedKey(expectedChar);
         if (tracked) {
           updatedTypedCounts[tracked] = (updatedTypedCounts[tracked] || 0) + 1;

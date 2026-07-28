@@ -34,6 +34,26 @@ export default function HistoryPage() {
   const [milestones, setMilestones] = useState<MilestoneEvent[]>([]);
   const [personalGoal, setPersonalGoal] = useState<number | null>(null);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [activeSkin, setActiveSkin] = useState("electric-blue");
+
+  const activeSkinColor = useMemo(() => {
+    if (activeSkin === "emerald-terminal") return "#10B981";
+    if (activeSkin === "amber-crt") return "#F59E0B";
+    if (activeSkin === "crimson-protocol") return "#EF4444";
+    return "#3B82F6"; // electric-blue
+  }, [activeSkin]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setActiveSkin(localStorage.getItem("tst_active_skin") || "electric-blue");
+    }
+  }, []);
+
+  const handleSelectSkin = (skinId: string) => {
+    localStorage.setItem("tst_active_skin", skinId);
+    setActiveSkin(skinId);
+    window.dispatchEvent(new CustomEvent("tst-skin-changed", { detail: skinId }));
+  };
 
   useEffect(() => {
     const hist = getHistory();
@@ -74,6 +94,43 @@ export default function HistoryPage() {
   const pbEasy = useMemo(() => getPersonalBest("easy", history), [history]);
   const pbMedium = useMemo(() => getPersonalBest("medium", history), [history]);
   const pbHard = useMemo(() => getPersonalBest("hard", history), [history]);
+
+  const SKINS = useMemo(() => {
+    return [
+      {
+        id: "electric-blue",
+        name: "Electric Blue",
+        colorHex: "#3B82F6",
+        desc: "Default sleek, modern operator interface. High-contrast electric styling.",
+        unlockLabel: "Always Unlocked",
+        isUnlocked: true,
+      },
+      {
+        id: "emerald-terminal",
+        name: "Emerald Terminal",
+        colorHex: "#10B981",
+        desc: "Classic Matrix hacker green. Maximum terminal nostalgia.",
+        unlockLabel: "Requires 'Speed Demon' Achievement (80+ WPM)",
+        isUnlocked: gamification?.unlockedAchievements.includes("speed_demon") ?? false,
+      },
+      {
+        id: "amber-crt",
+        name: "Amber CRT",
+        colorHex: "#F59E0B",
+        desc: "Warm monochrome phosphor glow. Vintage retro CRT styling.",
+        unlockLabel: "Requires 'Typing Legend' Achievement (100 completed tests)",
+        isUnlocked: gamification?.unlockedAchievements.includes("typing_legend_badge") ?? false,
+      },
+      {
+        id: "crimson-protocol",
+        name: "Crimson Protocol",
+        colorHex: "#EF4444",
+        desc: "Elite red alert overlay. S-Tier operator prestige styling.",
+        unlockLabel: "Requires reaching Operator Level 6 (10,000+ XP)",
+        isUnlocked: (gamification?.currentLevel ?? 1) >= 6,
+      },
+    ];
+  }, [gamification]);
 
   const skillProfile = useMemo(() => {
     const recentTests = [...history].slice(0, 10);
@@ -214,8 +271,8 @@ export default function HistoryPage() {
           <defs>
             {/* Custom linear gradient using strictly HEX colors */}
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.00" />
+              <stop offset="0%" stopColor={activeSkinColor} stopOpacity="0.25" />
+              <stop offset="100%" stopColor={activeSkinColor} stopOpacity="0.00" />
             </linearGradient>
           </defs>
 
@@ -257,7 +314,7 @@ export default function HistoryPage() {
             <path
               d={pathD}
               fill="none"
-              stroke="#3B82F6"
+              stroke={activeSkinColor}
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -312,7 +369,7 @@ export default function HistoryPage() {
         </svg>
       </div>
     );
-  }, [chartData]);
+  }, [chartData, activeSkinColor]);
 
   return (
     <div className="flex-grow flex flex-col w-full max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
@@ -672,6 +729,75 @@ export default function HistoryPage() {
                     On {pbOverall.difficulty}
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Skins Customization Section */}
+            <div className="bg-charcoal-800 border border-charcoal-700 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-charcoal-700 pb-3">
+                <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <span>🎨</span> Custom Operator Skins
+                </h2>
+                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  Unlock theme variations via achievements
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-1">
+                {SKINS.map((skin) => {
+                  const isActive = activeSkin === skin.id;
+                  return (
+                    <div
+                      key={skin.id}
+                      onClick={() => skin.isUnlocked && handleSelectSkin(skin.id)}
+                      className={`relative rounded-xl border p-4 font-mono text-xs flex flex-col justify-between min-h-[140px] select-none transition-all duration-300 ${
+                        skin.isUnlocked
+                          ? "cursor-pointer hover:border-electric-500/50 hover:bg-charcoal-900/20"
+                          : "opacity-45 bg-charcoal-900/10 cursor-not-allowed"
+                      } ${
+                        isActive
+                          ? "border-electric-500 bg-electric-500/[0.04] shadow-[0_0_12px_rgba(var(--color-accent-rgb),0.15)] ring-1 ring-electric-500/30"
+                          : "border-charcoal-700 bg-charcoal-800"
+                      }`}
+                    >
+                      <div>
+                        {/* Top color circle badge */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              style={{ backgroundColor: skin.colorHex }}
+                              className="w-3.5 h-3.5 rounded-full inline-block border border-black/30"
+                            />
+                            <span className="font-extrabold text-white text-xs">{skin.name}</span>
+                          </div>
+                          {isActive && (
+                            <span className="text-[9px] bg-electric-500 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                              ACTIVE
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-[10px] text-slate-400 font-sans leading-normal mb-3">
+                          {skin.desc}
+                        </p>
+                      </div>
+
+                      {/* Unlock status at the bottom */}
+                      <div className="pt-2 border-t border-charcoal-700/50 flex items-center justify-between text-[9px]">
+                        {skin.isUnlocked ? (
+                          <span className="text-emerald-400 font-bold uppercase tracking-wider">
+                            ✓ UNLOCKED
+                          </span>
+                        ) : (
+                          <div className="text-rose-400/90 font-semibold leading-tight pr-2" title={skin.unlockLabel}>
+                            🔒 LOCKED
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
