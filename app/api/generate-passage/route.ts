@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     : "code_arena") as NewCategory;
 
   const weakKeys = searchParams.get("weak_keys") || "";
+  const wordCountParam = searchParams.get("word_count");
 
   // Select a single random static fallback passage from the matching category and difficulty
   const getStaticFallback = () => {
@@ -52,7 +53,12 @@ export async function GET(request: NextRequest) {
   // Define word count guidelines
   let wordCountGuide = "approximately 60 words";
   let description = "standard narrative prose, moderate punctuation, and normal vocabulary";
-  if (category === "speed_sprint") {
+  if (wordCountParam) {
+    const parsedWordTarget = parseInt(wordCountParam, 10);
+    if (!isNaN(parsedWordTarget) && parsedWordTarget > 0) {
+      wordCountGuide = `exactly ${parsedWordTarget} words`;
+    }
+  } else if (category === "speed_sprint") {
     wordCountGuide = "strictly approximately 15-20 words";
     description = "highly punchy, neutral sentences designed for quick typing tests";
   } else if (difficulty === "easy") {

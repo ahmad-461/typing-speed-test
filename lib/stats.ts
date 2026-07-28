@@ -3,11 +3,14 @@ export type TestResult = {
   wpm: number;
   accuracy: number;
   difficulty: "easy" | "medium" | "hard" | "custom";
-  category?: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "programming" | "general_knowledge" | "custom";
+  category?: "code_arena" | "knowledge_quest" | "ai_lab" | "world_explorer" | "programming" | "general_knowledge" | "custom" | "speed_sprint" | "weak_key_drill";
   consistency?: number;
   timeTaken: number; // in seconds
   timestamp: number; // millisecond timestamp
   passageText: string;
+  modeType?: "time" | "words" | "passage";
+  modeDuration?: number;
+  modeWordCount?: number;
 };
 
 // Key used in local storage
