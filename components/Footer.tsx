@@ -396,6 +396,30 @@ export default function Footer() {
                 <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[EXEC]</span>
               </Link>
 
+              <Link
+                href="/data-protocol"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+              >
+                <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] data_protocol.log</span>
+                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[OPEN]</span>
+              </Link>
+
+              <Link
+                href="/rules-of-engagement"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+              >
+                <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] rules.txt</span>
+                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[READ]</span>
+              </Link>
+
+              <Link
+                href="/changelog"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-2 border-b border-[#1e293b]/40"
+              >
+                <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] changelog.log</span>
+                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LOG]</span>
+              </Link>
+
               <a
                 href="https://github.com/ahmad-461/typing-speed-test"
                 target="_blank"
