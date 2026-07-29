@@ -871,9 +871,14 @@ function ResultsScreenContent() {
             <span className="text-xs text-electric-400 font-bold tracking-wider">
               &gt;_ COACH_ANALYSIS
             </span>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
-              Adaptive AI Coach
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] bg-amber-500/[0.04] border border-amber-500/20 text-amber-500/90 font-mono px-1.5 py-0.5 rounded uppercase font-bold tracking-widest flex items-center gap-1">
+                <span>🤖</span> AI-GENERATED
+              </span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
+                Adaptive AI Coach
+              </span>
+            </div>
           </div>
           {coachLoading ? (
             <div className="space-y-2 py-1 font-mono text-xs">

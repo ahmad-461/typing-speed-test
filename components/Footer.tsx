@@ -412,6 +412,14 @@ export default function Footer() {
               </Link>
 
               <Link
+                href="/about"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
+              >
+                <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] about_operator.txt</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[INFO]</span>
+              </Link>
+
+              <Link
                 href="/rules-of-engagement"
                 className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
