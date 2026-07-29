@@ -31,9 +31,8 @@ export default function Footer() {
   const bottomText = "SYSTEM READY... KEEP TYPING. KEEP IMPROVING.";
   const [typedText, setTypedText] = useState("");
 
-  // Mouse Glow Position
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [showMouseGlow, setShowMouseGlow] = useState(false);
+  // Mouse Glow Ref
+  const glowRef = useRef<HTMLDivElement>(null);
 
   // Real Operator Metrics
   const [stats, setStats] = useState({
@@ -204,11 +203,19 @@ export default function Footer() {
       return; // Disable on touch devices
     }
     const rect = e.currentTarget.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-    setShowMouseGlow(true);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (glowRef.current) {
+      glowRef.current.style.setProperty("--mouse-x", `${x}px`);
+      glowRef.current.style.setProperty("--mouse-y", `${y}px`);
+      glowRef.current.style.opacity = "1";
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (glowRef.current) {
+      glowRef.current.style.opacity = "0";
+    }
   };
 
   // Format uptime to HH:MM:SS
@@ -232,8 +239,8 @@ export default function Footer() {
     <footer
       ref={footerRef}
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => setShowMouseGlow(false)}
-      className={`w-full bg-[#08090b] border-t border-[#3B82F6]/20 py-10 select-none font-mono relative overflow-hidden transition-all duration-700 ease-out ${
+      onMouseLeave={handleMouseLeave}
+      className={`w-full bg-[#08090b] border-t border-electric-500/20 py-10 select-none font-mono relative overflow-hidden transition-all duration-700 ease-out ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
       }`}
     >
@@ -259,8 +266,8 @@ export default function Footer() {
         }
         .footer-grid-bg {
           background-image:
-            linear-gradient(rgba(59, 130, 246, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.04) 1px, transparent 1px);
+            linear-gradient(rgba(var(--color-accent-rgb), 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(var(--color-accent-rgb), 0.04) 1px, transparent 1px);
           background-size: 32px 32px;
           animation: gridScroll 35s linear infinite;
         }
@@ -274,18 +281,18 @@ export default function Footer() {
 
       {/* 3. Sweeping Scan-Line Effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="w-full h-[1px] bg-[#3B82F6]/20 shadow-[0_0_8px_rgba(59,130,246,0.4)] absolute top-0 left-0 footer-scan-line" />
+        <div className="w-full h-[1px] bg-electric-500/20 shadow-[0_0_8px_rgba(var(--color-accent-rgb),0.4)] absolute top-0 left-0 footer-scan-line" />
       </div>
 
       {/* 4. Soft Top Neon Glowing Border */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#3B82F6]/40 to-transparent shadow-[0_1px_15px_rgba(59,130,246,0.3)]" />
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-electric-500/40 to-transparent shadow-[0_1px_15px_rgba(var(--color-accent-rgb),0.3)]" />
 
       {/* 5. Ambient Low-Opacity Floating Particles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {particles.map((p) => (
           <div
             key={p.id}
-            className="absolute w-1 h-1 rounded-full bg-[#3B82F6]/20 blur-[0.5px]"
+            className="absolute w-1 h-1 rounded-full bg-electric-500/20 blur-[0.5px]"
             style={{
               left: p.left,
               top: p.top,
@@ -297,15 +304,15 @@ export default function Footer() {
 
       {/* 6. Mouse-Following GPU-Accelerated Radial Glow */}
       <div
-        className="absolute pointer-events-none rounded-full blur-[80px] transition-opacity duration-300"
+        ref={glowRef}
+        className="absolute pointer-events-none rounded-full blur-[80px] transition-opacity duration-300 opacity-0"
         style={{
-          left: `${mousePos.x}px`,
-          top: `${mousePos.y}px`,
+          left: "var(--mouse-x, 0px)",
+          top: "var(--mouse-y, 0px)",
           width: "220px",
           height: "220px",
           transform: "translate(-50%, -50%)",
-          background: "radial-gradient(circle, rgba(59, 130, 246, 0.07) 0%, transparent 70%)",
-          opacity: showMouseGlow ? 1 : 0,
+          background: "radial-gradient(circle, rgba(var(--color-accent-rgb), 0.07) 0%, transparent 70%)",
         }}
       />
 
@@ -316,7 +323,7 @@ export default function Footer() {
           {/* SECTION 1: SYSTEM STATUS */}
           <div className="space-y-4">
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase tracking-widest font-black">
-              <span className="text-[#3B82F6] font-extrabold">&gt;</span> SYSTEM STATUS
+              <span className="text-electric-500 font-extrabold">&gt;</span> SYSTEM STATUS
             </div>
 
             <div className="flex items-center gap-2.5 bg-[#0e0f11]/60 border border-[#1e293b] p-3 rounded-xl shadow-inner">
@@ -335,7 +342,7 @@ export default function Footer() {
                 <span className="text-slate-500 font-medium">CORE VERSION</span>
                 <span
                   onClick={handleVersionClick}
-                  className="text-white font-extrabold cursor-pointer hover:text-[#3B82F6] transition-colors min-h-[30px] flex items-center"
+                  className="text-white font-extrabold cursor-pointer hover:text-electric-500 transition-colors min-h-[30px] flex items-center"
                 >
                   v1.6
                 </span>
@@ -343,7 +350,7 @@ export default function Footer() {
 
               <div className="flex justify-between items-center border-b border-[#1e293b]/60 pb-2.5">
                 <span className="text-slate-500 font-medium">SESSION UPTIME</span>
-                <span className="text-[#3B82F6] font-bold font-mono">{formatUptime(uptime)}</span>
+                <span className="text-electric-500 font-bold font-mono">{formatUptime(uptime)}</span>
               </div>
 
               <div className="flex justify-between items-center">
@@ -358,66 +365,66 @@ export default function Footer() {
           {/* SECTION 2: QUICK COMMANDS (Ensured touch targets >= 44px on mobile via vertical padding) */}
           <div className="space-y-4">
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase tracking-widest font-black">
-              <span className="text-[#3B82F6] font-extrabold">&gt;</span> QUICK COMMANDS
+              <span className="text-electric-500 font-extrabold">&gt;</span> QUICK COMMANDS
             </div>
 
             <div className="flex flex-col space-y-1">
               <Link
                 href="/"
                 onClick={handleCommandHomepageScroll}
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; start_test.sh</span>
-                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[EXEC]</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[EXEC]</span>
               </Link>
 
               <Link
                 href="/leaderboard"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; standings.cfg</span>
-                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LOAD]</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LOAD]</span>
               </Link>
 
               <Link
                 href="/history"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; player_logs.log</span>
-                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[OPEN]</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[OPEN]</span>
               </Link>
 
               <Link
                 href="/"
                 onClick={handleCommandHomepageScroll}
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; sectors.cfg</span>
-                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[EXEC]</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[EXEC]</span>
               </Link>
 
               <Link
                 href="/data-protocol"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] data_protocol.log</span>
-                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[OPEN]</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[OPEN]</span>
               </Link>
 
               <Link
                 href="/rules-of-engagement"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] rules.txt</span>
-                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[READ]</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[READ]</span>
               </Link>
 
               <Link
                 href="/changelog"
-                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-[#3B82F6]/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
+                className="group flex items-center justify-between text-xs text-slate-400 hover:text-white hover:border-electric-500/30 transition-colors py-3 border-b border-[#1e293b]/40 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; [CMD] changelog.log</span>
-                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LOG]</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LOG]</span>
               </Link>
 
               <a
@@ -427,7 +434,7 @@ export default function Footer() {
                 className="group flex items-center justify-between text-xs text-slate-400 hover:text-white transition-colors py-3 min-h-[44px]"
               >
                 <span className="font-mono text-slate-400 group-hover:text-white">&gt; github.git</span>
-                <span className="text-[9px] text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LINK]</span>
+                <span className="text-[9px] text-electric-500 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 font-bold tracking-wider">[LINK]</span>
               </a>
             </div>
           </div>
@@ -435,33 +442,33 @@ export default function Footer() {
           {/* SECTION 3: PLAYER STATS */}
           <div className="space-y-4">
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase tracking-widest font-black">
-              <span className="text-[#3B82F6] font-extrabold">&gt;</span> OPERATOR METRICS
+              <span className="text-electric-500 font-extrabold">&gt;</span> OPERATOR METRICS
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-[#3B82F6]/40 transition-colors duration-200">
+              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-electric-500/40 transition-colors duration-200">
                 <span className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider leading-none mb-1">LEVEL</span>
-                <span className="text-xs font-black text-[#3B82F6] font-mono leading-none">Lvl {stats.currentLevel}</span>
+                <span className="text-xs font-black text-electric-500 font-mono leading-none">Lvl {stats.currentLevel}</span>
               </div>
 
-              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-[#3B82F6]/40 transition-colors duration-200">
+              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-electric-500/40 transition-colors duration-200">
                 <span className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider leading-none mb-1">STREAK</span>
                 <span className="text-xs font-black text-amber-500 font-mono leading-none">🔥 {stats.streakDays}d</span>
               </div>
 
-              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-[#3B82F6]/40 transition-colors duration-200">
+              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-electric-500/40 transition-colors duration-200">
                 <span className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider leading-none mb-1">RUNS</span>
                 <span className="text-xs font-black text-white font-mono leading-none">{stats.totalTests}</span>
               </div>
 
-              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-[#3B82F6]/40 transition-colors duration-200">
+              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-electric-500/40 transition-colors duration-200">
                 <span className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider leading-none mb-1">BEST SPEED</span>
                 <span className="text-xs font-black text-emerald-400 font-mono leading-none">
                   {stats.bestWpm > 0 ? `${stats.bestWpm} W` : "—"}
                 </span>
               </div>
 
-              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-[#3B82F6]/40 transition-colors duration-200 col-span-2">
+              <div className="bg-[#0e0f11]/60 border border-[#1e293b] p-2.5 rounded-xl shadow-inner group hover:border-electric-500/40 transition-colors duration-200 col-span-2">
                 <span className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider leading-none mb-1">BEST PRECISION</span>
                 <span className="text-xs font-black text-sky-400 font-mono leading-none">
                   {stats.bestAccuracy > 0 ? `${stats.bestAccuracy}%` : "—"}
@@ -473,18 +480,18 @@ export default function Footer() {
           {/* SECTION 4: TELEMETRY FEED */}
           <div className="space-y-4">
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase tracking-widest font-black">
-              <span className="text-[#3B82F6] font-extrabold">&gt;</span> TELEMETRY FEED
+              <span className="text-electric-500 font-extrabold">&gt;</span> TELEMETRY FEED
             </div>
 
             <div className="bg-[#0e0f11]/70 border border-[#1e293b] p-3 rounded-xl text-[10px] leading-relaxed font-mono space-y-2 h-[125px] overflow-hidden relative shadow-inner">
               <div className="flex items-start gap-1.5 text-[#64748B]">
-                <span className="text-[#3B82F6] font-black">[SYS]</span>
+                <span className="text-electric-500 font-black">[SYS]</span>
                 <span className="text-slate-400 font-sans">Core engine active. Systems normal.</span>
               </div>
 
               {playerName ? (
                 <div className="flex items-start gap-1.5 text-[#64748B]">
-                  <span className="text-[#3B82F6] font-black">[AUTH]</span>
+                  <span className="text-electric-500 font-black">[AUTH]</span>
                   <span className="text-slate-400 font-sans truncate">
                     Operator connected: <strong className="text-white normal-case">{playerName}</strong>
                   </span>
@@ -525,15 +532,15 @@ export default function Footer() {
         </div>
 
         {/* Divider above bottom copyright row */}
-        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#3B82F6]/30 to-transparent my-8" />
+        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-electric-500/30 to-transparent my-8" />
 
         {/* BOTTOM SECTION */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-500 pt-1">
           {/* Animated Single-play Typewriter prompt */}
           <div className="flex items-center gap-1.5 text-slate-400 h-4">
-            <span className="text-[#3B82F6] font-extrabold">&gt;</span>
+            <span className="text-electric-500 font-extrabold">&gt;</span>
             <span className="tracking-wide">{typedText}</span>
-            <span className="w-1.5 h-3.5 bg-[#3B82F6] animate-blink" />
+            <span className="w-1.5 h-3.5 bg-electric-500 animate-blink" />
           </div>
 
           <div className="text-center sm:text-right flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-[10px]">

@@ -8,7 +8,7 @@ create table if
     wpm integer not null,
     accuracy numeric not null,
     difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'custom')),
-    category text not null default 'programming' check (category in ('programming', 'general_knowledge', 'custom')),
+    category text not null default 'code_arena' check (category in ('code_arena', 'knowledge_quest', 'ai_lab', 'world_explorer', 'speed_sprint', 'weak_key_drill', 'programming', 'general_knowledge', 'custom')),
     created_at timestamp with time zone default now() not null
   );
 

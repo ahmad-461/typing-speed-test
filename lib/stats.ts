@@ -106,7 +106,8 @@ export function migrateLegacyData() {
     "tst_streak_reset_notified_v1",
     "tst_keyerrors_v1",
     "tst_key_typed_counts_v1",
-    "tst_personal_wpm_goal_v1"
+    "tst_personal_wpm_goal_v1",
+    "tst_active_skin"
   ];
 
   let migratedAny = false;

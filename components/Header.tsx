@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { getPersonalBest, getPlayerName } from "../lib/stats";
+import { getPersonalBest, getPlayerName, getNamespacedKey } from "../lib/stats";
 import { getGamificationState } from "../lib/gamification";
 
 export default function Header() {
@@ -93,7 +93,7 @@ export default function Header() {
     if (typeof window === "undefined") return;
 
     const applySkin = () => {
-      const activeSkin = localStorage.getItem("tst_active_skin") || "electric-blue";
+      const activeSkin = localStorage.getItem(getNamespacedKey("tst_active_skin")) || "electric-blue";
       document.documentElement.classList.remove("skin-emerald", "skin-amber", "skin-crimson");
       if (activeSkin !== "electric-blue") {
         document.documentElement.classList.add(`skin-${activeSkin.split("-")[0]}`);
