@@ -350,8 +350,36 @@ export default function Home() {
 
   const isNewRecruit = historyLength === 0;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "NOKY Terminal Typing Speed Test",
+    "operatingSystem": "All",
+    "applicationCategory": "EducationalApplication",
+    "description": "A gamified typing speed and accuracy platform with AI-generated passages, real-time coaching, and a persistent leaderboard — styled as a dark cyber-terminal experience.",
+    "author": {
+      "@type": "Person",
+      "name": "Ahmad"
+    },
+    "creator": {
+      "@type": "Person",
+      "name": "Ahmad"
+    },
+    "codeRepository": "https://github.com/ahmad-461/typing-speed-test",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  };
+
   return (
     <div className="flex-grow flex flex-col w-full max-w-5xl mx-auto px-4 py-4 sm:py-8 lg:px-8 animate-fade-in space-y-6 sm:space-y-10">
+      {/* Structured Metadata for Search Engine Credibility */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* SYSTEM DIAGNOSTICS & HUB NAVIGATION (Compact System Label) */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#1E293B]">

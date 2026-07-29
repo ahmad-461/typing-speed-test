@@ -601,9 +601,14 @@ function TestScreenContent() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-xs text-slate-450 font-bold uppercase tracking-wider font-mono">Live Session Ready</span>
+        <div className="flex items-center gap-3">
+          <div className="text-[9px] bg-amber-500/[0.04] border border-amber-500/20 text-amber-500/90 font-mono px-2 py-0.5 rounded uppercase font-bold tracking-widest flex items-center gap-1">
+            <span>🤖</span> AI-GENERATED
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs text-slate-450 font-bold uppercase tracking-wider font-mono">Live Session Ready</span>
+          </div>
         </div>
       </div>
 

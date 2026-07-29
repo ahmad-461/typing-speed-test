@@ -20,10 +20,32 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Typing Speed Test",
-  description: "Evaluate your typing speed and accuracy under pressure with a beautiful, minimalist, and sleek developer terminal theme. Fully integrated with AI passage generation and global live leaderboard.",
-  keywords: ["typing speed test", "typing test", "wpm", "keyboard test", "words per minute"],
-  authors: [{ name: "Ahmad" }],
+  metadataBase: new URL("https://typing-speed-test-pi-smoky.vercel.app"),
+  title: "NOKY — Premium Terminal Typing Speed Test ⚡",
+  description: "A gamified typing speed and accuracy platform with AI-generated passages, real-time coaching, and a persistent leaderboard — styled as a dark cyber-terminal experience.",
+  keywords: ["typing speed test", "typing test", "wpm", "keyboard test", "words per minute", "NOKY", "Ahmad portfolio"],
+  authors: [{ name: "Ahmad", url: "https://github.com/ahmad-461/typing-speed-test" }],
+  openGraph: {
+    title: "NOKY — Premium Terminal Typing Speed Test ⚡",
+    description: "A gamified typing speed and accuracy platform with AI-generated passages, real-time coaching, and a persistent leaderboard — styled as a dark cyber-terminal experience.",
+    url: "https://typing-speed-test-pi-smoky.vercel.app",
+    siteName: "NOKY Terminal Systems",
+    images: [
+      {
+        url: "/logo.svg",
+        width: 512,
+        height: 512,
+        alt: "NOKY Logo",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NOKY — Premium Terminal Typing Speed Test ⚡",
+    description: "A gamified typing speed and accuracy platform with AI-generated passages, real-time coaching, and a persistent leaderboard — styled as a dark cyber-terminal experience.",
+    images: ["/logo.svg"],
+  },
 };
 
 export default function RootLayout({
