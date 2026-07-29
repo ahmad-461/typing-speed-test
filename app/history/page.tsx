@@ -46,12 +46,12 @@ export default function HistoryPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setActiveSkin(localStorage.getItem("tst_active_skin") || "electric-blue");
+      setActiveSkin(localStorage.getItem(getNamespacedKey("tst_active_skin")) || "electric-blue");
     }
   }, []);
 
   const handleSelectSkin = (skinId: string) => {
-    localStorage.setItem("tst_active_skin", skinId);
+    localStorage.setItem(getNamespacedKey("tst_active_skin"), skinId);
     setActiveSkin(skinId);
     window.dispatchEvent(new CustomEvent("tst-skin-changed", { detail: skinId }));
   };
@@ -421,23 +421,23 @@ export default function HistoryPage() {
                       {"// RECRUIT PROGRESSION TRACKING"}
                     </span>
                     <h2 className="text-xl font-extrabold text-white font-mono">
-                      {gamification.levelTitle} <span className="text-sm font-mono text-slate-500">(Level {gamification.currentLevel})</span>
+                      {gamification.levelTitle} <span className="text-sm font-mono text-slate-400">(Level {gamification.currentLevel})</span>
                     </h2>
                   </div>
 
                   <div className="flex gap-6 items-center text-left sm:text-right font-mono text-xs">
                     <div>
-                      <span className="text-[9px] text-slate-500 uppercase block font-bold">Total Tests</span>
+                      <span className="text-[9px] text-slate-400 uppercase block font-bold">Total Tests</span>
                       <strong className="text-white text-sm font-black">{history.length}</strong>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-500 uppercase block font-bold">Active Streak</span>
+                      <span className="text-[9px] text-slate-400 uppercase block font-bold">Active Streak</span>
                       <strong className="text-amber-500 text-sm font-black flex items-center gap-0.5">
                         <span>🔥</span> {gamification.streakDays}
                       </strong>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-500 uppercase block font-bold">XP Base</span>
+                      <span className="text-[9px] text-slate-400 uppercase block font-bold">XP Base</span>
                       <strong className="text-white text-sm font-black">{gamification.totalXp.toLocaleString()} XP</strong>
                     </div>
                   </div>
@@ -462,7 +462,7 @@ export default function HistoryPage() {
                         className="h-full bg-electric-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(59,130,246,0.5)]"
                       />
                     </div>
-                    <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                       <span>{gamification.prevLevelXp} XP</span>
                       <span>
                         {Math.round(
@@ -487,7 +487,7 @@ export default function HistoryPage() {
                   <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>📈</span> performance trends
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                     Rolling 7-day windows
                   </span>
                 </div>
@@ -495,13 +495,13 @@ export default function HistoryPage() {
                 <div className="grid grid-cols-2 gap-4 py-2">
                   {/* WPM Trend */}
                   <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 space-y-1">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-bold">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-bold">
                       WPM Trend
                     </span>
                     {trend && trend.thisWeekWpm !== null ? (
                       <div className="space-y-1">
                         <div className="text-2xl font-extrabold text-white font-mono">
-                          {trend.thisWeekWpm} <span className="text-xs font-normal text-slate-500 font-mono">WPM avg</span>
+                          {trend.thisWeekWpm} <span className="text-xs font-normal text-slate-400 font-mono">WPM avg</span>
                         </div>
                         {trend.wpmDiff !== null ? (
                           <div className={`text-xs font-mono font-bold ${trend.wpmDiff >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
@@ -514,19 +514,19 @@ export default function HistoryPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="text-xs text-slate-500 italic py-2">No tests this week</div>
+                      <div className="text-xs text-slate-400 italic py-2">No tests this week</div>
                     )}
                   </div>
 
                   {/* Accuracy Trend */}
                   <div className="bg-charcoal-900/40 border border-charcoal-700/60 rounded-xl p-4 space-y-1">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block font-bold">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-bold">
                       Accuracy Trend
                     </span>
                     {trend && trend.thisWeekAcc !== null ? (
                       <div className="space-y-1">
                         <div className="text-2xl font-extrabold text-white font-mono">
-                          {trend.thisWeekAcc}% <span className="text-xs font-normal text-slate-500 font-mono">avg</span>
+                          {trend.thisWeekAcc}% <span className="text-xs font-normal text-slate-400 font-mono">avg</span>
                         </div>
                         {trend.accDiff !== null ? (
                           <div className={`text-xs font-mono font-bold ${trend.accDiff >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
@@ -539,7 +539,7 @@ export default function HistoryPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="text-xs text-slate-500 italic py-2">No tests this week</div>
+                      <div className="text-xs text-slate-400 italic py-2">No tests this week</div>
                     )}
                   </div>
                 </div>
@@ -551,7 +551,7 @@ export default function HistoryPage() {
                   <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>🎯</span> personal speed target
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                     deliberate practice goal
                   </span>
                 </div>
@@ -604,7 +604,7 @@ export default function HistoryPage() {
                           className="h-full bg-electric-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(59,130,246,0.5)]"
                         />
                       </div>
-                      <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                      <div className="flex justify-between text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                         <span>0 WPM</span>
                         <span>
                           {Math.min(100, Math.round(((pbOverall ? pbOverall.wpm : 0) / personalGoal) * 100))}% Completed
@@ -620,7 +620,7 @@ export default function HistoryPage() {
                           <span>🎉</span> Goal Met! Level Up Target.
                         </div>
                       ) : (
-                        <div className="text-[10px] font-mono text-slate-500 italic">
+                        <div className="text-[10px] font-mono text-slate-400 italic">
                           Keep pushing to meet your target.
                         </div>
                       )}
@@ -668,7 +668,7 @@ export default function HistoryPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {/* Metric 1: Total Tests */}
               <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1 font-bold">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1 font-bold">
                   Tests Completed
                 </span>
                 <div className="text-3xl font-extrabold text-white font-mono leading-none">
@@ -681,11 +681,11 @@ export default function HistoryPage() {
 
               {/* Metric 2: Avg WPM */}
               <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1 font-bold">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1 font-bold">
                   Average Speed
                 </span>
                 <div className="text-3xl font-extrabold text-electric-400 font-mono leading-none">
-                  {summary.avgWpm} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
+                  {summary.avgWpm} <span className="text-xs font-normal text-slate-400 font-mono">WPM</span>
                 </div>
                 <div className="absolute right-3 bottom-3 text-xs opacity-10 font-mono text-electric-400 text-right uppercase font-bold">
                   Avg
@@ -694,7 +694,7 @@ export default function HistoryPage() {
 
               {/* Metric 3: Avg Accuracy */}
               <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1 font-bold">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1 font-bold">
                   Average Accuracy
                 </span>
                 <div className="text-3xl font-extrabold text-emerald-400 font-mono leading-none">
@@ -707,7 +707,7 @@ export default function HistoryPage() {
 
               {/* Metric 4: Avg Consistency */}
               <div className="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 sm:p-5 relative overflow-hidden group">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1 font-bold">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1 font-bold">
                   Avg Consistency
                 </span>
                 <div className="text-3xl font-extrabold text-sky-400 font-mono leading-none">
@@ -729,10 +729,10 @@ export default function HistoryPage() {
                   </span>
                 </div>
                 <div className="text-3xl font-extrabold text-white font-mono leading-none">
-                  {pbOverall ? pbOverall.wpm : 0} <span className="text-xs font-normal text-slate-500 font-mono">WPM</span>
+                  {pbOverall ? pbOverall.wpm : 0} <span className="text-xs font-normal text-slate-400 font-mono">WPM</span>
                 </div>
                 {pbOverall && (
-                  <div className="text-[9px] font-mono text-slate-500 mt-1 uppercase font-bold">
+                  <div className="text-[9px] font-mono text-slate-400 mt-1 uppercase font-bold">
                     On {pbOverall.difficulty}
                   </div>
                 )}
@@ -745,7 +745,7 @@ export default function HistoryPage() {
                 <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                   <span>🎨</span> Custom Operator Skins
                 </h2>
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                   Unlock theme variations via achievements
                 </span>
               </div>
@@ -816,7 +816,7 @@ export default function HistoryPage() {
                   <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>👤</span> Active Skill Profile
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                     Recent 10 completed tests
                   </span>
                 </div>
@@ -828,7 +828,7 @@ export default function HistoryPage() {
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-white font-bold uppercase">SPEED RATING</span>
                         <span className="text-electric-400 font-bold">
-                          {skillProfile.speed}/100 <span className="text-[10px] text-slate-500 font-normal font-mono">({skillProfile.avgWpm} WPM)</span>
+                          {skillProfile.speed}/100 <span className="text-[10px] text-slate-400 font-normal font-mono">({skillProfile.avgWpm} WPM)</span>
                         </span>
                       </div>
                       <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
@@ -844,7 +844,7 @@ export default function HistoryPage() {
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-white font-bold uppercase">ACCURACY RATING</span>
                         <span className="text-emerald-400 font-bold">
-                          {skillProfile.accuracy}/100 <span className="text-[10px] text-slate-500 font-normal font-mono">({skillProfile.avgAccuracy}%)</span>
+                          {skillProfile.accuracy}/100 <span className="text-[10px] text-slate-400 font-normal font-mono">({skillProfile.avgAccuracy}%)</span>
                         </span>
                       </div>
                       <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
@@ -860,7 +860,7 @@ export default function HistoryPage() {
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-white font-bold uppercase">CONSISTENCY RATING</span>
                         <span className="text-sky-400 font-bold">
-                          {skillProfile.consistency}/100 <span className="text-[10px] text-slate-500 font-normal font-mono">({skillProfile.avgConsistency}%)</span>
+                          {skillProfile.consistency}/100 <span className="text-[10px] text-slate-400 font-normal font-mono">({skillProfile.avgConsistency}%)</span>
                         </span>
                       </div>
                       <div className="w-full h-2 bg-[#121316] rounded-full overflow-hidden relative">
@@ -872,7 +872,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="py-8 text-center text-xs font-mono text-slate-500">
+                  <div className="py-8 text-center text-xs font-mono text-slate-400">
                     Complete your first test to initialize your active skill profile.
                   </div>
                 )}
@@ -884,7 +884,7 @@ export default function HistoryPage() {
                   <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>🎮</span> Practice Mode Breakdown
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                     Lifetime category performance
                   </span>
                 </div>
@@ -896,7 +896,7 @@ export default function HistoryPage() {
                       className={`p-3 rounded-xl border font-mono text-[11px] flex flex-col justify-between min-h-[64px] ${
                         mode.count > 0
                           ? "border-charcoal-700 bg-charcoal-900/30 text-white"
-                          : "border-charcoal-850 bg-charcoal-900/10 text-slate-500"
+                          : "border-charcoal-850 bg-charcoal-900/10 text-slate-400"
                       }`}
                     >
                       <div className="flex items-center gap-1.5 mb-1">
@@ -923,13 +923,13 @@ export default function HistoryPage() {
                 <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                   <span>⌨️</span> Weak-Key Error Map
                 </h2>
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                   Target expected keys causing mistakes
                 </span>
               </div>
 
               {history.length < 3 ? (
-                <div className="p-8 text-center text-xs font-mono text-slate-500">
+                <div className="p-8 text-center text-xs font-mono text-slate-400">
                   Complete a few more tests to see your weak-key map
                 </div>
               ) : (
@@ -979,7 +979,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-4 text-[10px] font-mono text-slate-500 w-full max-w-sm mx-auto">
+                  <div className="flex items-center justify-between mt-4 text-[10px] font-mono text-slate-400 w-full max-w-sm mx-auto">
                     <span>Low mistake frequency</span>
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/30" />
@@ -1010,7 +1010,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="text-2xl font-extrabold text-white font-mono">
-                    {pbEasy ? pbEasy.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                    {pbEasy ? pbEasy.wpm : "—"} <span className="text-xs font-normal text-slate-400">WPM</span>
                   </div>
                 </div>
 
@@ -1025,7 +1025,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="text-2xl font-extrabold text-white font-mono">
-                    {pbMedium ? pbMedium.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                    {pbMedium ? pbMedium.wpm : "—"} <span className="text-xs font-normal text-slate-400">WPM</span>
                   </div>
                 </div>
 
@@ -1040,7 +1040,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="text-2xl font-extrabold text-white font-mono">
-                    {pbHard ? pbHard.wpm : "—"} <span className="text-xs font-normal text-slate-500">WPM</span>
+                    {pbHard ? pbHard.wpm : "—"} <span className="text-xs font-normal text-slate-400">WPM</span>
                   </div>
                 </div>
               </div>
@@ -1053,7 +1053,7 @@ export default function HistoryPage() {
                   <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                     <span>📈</span> typing speed progression (WPM)
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                     showing last {chartData.length} tests
                   </span>
                 </div>
@@ -1072,7 +1072,7 @@ export default function HistoryPage() {
                     <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                       <span>🏆</span> Unlockable Achievements
                     </h2>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                       {gamification.unlockedAchievements.length} / {ACHIEVEMENTS.length} Unlocked
                     </span>
                   </div>
@@ -1088,7 +1088,7 @@ export default function HistoryPage() {
                           className={`p-4 rounded-xl border flex gap-3.5 transition-all duration-300 relative group select-none ${
                             isUnlocked
                               ? "border-[#3B82F6]/30 bg-electric-500/[0.03] text-white shadow-[0_0_12px_rgba(59,130,246,0.03)] card-hover-lift"
-                              : "border-charcoal-700/50 bg-charcoal-900/10 text-slate-500"
+                              : "border-charcoal-700/50 bg-charcoal-900/10 text-slate-400"
                           }`}
                         >
                           {/* Custom visual vector indicator based on achievement ID */}
@@ -1135,11 +1135,11 @@ export default function HistoryPage() {
                           {/* Description block */}
                           <div className="flex-grow space-y-1">
                             <h4 className={`text-xs font-bold font-sans tracking-wide uppercase transition-colors ${
-                              isUnlocked ? "text-white" : "text-slate-500"
+                              isUnlocked ? "text-white" : "text-slate-400"
                             }`}>
                               {badge.title}
                             </h4>
-                            <p className="text-[10px] text-slate-500 leading-normal font-sans">
+                            <p className="text-[10px] text-slate-400 leading-normal font-sans">
                               {badge.description}
                             </p>
                             {isUnlocked && unlockTimestamp && (
@@ -1175,14 +1175,14 @@ export default function HistoryPage() {
                     <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                       <span>🗺️</span> Journey Timeline
                     </h2>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                       Key milestones
                     </span>
                   </div>
 
                   <div className="flex-grow overflow-y-auto max-h-[380px] pr-1.5 space-y-4 scrollbar-thin scrollbar-thumb-charcoal-700 scrollbar-track-transparent">
                     {milestones.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-center p-8 text-xs font-mono text-slate-500 italic">
+                      <div className="h-full flex items-center justify-center text-center p-8 text-xs font-mono text-slate-400 italic">
                         Your milestones will appear here chronologically as you complete speed typing tests.
                       </div>
                     ) : (
@@ -1194,7 +1194,7 @@ export default function HistoryPage() {
                               {milestone.icon}
                             </span>
                             <div className="space-y-0.5">
-                              <span className="text-[9px] font-mono text-slate-500 block uppercase font-bold">
+                              <span className="text-[9px] font-mono text-slate-400 block uppercase font-bold">
                                 {formatDateShort(milestone.timestamp)}
                               </span>
                               <h4 className="text-xs font-bold text-white uppercase tracking-wide">
@@ -1219,7 +1219,7 @@ export default function HistoryPage() {
                 <h2 className="text-sm font-mono text-slate-300 uppercase tracking-widest flex items-center gap-1.5 font-bold">
                   <span>⏱️</span> chronological test log
                 </h2>
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">
                   Total logged: {history.length}
                 </span>
               </div>
@@ -1243,7 +1243,7 @@ export default function HistoryPage() {
                       return (
                         <tr key={item.id} className="hover:bg-charcoal-900/10 transition-colors">
                           {/* Index */}
-                          <td className="py-3 px-6 font-mono text-xs text-slate-500 font-bold">
+                          <td className="py-3 px-6 font-mono text-xs text-slate-400 font-bold">
                             #{numberIndex.toString().padStart(2, "0")}
                           </td>
 

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 import { saveResult, getPlayerName, setPlayerName as statsSetPlayerName, getNamespacedKey, getHistory } from "../../lib/stats";
+import { fallbackTips } from "../../lib/constants";
 
 function formatExportDate() {
   const d = new Date();
@@ -92,7 +93,7 @@ function ResultsScreenContent() {
     if (typeof window !== "undefined") {
       const stored = getPlayerName();
       setDisplayName(stored);
-      setActiveSkin(localStorage.getItem("tst_active_skin") || "electric-blue");
+      setActiveSkin(localStorage.getItem(getNamespacedKey("tst_active_skin")) || "electric-blue");
 
       import("../../lib/gamification").then(({ getGamificationState }) => {
         const state = getGamificationState();
@@ -159,13 +160,6 @@ function ResultsScreenContent() {
         }
       } catch (err) {
         console.error("Failed to fetch coach feedback:", err);
-        const fallbackTips = [
-          "Maintain a steady cadence. Focus on flowing smoothly between letters rather than rushing individual words.",
-          "When encountering tricky letters, reduce your speed slightly to reinforce correct muscle memory.",
-          "Keep your wrists floating gently above the keyboard to reach keys without awkward angles.",
-          "If you notice mistakes on a specific character, practice common words containing that letter to build speed.",
-          "Take deep, relaxed breaths. A calm posture drastically reduces keyboard tension and improves consistency."
-        ];
         const idx = Math.abs(parseInt(wpm, 10) || 0) % fallbackTips.length;
         setCoachFeedback(fallbackTips[idx]);
       } finally {
@@ -328,16 +322,12 @@ function ResultsScreenContent() {
       statsSetPlayerName(sanitizedName);
     }
 
-    // For custom category options not native to remote SQL tables,
-    // score submission mapping safely falls back to 'custom' inside the Supabase payload to comply with constraints.
-    const supabaseCategory = "custom";
-
     const insertPayload = {
       name: sanitizedName,
       wpm: parseInt(wpm, 10),
       accuracy: parseFloat(accuracy),
       difficulty: difficulty,
-      category: supabaseCategory,
+      category: categoryParsed,
     };
 
     // Helper to store locally as a robust mock fallback

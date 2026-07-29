@@ -376,10 +376,10 @@ export default function Home() {
                 {/* Mobile view: Stack into exactly two clean, deliberate, and compact rows */}
                 <div className="flex flex-col gap-1.5 sm:hidden w-full">
                   {/* Row 1: Level Title + Level + Streak */}
-                  <div className="inline-flex items-center h-8 rounded-full border border-[#3B82F6]/20 bg-charcoal-800 text-[9px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden">
+                  <div className="inline-flex items-center h-8 rounded-full border border-electric-500/20 bg-charcoal-800 text-[9px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden">
                     <span className="px-2.5 text-slate-400">{gamificationState.levelTitle}</span>
                     <span className="h-full w-[1px] bg-charcoal-700" />
-                    <span className="px-2.5 text-[#3B82F6]">Lvl {gamificationState.currentLevel}</span>
+                    <span className="px-2.5 text-electric-500">Lvl {gamificationState.currentLevel}</span>
                     <span className="h-full w-[1px] bg-charcoal-700" />
                     <span className="px-2.5 text-amber-500 flex items-center gap-0.5">
                       <span>🔥</span> {gamificationState.streakDays}
@@ -394,10 +394,10 @@ export default function Home() {
                 </div>
 
                 {/* Desktop view: Single horizontal pill container */}
-                <div className="hidden sm:inline-flex items-center h-8 rounded-full border border-[#3B82F6]/20 bg-charcoal-800 text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider">
+                <div className="hidden sm:inline-flex items-center h-8 rounded-full border border-electric-500/20 bg-charcoal-800 text-[10px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider">
                   <span className="px-3 text-slate-400">{gamificationState.levelTitle}</span>
                   <span className="h-full w-[1px] bg-charcoal-700" />
-                  <span className="px-3 text-[#3B82F6]">Lvl {gamificationState.currentLevel}</span>
+                  <span className="px-3 text-electric-500">Lvl {gamificationState.currentLevel}</span>
                   <span className="h-full w-[1px] bg-charcoal-700" />
                   <span className="px-3 text-amber-500 flex items-center gap-1">
                     <span>🔥</span> {gamificationState.streakDays} Day Streak
@@ -428,7 +428,7 @@ export default function Home() {
             </button>
             <button
               onClick={triggerExitModal}
-              className="flex items-center justify-center border border-[#3B82F6]/30 hover:border-[#3B82F6] hover:bg-[#3B82F6]/10 text-slate-400 hover:text-white rounded-lg h-9 px-2 transition-all cursor-pointer ml-1 active:scale-[0.9]"
+              className="flex items-center justify-center border border-electric-500/30 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-lg h-9 px-2 transition-all cursor-pointer ml-1 active:scale-[0.9]"
               title="Exit Session"
             >
               <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -641,7 +641,7 @@ export default function Home() {
           className="bg-charcoal-800 border-2 border-[#1E293B] rounded-2xl p-4 sm:p-8 shadow-2xl space-y-6 transition-all duration-300 animate-slide-in relative overflow-hidden"
         >
           {/* subtle accent based on category */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#3B82F6]" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-electric-500" />
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#1E293B] pb-4">
             <div className="space-y-1">

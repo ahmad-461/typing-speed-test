@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from "react";
-import LinkIcon from "next/link";
+import Link from "next/link";
 import { passageBank } from "../../lib/passages";
 import { getPersonalBest, saveKeyErrors, saveKeyTypedCounts, getWeakestKeys } from "../../lib/stats";
 import { playCorrectClick, playIncorrectClick, playCompleteChime } from "../../lib/sounds";
@@ -578,12 +578,12 @@ function TestScreenContent() {
       {/* Top Meta info */}
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 pb-4 border-b border-charcoal-700/60 font-mono">
         <div className="flex flex-wrap items-center gap-3">
-          <LinkIcon
+          <Link
             href="/"
             className="btn-secondary min-h-[44px] px-4 py-2 hover:bg-charcoal-800 hover-glow-electric text-xs text-slate-400 hover:text-white flex items-center gap-1.5 rounded-xl border border-charcoal-700 transition-all duration-200 active:scale-[0.97]"
           >
             ← Back
-          </LinkIcon>
+          </Link>
           <div className="text-xs text-slate-450 uppercase tracking-wider flex items-center gap-2 flex-wrap font-bold">
             <span>MODE:</span>
             <span className="font-extrabold text-electric-500 uppercase">
@@ -687,7 +687,7 @@ function TestScreenContent() {
                 colorClass = isCorrect ? "text-emerald-400" : "text-rose-500 bg-rose-500/10";
               } else {
                 // Untyped character
-                colorClass = "text-slate-500";
+                colorClass = "text-slate-400";
               }
 
               const isCurrent = index === typedInput.length;

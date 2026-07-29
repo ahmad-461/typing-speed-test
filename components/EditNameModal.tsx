@@ -24,12 +24,19 @@ export default function EditNameModal() {
 
   const handleSave = () => {
     let sanitized = nameInput.trim();
-    sanitized = sanitized.replace(/<\/?[^>]+(>|$)/g, "").slice(0, 20);
+    const isValid = /^[a-zA-Z0-9 ]+$/.test(sanitized);
 
     if (!sanitized) {
       setError("Callsign cannot be empty");
       return;
     }
+
+    if (!isValid) {
+      setError("Only alphanumeric characters and spaces are allowed");
+      return;
+    }
+
+    sanitized = sanitized.slice(0, 20);
 
     setPlayerName(sanitized);
     setIsOpen(false);
