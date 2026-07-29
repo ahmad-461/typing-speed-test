@@ -328,9 +328,8 @@ function ResultsScreenContent() {
       statsSetPlayerName(sanitizedName);
     }
 
-    // For custom category options not native to remote SQL tables,
-    // score submission mapping safely falls back to 'custom' inside the Supabase payload to comply with constraints.
-    const supabaseCategory = "custom";
+    // Use the actual dynamic practice mode category as the primary value for the DB, matching schema.sql
+    const supabaseCategory = categoryParsed;
 
     const insertPayload = {
       name: sanitizedName,
@@ -368,17 +367,31 @@ function ResultsScreenContent() {
         const { error } = await supabase.from("scores").insert([insertPayload]);
 
         if (error) {
-          console.warn("Primary category insert failed, trying backup insertion:", error);
-          // Fallback without category column in case of legacy db tables or constraint mismatch
-          const fallbackPayload = {
+          console.warn("Primary category insert failed, trying secondary fallback with 'custom' category:", error);
+          // Multi-tiered robust fallback strategy:
+          // Fallback 1: Try inserting with category as 'custom' (supports old database constraints)
+          const fallbackCustomPayload = {
             name: sanitizedName,
             wpm: parseInt(wpm, 10),
             accuracy: parseFloat(accuracy),
             difficulty: difficulty,
+            category: "custom",
           };
-          const { error: fallbackError } = await supabase.from("scores").insert([fallbackPayload]);
-          if (fallbackError) {
-            throw fallbackError;
+          const { error: fallbackCustomError } = await supabase.from("scores").insert([fallbackCustomPayload]);
+
+          if (fallbackCustomError) {
+            console.warn("Secondary 'custom' category fallback failed, trying third fallback without category column:", fallbackCustomError);
+            // Fallback 2: Try inserting without the category column entirely (supports very old or custom schemas)
+            const fallbackNoCategoryPayload = {
+              name: sanitizedName,
+              wpm: parseInt(wpm, 10),
+              accuracy: parseFloat(accuracy),
+              difficulty: difficulty,
+            };
+            const { error: fallbackNoCategoryError } = await supabase.from("scores").insert([fallbackNoCategoryPayload]);
+            if (fallbackNoCategoryError) {
+              throw fallbackNoCategoryError;
+            }
           }
         }
 

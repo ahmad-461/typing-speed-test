@@ -1,29 +1,64 @@
-# Typing Speed Test ⚡
+# ⚡ Typing Speed Test (TST) — Terminal Edition
 
-A highly polished, portfolio-quality Next.js application designed to benchmark keyboard accuracy and words-per-minute (WPM) under pressure. Featuring a minimalist developer terminal design, AI-powered passage generation, and a persistent global leaderboard.
-
-## Features
-
-- **Dynamic AI Passages**: Serverless endpoint utilizing the Gemini API (`gemini-flash-lite-latest`) to stream real-time typing passages tailored to easy (~30 words), medium (~60 words), or hard (~100 words) guidelines. Includes a 100% silent, instantaneous static fallback system on any network or API timeout event.
-- **Premium Typing Experience**: Character-by-character accuracy capturing driven directly via a hidden text-input buffer. This ensures robust physical and virtual mobile keyboard support (no complex on-screen custom keyboard hacks) and zero layout shift.
-- **Persistent Global Leaderboard**: Beautiful, paginated standings table connected to a live Supabase backend. Displays the top 50 typing performances filtered dynamically by difficulty level.
-- **Micro-interactions & Polish**: Smooth CSS page mount fade-ins, aesthetic active focus states, custom blinking terminal cursors, responsive compatibility from 360px up to 1920px width screens, and strict adherence to AA accessibility standards (only HEX/RGB colors used).
+A premium, highly polished, game-themed Next.js portfolio application designed to benchmark typing accuracy, speed (WPM), and typing consistency under pressure. Featuring a minimalist developer terminal aesthetics, dynamic AI-powered content streams, deep gamified progression systems, local error heatmaps, and a global leaderboard connected to a live Supabase database.
 
 ---
 
-## Technical Stack
+## 🎮 Key Systems & Core Features
 
-- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
-- **Styling**: [Tailwind CSS v3](https://tailwindcss.com/)
-- **Programming Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Database**: [Supabase](https://supabase.com/) (PostgreSQL client)
-- **AI API**: Google Gemini (`@google/generative-ai` compatible HTTPS)
+### 1. Gamified Mission Control Hub (`/`)
+The traditional landing page is replaced with a premium, fully-interactive retro **Mission Select Game Menu**:
+*   **6 Immersive Practice Modes**:
+    *   `Code Arena`: Benchmarks your performance on real, multi-language code blocks (TypeScript, Python, HTML/CSS).
+    *   `Knowledge Quest`: Educational trivia, core science facts, and advanced vocabulary passages.
+    *   `AI Lab`: Futuristic paragraphs focusing on deep learning, neural networks, and AI trends.
+    *   `World Explorer`: Rich descriptive passages covering geography, landmarks, and travel.
+    *   `Weak-Key Drill`: Dynamically customized passages prioritizing keys that you historically struggle with.
+    *   `Speed Sprint`: High-pressure 20-second flat countdown utilizing ultra-short, punchy sentences (~15-20 words).
+*   **Interactive Parameters Console**: Segmented control tabs prefixed with `> MODE:`, `> DURATION:`, `> LENGTH:`, and `> DIFFICULTY:`. Allows players to toggle **Punctuation** and **Numbers** dynamically, with instant visual feedback and no layout shifts.
+*   **Ghost Race Mode**: Race in real-time against your previous personal best run. The ghost cursor starts automatically and moves at a constant linear speed calculated from your personal best record's duration and characters.
+
+### 2. Gamification & Progression Engine
+*   **XP & Leveling System**: Earn experience points (XP) retroactively on every completed test. Watch your levels promote in real-time!
+*   **Daily Streaks**: Consecutive days of completed tests grant timezone-safe scaling XP modifiers (`+10%` for 3-4 days, `+15%` for 5-6 days, `+20%` for 7+ days) to incentivize daily training.
+*   **Achievements & Titles**: Over a dozen unique achievements (e.g., reaching 50+ or 80+ WPM benchmarks, perfect 100% accuracy, level promotions, completed test milestones) with custom unlock timestamps persisted to your operator log.
+
+### 3. Diagnostics & Analytics Dashboard (`/history`)
+*   **Player Profile HUD**: Visually rich dashboard including your current rank, XP progress bar, active streak, and personal speed goal.
+*   **QWERTY Weak-Key Heatmap**: Tracks your keyboard error metrics mapping expected letters (A-Z and Spacebar) vs actual incorrect inputs. Overlaid with an electric-blue opacity gradient to visually target your weak spots.
+*   **Active Skill Profile**: Represents your current capabilities (Speed, Accuracy, and Consistency) computed from your last 10 completed tests.
+*   **Practice Mode Breakdown**: Chronological and aggregated log of completed tests, averages, and milestones.
+
+### 4. Advanced Technical Integrations
+*   **Dynamic Gemini AI Generator**: Integrated with Google's `@google/generative-ai` SDK using `gemini-flash-lite-latest` to stream real-time, prompt-engineered typing passages tailored to your chosen difficulty, category, punctuation/numbers toggles, and optional weak keys. Features an instantaneous, silent fallback to static local passages in case of rate limits or offline events.
+*   **Adaptive AI Coach**: Sends your typing metrics to `/api/coach-feedback` where a Gemini prompt evaluates your stats (WPM, accuracy, consistency) and returns 1-2 sentences of highly customized, actionable coaching advice.
+*   **Synthesized Audio Engine**: Keystroke sounds (correct and incorrect clicks) and event chimes (completion, levels, achievements) are synthesized programmatically using the native browser **Web Audio API** (zero external assets loaded!).
+*   **Unlockable Terminal Skins**: Swap between four gorgeous CRT/terminal-themed accent color profiles ("Electric Blue", "Emerald Terminal", "Amber CRT", "Crimson Protocol") bound to specific levels and achievements.
+*   **Branded Result Card Exporter**: Utilizing `html2canvas` to render and export a gorgeous 16:9 performance certificate showing your stats, Operator Name, and active theme colors. You can copy the image directly to your clipboard or download it as a PNG.
+
+### 5. Terminal Identity & Quick Command Pages
+Directly linked in the Mission Control Footer under QUICK COMMANDS:
+*   `[CMD] data_protocol.log` (`/data-protocol`): Terminal diagnostic readout covering GDPR/data handling rules, equipped with an interactive data purge tool.
+*   `[CMD] rules.txt` (`/rules-of-engagement`): Clean rules, tips, and mission objectives layout.
+*   `[CMD] changelog.log` (`/changelog`): Comprehensive developer roadmap (v1.0 to v1.6 patch notes).
 
 ---
 
-## Setup & Local Installation
+## 🛠️ Technical Stack
+
+*   **Framework**: Next.js 15 (App Router)
+*   **Styling**: Tailwind CSS v3 with custom theme config and utility classes
+*   **Runtime/Language**: TypeScript & Node.js
+*   **Database**: Supabase (PostgreSQL client with Row Level Security)
+*   **AI Engine**: Google Gemini API (`gemini-flash-lite-latest`)
+*   **Client Dependencies**: `html2canvas` (with strict HEX/RGB constraints to prevent canvas export breaking)
+
+---
+
+## 🚀 Setup & Local Installation
 
 ### 1. Clone & Install Dependencies
+Ensure you have Node.js installed, then run:
 ```bash
 git clone https://github.com/ahmad-461/typing-speed-test.git
 cd typing-speed-test
@@ -45,43 +80,42 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_ANON_PUBLIC_KEY"
 *Note: For build processes or CI pipelines, the Supabase wrapper silently handles missing environment variables with a warning fallback to prevent static generation failures.*
 
 ### 3. Setup PostgreSQL Table Schema
-Apply the database definition located in the project's root `schema.sql` inside your Supabase SQL editor. It defines the structure for storing leaderboard rankings:
+Apply the updated database definition located in the project's root `schema.sql` inside your Supabase SQL editor. It defines the structure for storing leaderboard rankings with Row Level Security (RLS) and check constraints:
 
 ```sql
--- Schema SQL setup:
 create table if not exists public.scores (
-  id uuid default gen_random_uuid() primary key,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  name text not null,
+  id uuid primary key default gen_random_uuid (),
+  name text not null check (length(name) <= 25),
   wpm integer not null,
-  accuracy numeric(5,2) not null,
-  difficulty text not null
+  accuracy numeric not null,
+  difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'custom')),
+  category text not null default 'custom' check (category in ('code_arena', 'knowledge_quest', 'ai_lab', 'world_explorer', 'weak_key_drill', 'speed_sprint', 'custom')),
+  created_at timestamp with time zone default now() not null
 );
 
--- RLS (Row Level Security) Configuration
+-- Enable Row Level Security
 alter table public.scores enable row level security;
 
-create policy "Allow public read access" on public.scores
-  for select using (true);
-
-create policy "Allow public insert access" on public.scores
-  for insert with check (true);
+-- Create policies
+create policy "Allow public insert" on public.scores for insert with check (true);
+create policy "Allow public select" on public.scores for select using (true);
 ```
 
-### 4. Run Locally
+### 4. Run the Development Server
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to review.
+Open [http://localhost:3000](http://localhost:3000) inside your browser.
 
 ---
 
-## Build Commands
-Verify compilation, type checks, and lint configurations:
+## 🏗️ Development and Production Builds
+
+Verify compilation, static generation, type checks, and lint configurations:
 ```bash
-# Production optimization compilation
+# Compile and build the optimized production package
 npm run build
 
-# Code standards linter
+# Run the project linter
 npm run lint
 ```
