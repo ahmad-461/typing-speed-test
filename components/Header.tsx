@@ -47,8 +47,31 @@ export default function Header() {
   }, [pathname]);
 
   const navItems = [
-    { label: "Leaderboard", href: "/leaderboard" },
-    { label: "History", href: "/history" },
+    {
+      label: "Leaderboard",
+      mobileLabel: "LDR",
+      href: "/leaderboard",
+      icon: (
+        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+          <path d="M4 22h16" />
+          <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+          <path d="M12 2a4 4 0 0 1 4 4v5c0 2.2-1.8 4-4 4s-4-1.8-4-4V6a4 4 0 0 1 4-4z" />
+        </svg>
+      )
+    },
+    {
+      label: "History",
+      mobileLabel: "HST",
+      href: "/history",
+      icon: (
+        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      )
+    },
   ];
 
   const [playerName, setPlayerName] = useState<string>("");
@@ -125,14 +148,14 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#121316]/90 backdrop-blur-md border-b border-[#1E293B]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
 
         {/* Left Side: Logo/Wordmark and Navigation Links Inline */}
-        <div className="flex items-center gap-3 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Brand/Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 font-mono text-sm sm:text-base font-bold tracking-wide text-[#F1F5F9] hover:opacity-90 transition-opacity select-none min-h-[44px] py-1"
+            className="flex items-center gap-1.5 font-mono text-sm sm:text-base font-bold tracking-wide text-[#F1F5F9] hover:opacity-90 transition-opacity select-none min-h-[44px] py-1"
           >
             <Image
               src="/logo.svg"
@@ -142,38 +165,31 @@ export default function Header() {
               className="object-contain sm:w-8 sm:h-8"
               priority
             />
-            <span className="hidden sm:inline">TST</span>
+            <span className="hidden sm:inline font-extrabold text-electric-400 tracking-wider">NOKY</span>
           </Link>
 
           {/* Navigation links inline */}
           {!isTestPage && (
-            <nav className="flex items-center gap-2.5 sm:gap-5">
+            <nav className="flex items-center gap-1 sm:gap-2 bg-charcoal-800/40 p-1 rounded-lg border border-charcoal-700/50">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.label}
                     href={item.href}
-                    className={`group relative flex items-center py-2.5 px-1 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-200 min-h-[44px]`}
+                    className={`group flex items-center gap-1 sm:gap-1.5 py-1 px-2 rounded-md font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-150 min-h-[44px] sm:min-h-[32px] ${
+                      isActive
+                        ? "bg-electric-500/15 text-electric-400 border border-electric-500/30 shadow-[0_0_8px_rgba(59,130,246,0.1)]"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-charcoal-700/40 border border-transparent"
+                    }`}
                   >
-                    {/* Subtle glowing dot indicator to the left of active/hovered link on desktop */}
-                    <span
-                      className={`hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-electric-500 shadow-[0_0_8px_var(--color-accent)] transition-all duration-200 mr-1.5 ${
-                        isActive
-                          ? "opacity-100 scale-100"
-                          : "opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
-                      }`}
-                    />
-
-                    {/* Text */}
-                    <span>{item.label}</span>
-
-                    {/* Underline for active link only (animates in from center) */}
-                    <span
-                      className={`absolute bottom-[4px] left-0 right-0 h-[1.5px] bg-electric-500 transition-transform duration-300 origin-center ${
-                        isActive ? "scale-x-100" : "scale-x-0"
-                      }`}
-                    />
+                    {/* Icon */}
+                    <span className={isActive ? "text-electric-400" : "text-slate-400 group-hover:text-slate-200"}>
+                      {item.icon}
+                    </span>
+                    {/* Text Label */}
+                    <span className="hidden sm:inline">{item.label}</span>
+                    <span className="inline sm:hidden">{item.mobileLabel}</span>
                   </Link>
                 );
               })}
@@ -181,12 +197,12 @@ export default function Header() {
           )}
         </div>
 
-        {/* Right Side: Cohesive Player Status Pill & Callsign display */}
-        <div className="flex items-center gap-3 justify-end select-none">
+        {/* Right Side: Cohesive Player Status Pill, Callsign, Sound Toggle */}
+        <div className="flex items-center gap-2 sm:gap-3 justify-end select-none">
           {/* Sound Toggle Icon Button (min 44x44px for perfect mobile usability) */}
           <button
             onClick={toggleSound}
-            className="flex items-center justify-center border border-charcoal-700 bg-charcoal-800 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-xl transition-all cursor-pointer h-11 w-11 active:scale-[0.95]"
+            className="flex items-center justify-center border border-charcoal-700 bg-charcoal-800 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer h-11 w-11 sm:h-10 sm:w-10 active:scale-[0.95]"
             title={soundEnabled ? "Mute Keyboard Sounds" : "Unmute Keyboard Sounds"}
           >
             {soundEnabled ? (
@@ -201,14 +217,14 @@ export default function Header() {
           </button>
 
           {!isTestPage && playerName && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-charcoal-700 bg-charcoal-800 font-mono text-[11px] text-slate-300">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-charcoal-700 bg-charcoal-800 font-mono text-[11px] text-slate-300 h-10">
               <span className="text-slate-500 font-bold">&gt;</span>
               <span className="font-extrabold text-white truncate max-w-[100px] normal-case" title={playerName}>
                 {playerName}
               </span>
               <button
                 onClick={triggerEditModal}
-                className="text-slate-500 hover:text-white transition-colors cursor-pointer ml-1 h-9 w-9 flex items-center justify-center active:scale-[0.9]"
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer ml-1 h-8 w-8 flex items-center justify-center active:scale-[0.9]"
                 title="Edit Callsign"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -218,7 +234,7 @@ export default function Header() {
               </button>
               <button
                 onClick={triggerExitModal}
-                className="flex items-center justify-center border border-electric-500/30 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-lg h-9 px-2.5 transition-all cursor-pointer ml-1 active:scale-[0.9]"
+                className="flex items-center justify-center border border-electric-500/30 hover:border-electric-500 hover:bg-electric-500/10 text-slate-400 hover:text-white rounded-md h-8 px-2 transition-all cursor-pointer ml-1 active:scale-[0.9]"
                 title="Exit Session"
               >
                 <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -231,40 +247,40 @@ export default function Header() {
             </div>
           )}
 
-          {!isTestPage && gamification && (
-            <div className="flex flex-col items-end">
-              <div className="inline-flex items-center h-11 rounded-xl border border-electric-500/30 bg-electric-500/[0.06] text-[9px] sm:text-[11px] font-mono text-white font-bold uppercase tracking-wider overflow-hidden animate-fade-in">
-                {/* Level portion */}
-                <span className="px-2.5 sm:px-3 text-electric-500">
-                  Lvl {gamification.level}
-                </span>
-
-                {/* Partition Line */}
-                <span className="h-full w-[1px] bg-electric-500/30" />
-
-                {/* Streak portion */}
-                <span className="px-2.5 sm:px-3 text-amber-500 flex items-center gap-1">
-                  <span>🔥</span>
-                  <span>{gamification.streak}</span>
-                  <span className="hidden sm:inline">Streak</span>
-                </span>
-
-                {/* Personal Best portion - Desktop only */}
-                {pbWPM !== null && (
-                  <>
-                    <span className="hidden md:inline-block h-full w-[1px] bg-electric-500/30" />
-                    <span className="hidden md:inline-flex px-3 text-sky-400 items-center gap-1">
-                      <span>PB:</span>
-                      <span>{pbWPM} WPM</span>
-                    </span>
-                  </>
-                )}
+          {gamification && (
+            <div className="inline-flex items-center h-10 rounded-lg border border-electric-500/30 bg-electric-500/[0.04] shadow-[0_0_12px_rgba(59,130,246,0.03)] font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider overflow-hidden">
+              {/* Level Portion */}
+              <div className="flex items-center gap-1 px-2 sm:px-3 text-electric-400">
+                <svg className="w-3.5 h-3.5 text-electric-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <span>LVL {gamification.level}</span>
               </div>
 
-              {gamification.resetOccurred && (
-                <div className="text-[8px] sm:text-[9px] font-mono text-rose-400 font-semibold tracking-wider uppercase mt-0.5 animate-pulse">
-                  Streak reset — start fresh today
-                </div>
+              {/* Divider */}
+              <span className="h-4 w-[1px] bg-electric-500/25" />
+
+              {/* Streak Portion */}
+              <div className="flex items-center gap-1 px-2 sm:px-3 text-amber-500">
+                <svg className="w-3.5 h-3.5 text-amber-500 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                </svg>
+                <span>{gamification.streak}<span className="hidden sm:inline"> STREAK</span></span>
+              </div>
+
+              {/* PB Portion */}
+              {pbWPM !== null && (
+                <>
+                  {/* Divider */}
+                  <span className="h-4 w-[1px] bg-electric-500/25" />
+                  <div className="flex items-center gap-1 px-2 sm:px-3 text-sky-400">
+                    <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+                      <path d="M3 20h18" strokeWidth="2" />
+                    </svg>
+                    <span>{pbWPM}<span className="hidden sm:inline"> WPM</span><span className="inline sm:hidden"> PB</span></span>
+                  </div>
+                </>
               )}
             </div>
           )}
