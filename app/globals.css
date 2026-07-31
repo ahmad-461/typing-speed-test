@@ -220,3 +220,107 @@ html {
     animation: pbPulse 2s ease-in-out infinite;
   }
 }
+
+/* ═══════════════════════════════════════════
+   NEW HUD HEADER GEOMETRY & SPECS
+   ═══════════════════════════════════════════ */
+
+@keyframes hud-glow-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Outer frame with bottom bevels */
+.hud-header-outer {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px));
+  position: relative;
+}
+
+.hud-header-outer-glow {
+  background: linear-gradient(90deg,
+    var(--color-accent) 0%,
+    rgba(var(--color-accent-rgb), 0.3) 25%,
+    var(--color-accent) 50%,
+    rgba(var(--color-accent-rgb), 0.3) 75%,
+    var(--color-accent) 100%
+  );
+  background-size: 200% auto;
+  animation: hud-glow-flow 6s linear infinite;
+}
+
+/* Inner frame containing content, slightly inset to form a 1px border */
+.hud-header-inner {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 11px 100%, 0 calc(100% - 11px));
+  background-color: #121316;
+  width: calc(100% - 2px);
+  height: calc(100% - 1px);
+  margin-left: 1px;
+  margin-right: 1px;
+  margin-bottom: 1px;
+  margin-top: 0;
+}
+
+/* 2. Slanted Parallelogram (Status readout & Operator Console) */
+.hud-parallelogram-outer {
+  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  background: rgba(var(--color-accent-rgb), 0.3);
+  position: relative;
+  transition: all 0.25s ease;
+}
+.hud-parallelogram-outer:hover {
+  background: rgba(var(--color-accent-rgb), 0.6);
+  box-shadow: 0 0 12px rgba(var(--color-accent-rgb), 0.25);
+}
+
+.hud-parallelogram-inner {
+  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  background-color: rgba(18, 19, 22, 0.85);
+}
+
+/* 3. Navigation Tabs (Top cut corner) */
+.hud-tab-outer {
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%, 0 8px);
+  background: rgba(255, 255, 255, 0.08);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.hud-tab-outer.active {
+  background: var(--color-accent);
+  box-shadow: 0 -2px 10px rgba(var(--color-accent-rgb), 0.2);
+}
+
+.hud-tab-inner {
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%, 0 8px);
+  background-color: rgba(18, 19, 22, 0.95);
+  transition: all 0.2s ease;
+}
+.hud-tab-outer.active .hud-tab-inner {
+  background-color: rgba(var(--color-accent-rgb), 0.12);
+}
+
+/* 4. Small Cut-Corner Buttons / Indicators */
+.hud-btn-cut {
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+/* 5. Mobile Dropdown Panel */
+.hud-dropdown-outer {
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  background: rgba(var(--color-accent-rgb), 0.3);
+  position: relative;
+}
+
+.hud-dropdown-inner {
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  background-color: rgba(18, 19, 22, 0.96);
+}
